@@ -1,0 +1,220 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  username  String   @unique
+  email     String?
+  password  String
+  role      Role     @default(ADMIN)
+  isActive  Boolean  @default(true)
+  lastLogin DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("users")
+}
+
+model Student {
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  admissionNo   String    @unique
+  aadharNo      String?
+  emisNo        String?
+  name          String
+  gender        Gender
+  dateOfBirth   DateTime
+  age           Int
+  community     String
+  motherTongue  String
+  mobileNo1     String
+  mobileNo2     String?
+  fatherName    String
+  motherName    String
+  address       String
+  previousSchool String?
+  religion      String
+  caste         String
+  nationality   String   @default("Indian")
+  remarks       String?
+  isActive      Boolean  @default(true)
+  admissionDate DateTime @default(now())
+  profilePhotoUrl String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  enrollments StudentYear[]
+  documents   Document[]
+
+  @@map("students")
+}
+
+model AcademicYear {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  year      String   @unique // "2024-25"
+  startDate DateTime
+  endDate   DateTime
+  isActive  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  feeStructures CommonFee[]
+  enrollments   StudentYear[]
+
+  @@map("academic_years")
+}
+
+model Class {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  className String   @unique // "1st", "2nd", etc.
+  order     Int      @unique
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  feeStructures CommonFee[]
+  enrollments   StudentYear[]
+
+  @@map("classes")
+}
+
+model CommonFee {
+  id             String @id @default(auto()) @map("_id") @db.ObjectId
+  academicYearId String @db.ObjectId
+  classId        String @db.ObjectId
+  schoolFee      Float  @default(0)
+  bookFee        Float  @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  academicYear AcademicYear @relation(fields: [academicYearId], references: [id])
+  class        Class        @relation(fields: [classId], references: [id])
+  enrollments  StudentYear[]
+
+  @@unique([academicYearId, classId])
+  @@map("common_fees")
+}
+
+model StudentYear {
+  id             String @id @default(auto()) @map("_id") @db.ObjectId
+  studentId      String @db.ObjectId
+  academicYearId String @db.ObjectId
+  classId        String @db.ObjectId
+  commonFeeId    String @db.ObjectId
+  section        String
+  
+  // Individual fee customizations
+  uniformFee     Float @default(0)
+  islamicStudies Float @default(0)
+  vanFee         Float @default(0)
+  scholarship    Float @default(0)
+  
+  enrollmentDate DateTime @default(now())
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  student      Student      @relation(fields: [studentId], references: [id])
+  academicYear AcademicYear @relation(fields: [academicYearId], references: [id])
+  class        Class        @relation(fields: [classId], references: [id])
+  commonFee    CommonFee    @relation(fields: [commonFeeId], references: [id])
+  
+  feeTransactions FeeTxn[]
+  paidFee         PaidFee?
+
+  @@unique([studentId, academicYearId])
+  @@map("student_years")
+}
+
+model FeeTxn {
+  id             String @id @default(auto()) @map("_id") @db.ObjectId
+  studentYearId  String @db.ObjectId
+  
+  // Payment breakdown
+  schoolFee      Float @default(0)
+  bookFee        Float @default(0)
+  uniformFee     Float @default(0)
+  islamicStudies Float @default(0)
+  vanFee         Float @default(0)
+  totalAmountPaid Float
+  
+  paymentDate    DateTime      @default(now())
+  receiptNo      String        @unique
+  paymentMethod  PaymentMethod @default(CASH)
+  remarks        String?
+  createdBy      String
+  createdAt      DateTime      @default(now())
+
+  studentYear StudentYear @relation(fields: [studentYearId], references: [id])
+
+  @@map("fee_transactions")
+}
+
+model PaidFee {
+  id                  String @id @default(auto()) @map("_id") @db.ObjectId
+  studentYearId       String @unique @db.ObjectId
+  
+  // Cumulative amounts paid
+  schoolFeePaid       Float @default(0)
+  bookFeePaid         Float @default(0)
+  uniformFeePaid      Float @default(0)
+  islamicStudiesPaid  Float @default(0)
+  vanFeePaid          Float @default(0)
+  totalPaid           Float @default(0)
+  
+  lastPaymentDate     DateTime?
+  updatedAt           DateTime @updatedAt
+
+  studentYear StudentYear @relation(fields: [studentYearId], references: [id])
+
+  @@map("paid_fees")
+}
+
+model Document {
+  id        String       @id @default(auto()) @map("_id") @db.ObjectId
+  studentId String       @db.ObjectId
+  fileName  String
+  fileUrl   String       // Cloudinary URL
+  fileType  DocumentType
+  uploadDate DateTime    @default(now())
+  uploadedBy String
+  createdAt  DateTime    @default(now())
+
+  student Student @relation(fields: [studentId], references: [id])
+
+  @@map("documents")
+}
+
+enum Role {
+  ADMIN
+  STAFF
+}
+
+enum Gender {
+  MALE
+  FEMALE
+}
+
+enum PaymentMethod {
+  CASH
+  ONLINE
+  CHEQUE
+}
+
+enum DocumentType {
+  PHOTO
+  DOCUMENT
+  CERTIFICATE
+}
