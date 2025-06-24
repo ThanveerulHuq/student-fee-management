@@ -11,7 +11,8 @@ import {
   FileText, 
   BarChart3,
   LogOut,
-  UserCircle
+  UserCircle,
+  GraduationCap
 } from "lucide-react"
 
 export default function DashboardPage() {
@@ -46,6 +47,13 @@ export default function DashboardPage() {
       icon: Users,
       href: "/students",
       color: "bg-blue-500"
+    },
+    {
+      title: "Student Enrollments",
+      description: "Manage student class enrollments and assignments",
+      icon: GraduationCap,
+      href: "/enrollments",
+      color: "bg-indigo-500"
     },
     {
       title: "Fee Management",
@@ -86,10 +94,10 @@ export default function DashboardPage() {
               <div className="flex items-center space-x-2">
                 <UserCircle className="h-5 w-5 text-gray-400" />
                 <span className="text-sm text-gray-700">
-                  {session.user.username}
+                  {(session.user as { username?: string })?.username}
                 </span>
                 <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                  {session.user.role}
+                  {(session.user as { role?: string })?.role}
                 </span>
               </div>
               
@@ -110,7 +118,7 @@ export default function DashboardPage() {
       <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-2">
-            Welcome back, {session.user.username}!
+            Welcome back, {(session.user as { username?: string })?.username}!
           </h2>
           <p className="text-gray-600">
             Manage your school data efficiently with BlueMoon SDMS
@@ -118,7 +126,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Dashboard Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 mb-8">
           {menuItems.map((item) => {
             const IconComponent = item.icon
             return (

@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -15,14 +15,6 @@ import {
   TableHeader, 
   TableRow 
 } from "@/components/ui/table"
-import { 
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
 import { Plus, Search, Eye, Edit, Users, ArrowLeft } from "lucide-react"
 
 interface Student {
@@ -71,11 +63,7 @@ export default function StudentsPage() {
     }
   }, [status, router])
 
-  useEffect(() => {
-    fetchStudents()
-  }, [page, search])
-
-  const fetchStudents = async () => {
+  const fetchStudents = useCallback(async () => {
     try {
       setLoading(true)
       const params = new URLSearchParams({
@@ -95,7 +83,11 @@ export default function StudentsPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [page, search])
+
+  useEffect(() => {
+    fetchStudents()
+  }, [fetchStudents])
 
   const handleSearch = (value: string) => {
     setSearch(value)
@@ -181,7 +173,7 @@ export default function StudentsPage() {
                   <TableRow>
                     <TableHead>Admission No</TableHead>
                     <TableHead>Student Name</TableHead>
-                    <TableHead>Father's Name</TableHead>
+                    <TableHead>Father&apos;s Name</TableHead>
                     <TableHead>Gender</TableHead>
                     <TableHead>Age</TableHead>
                     <TableHead>Mobile</TableHead>

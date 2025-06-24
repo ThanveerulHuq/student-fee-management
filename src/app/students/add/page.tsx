@@ -47,7 +47,6 @@ export default function AddStudentPage() {
 
       const submitData = {
         ...formData,
-        dateOfBirth: new Date(formData.dateOfBirth),
         isActive: true,
       }
 
@@ -65,7 +64,7 @@ export default function AddStudentPage() {
         const errorData = await response.json()
         setError(errorData.error || "Failed to create student")
       }
-    } catch (error) {
+    } catch {
       setError("An error occurred. Please try again.")
     } finally {
       setLoading(false)
@@ -196,7 +195,7 @@ export default function AddStudentPage() {
                 <h3 className="text-lg font-medium mb-4">Family Information</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <Label htmlFor="fatherName">Father's Name *</Label>
+                    <Label htmlFor="fatherName">Father&apos;s Name *</Label>
                     <Input
                       id="fatherName"
                       name="fatherName"
@@ -208,7 +207,7 @@ export default function AddStudentPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="motherName">Mother's Name *</Label>
+                    <Label htmlFor="motherName">Mother&apos;s Name *</Label>
                     <Input
                       id="motherName"
                       name="motherName"

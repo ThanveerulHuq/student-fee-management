@@ -8,8 +8,9 @@ export const studentSchema = z.object({
   gender: z.enum(["MALE", "FEMALE"], {
     required_error: "Gender is required",
   }),
-  dateOfBirth: z.date({
-    required_error: "Date of birth is required",
+  dateOfBirth: z.union([z.string(), z.date()]).transform((val) => {
+    if (!val) throw new Error("Date of birth is required")
+    return val instanceof Date ? val : new Date(val)
   }),
   community: z.string().min(1, "Community is required"),
   motherTongue: z.string().min(1, "Mother tongue is required"),

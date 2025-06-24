@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
+import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { studentUpdateSchema } from "@/lib/validations/student"
+import { Gender } from "@/generated/prisma"
 
 export async function GET(
   request: NextRequest,
@@ -83,7 +84,10 @@ export async function PUT(
     }
 
     // Calculate age if date of birth is updated
-    const updateData: any = { ...validatedData }
+    const updateData: Record<string, unknown> = { 
+      ...validatedData,
+      ...(validatedData.gender && { gender: validatedData.gender as Gender })
+    }
     if (validatedData.dateOfBirth) {
       updateData.age = new Date().getFullYear() - validatedData.dateOfBirth.getFullYear()
     }

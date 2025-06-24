@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { signIn, getSession } from "next-auth/react"
+import { signIn } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -12,14 +12,14 @@ import { Alert } from "@/components/ui/alert"
 export default function LoginPage() {
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
-  const [error, setError] = useState("")
+  const [errorMessage, setErrorMessage] = useState("")
   const [loading, setLoading] = useState(false)
   const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
-    setError("")
+    setErrorMessage("")
 
     try {
       const result = await signIn("credentials", {
@@ -29,12 +29,12 @@ export default function LoginPage() {
       })
 
       if (result?.error) {
-        setError("Invalid username or password")
+        setErrorMessage("Invalid username or password")
       } else {
         router.push("/dashboard")
       }
-    } catch (error) {
-      setError("An error occurred. Please try again.")
+    } catch {
+      setErrorMessage("An error occurred. Please try again.")
     } finally {
       setLoading(false)
     }
@@ -51,9 +51,9 @@ export default function LoginPage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            {error && (
+            {errorMessage && (
               <Alert variant="destructive">
-                {error}
+                {errorMessage}
               </Alert>
             )}
             
