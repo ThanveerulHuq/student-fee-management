@@ -1,8 +1,6 @@
 "use client"
 
 import { useEffect, useState, useCallback } from "react"
-import { useSession } from "next-auth/react"
-import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -15,7 +13,9 @@ import {
   TableHeader, 
   TableRow 
 } from "@/components/ui/table"
-import { Plus, Search, Eye, Edit, Users, ArrowLeft } from "lucide-react"
+import { Plus, Search, Eye, Edit, Users } from "lucide-react"
+import { useAcademicYear, useAcademicYearNavigation } from "@/contexts/academic-year-context"
+import EnhancedPageHeader from "@/components/ui/enhanced-page-header"
 
 interface Student {
   id: string
@@ -44,8 +44,8 @@ interface StudentsResponse {
 }
 
 export default function StudentsPage() {
-  const { data: session, status } = useSession()
-  const router = useRouter()
+  const { academicYear } = useAcademicYear()
+  const { navigateTo, goToStudent } = useAcademicYearNavigation()
   const [students, setStudents] = useState<Student[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
@@ -57,18 +57,15 @@ export default function StudentsPage() {
     pages: 0,
   })
 
-  useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/auth/login")
-    }
-  }, [status, router])
-
   const fetchStudents = useCallback(async () => {
+    if (!academicYear) return
+    
     try {
       setLoading(true)
       const params = new URLSearchParams({
         page: page.toString(),
         limit: "10",
+        academicYear: academicYear.id,
         ...(search && { search }),
       })
 
@@ -83,7 +80,7 @@ export default function StudentsPage() {
     } finally {
       setLoading(false)
     }
-  }, [page, search])
+  }, [page, search, academicYear])
 
   useEffect(() => {
     fetchStudents()
@@ -94,7 +91,15 @@ export default function StudentsPage() {
     setPage(1)
   }
 
-  if (status === "loading" || !session) {
+  const handleAddStudent = () => {
+    navigateTo("/students/add")
+  }
+
+  const handleEditStudent = (studentId: string) => {
+    navigateTo(`/students/${studentId}/edit`)
+  }
+
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -107,33 +112,16 @@ export default function StudentsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-4">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => router.push("/dashboard")}
-              >
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Dashboard
-              </Button>
-              <h1 className="text-xl font-semibold text-gray-900">
-                Student Management
-              </h1>
-            </div>
-            
-            <Button onClick={() => router.push("/students/add")}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Student
-            </Button>
-          </div>
-        </div>
-      </header>
+      <EnhancedPageHeader 
+        title="Student Management" 
+        showBackButton={true}
+      >
+        <Button onClick={handleAddStudent}>
+          <Plus className="h-4 w-4 mr-2" />
+          Add Student
+        </Button>
+      </EnhancedPageHeader>
 
-      {/* Main Content */}
       <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         {/* Search and Filters */}
         <Card className="mb-6">
@@ -146,7 +134,7 @@ export default function StudentsPage() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center space-x-4">
-              <div className="relative flex-1 max-w-md">
+              <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <Input
                   placeholder="Search students..."
@@ -163,17 +151,16 @@ export default function StudentsPage() {
         <Card>
           <CardContent className="p-0">
             {loading ? (
-              <div className="flex items-center justify-center p-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                <span className="ml-2">Loading students...</span>
+              <div className="p-8 text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                <p className="mt-2 text-gray-600">Loading students...</p>
               </div>
             ) : (
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Admission No</TableHead>
-                    <TableHead>Student Name</TableHead>
-                    <TableHead>Father&apos;s Name</TableHead>
+                    <TableHead>Name</TableHead>
                     <TableHead>Gender</TableHead>
                     <TableHead>Age</TableHead>
                     <TableHead>Mobile</TableHead>
@@ -185,24 +172,20 @@ export default function StudentsPage() {
                 <TableBody>
                   {students.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={9} className="text-center py-8">
-                        <div className="text-gray-500">
-                          <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                          <p>No students found</p>
-                          <p className="text-sm">Add your first student to get started</p>
-                        </div>
+                      <TableCell colSpan={8} className="text-center py-8 text-gray-500">
+                        No students found
                       </TableCell>
                     </TableRow>
                   ) : (
                     students.map((student) => {
-                      const currentEnrollment = student.enrollments[0]
+                      const currentEnrollment = student.enrollments.find(
+                        e => e.academicYear.year === academicYear?.year
+                      )
+                      
                       return (
                         <TableRow key={student.id}>
-                          <TableCell className="font-medium">
-                            {student.admissionNo}
-                          </TableCell>
+                          <TableCell className="font-medium">{student.admissionNo}</TableCell>
                           <TableCell>{student.name}</TableCell>
-                          <TableCell>{student.fatherName}</TableCell>
                           <TableCell>
                             <Badge variant="outline">
                               {student.gender}
@@ -226,14 +209,14 @@ export default function StudentsPage() {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => router.push(`/students/${student.id}`)}
+                                onClick={() => goToStudent(student.id)}
                               >
                                 <Eye className="h-4 w-4" />
                               </Button>
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => router.push(`/students/${student.id}/edit`)}
+                                onClick={() => handleEditStudent(student.id)}
                               >
                                 <Edit className="h-4 w-4" />
                               </Button>
@@ -261,19 +244,29 @@ export default function StudentsPage() {
               <Button
                 variant="outline"
                 size="sm"
-                disabled={pagination.page <= 1}
-                onClick={() => setPage(pagination.page - 1)}
+                onClick={() => setPage(page - 1)}
+                disabled={page <= 1}
               >
                 Previous
               </Button>
-              <span className="text-sm">
-                Page {pagination.page} of {pagination.pages}
-              </span>
+              <div className="flex items-center space-x-1">
+                {Array.from({ length: pagination.pages }, (_, i) => i + 1).map((pageNum) => (
+                  <Button
+                    key={pageNum}
+                    variant={pageNum === page ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setPage(pageNum)}
+                    className="w-8 h-8 p-0"
+                  >
+                    {pageNum}
+                  </Button>
+                ))}
+              </div>
               <Button
                 variant="outline"
                 size="sm"
-                disabled={pagination.page >= pagination.pages}
-                onClick={() => setPage(pagination.page + 1)}
+                onClick={() => setPage(page + 1)}
+                disabled={page >= pagination.pages}
               >
                 Next
               </Button>

@@ -1,8 +1,6 @@
 "use client"
 
 import { useEffect, useState, useCallback } from "react"
-import { useSession } from "next-auth/react"
-import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -15,7 +13,6 @@ import {
   TableRow 
 } from "@/components/ui/table"
 import { 
-  ArrowLeft,
   CreditCard,
   IndianRupee,
   TrendingDown,
@@ -23,6 +20,8 @@ import {
   DollarSign
 } from "lucide-react"
 import { formatCurrency } from "@/lib/utils/receipt"
+import { useAcademicYear, useAcademicYearNavigation } from "@/contexts/academic-year-context"
+import EnhancedPageHeader from "@/components/ui/enhanced-page-header"
 
 interface OutstandingFee {
   id: string
@@ -68,8 +67,8 @@ interface OutstandingResponse {
 }
 
 export default function FeesPage() {
-  const { data: session, status } = useSession()
-  const router = useRouter()
+  const { academicYear } = useAcademicYear()
+  const { navigateTo } = useAcademicYearNavigation()
   const [outstandingFees, setOutstandingFees] = useState<OutstandingFee[]>([])
   const [summary, setSummary] = useState({
     totalStudents: 0,
@@ -85,19 +84,16 @@ export default function FeesPage() {
     pages: 0,
   })
 
-  useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/auth/login")
-    }
-  }, [status, router])
-
   const fetchOutstandingFees = useCallback(async () => {
+    if (!academicYear) return
+
     try {
       setLoading(true)
       const params = new URLSearchParams({
         page: page.toString(),
         limit: "20",
         minOutstanding: "1", // Only show students with outstanding fees > ₹1
+        academicYear: academicYear.id,
       })
 
       const response = await fetch(`/api/fees/outstanding?${params}`)
@@ -112,13 +108,13 @@ export default function FeesPage() {
     } finally {
       setLoading(false)
     }
-  }, [page])
+  }, [page, academicYear])
 
   useEffect(() => {
     fetchOutstandingFees()
   }, [fetchOutstandingFees])
 
-  if (status === "loading" || !session) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -131,31 +127,15 @@ export default function FeesPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-4">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => router.push("/dashboard")}
-              >
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Dashboard
-              </Button>
-              <h1 className="text-xl font-semibold text-gray-900">
-                Fee Management
-              </h1>
-            </div>
-            
-            <Button onClick={() => router.push("/fees/collect")}>
-              <CreditCard className="h-4 w-4 mr-2" />
-              Collect Fees
-            </Button>
-          </div>
-        </div>
-      </header>
+      <EnhancedPageHeader 
+        title="Fee Management" 
+        showBackButton={true}
+      >
+        <Button onClick={() => navigateTo("/fees/collect")}>
+          <CreditCard className="h-4 w-4 mr-2" />
+          Collect Fees
+        </Button>
+      </EnhancedPageHeader>
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
@@ -281,7 +261,7 @@ export default function FeesPage() {
                             <Button
                               variant="default"
                               size="sm"
-                              onClick={() => router.push(`/fees/collect?enrollmentId=${fee.id}`)}
+                              onClick={() => navigateTo(`/fees/collect?enrollmentId=${fee.id}`)}
                             >
                               <CreditCard className="h-4 w-4 mr-1" />
                               Collect
@@ -289,7 +269,7 @@ export default function FeesPage() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => router.push(`/students/${fee.student.id}`)}
+                              onClick={() => navigateTo(`/students/${fee.student.id}`)}
                             >
                               View
                             </Button>

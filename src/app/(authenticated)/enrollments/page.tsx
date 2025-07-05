@@ -1,8 +1,6 @@
 "use client"
 
 import { useEffect, useState, useCallback } from "react"
-import { useSession } from "next-auth/react"
-import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -18,9 +16,10 @@ import {
 import { 
   Eye, 
   GraduationCap,
-  ArrowLeft,
   CreditCard
 } from "lucide-react"
+import { useAcademicYear, useAcademicYearNavigation } from "@/contexts/academic-year-context"
+import EnhancedPageHeader from "@/components/ui/enhanced-page-header"
 
 interface Enrollment {
   id: string
@@ -63,13 +62,12 @@ interface EnrollmentsResponse {
 }
 
 export default function EnrollmentsPage() {
-  const { data: session, status } = useSession()
-  const router = useRouter()
+  const { academicYear } = useAcademicYear()
+  const { navigateTo } = useAcademicYearNavigation()
   const [enrollments, setEnrollments] = useState<Enrollment[]>([])
   const [loading, setLoading] = useState(true)
   const [page, setPage] = useState(1)
   const [filters, setFilters] = useState({
-    academicYearId: "",
     classId: "",
     section: "",
   })
@@ -80,18 +78,15 @@ export default function EnrollmentsPage() {
     pages: 0,
   })
 
-  useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/auth/login")
-    }
-  }, [status, router])
-
   const fetchEnrollments = useCallback(async () => {
+    if (!academicYear) return
+
     try {
       setLoading(true)
       const params = new URLSearchParams({
         page: page.toString(),
         limit: "10",
+        academicYear: academicYear.id,
         ...Object.fromEntries(
           Object.entries(filters).filter(([, value]) => value)
         ),
@@ -108,7 +103,7 @@ export default function EnrollmentsPage() {
     } finally {
       setLoading(false)
     }
-  }, [page, filters])
+  }, [page, filters, academicYear])
 
   useEffect(() => {
     fetchEnrollments()
@@ -131,7 +126,7 @@ export default function EnrollmentsPage() {
     return totalFee - paid
   }
 
-  if (status === "loading" || !session) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -144,26 +139,10 @@ export default function EnrollmentsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-4">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => router.push("/dashboard")}
-              >
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Dashboard
-              </Button>
-              <h1 className="text-xl font-semibold text-gray-900">
-                Student Enrollments
-              </h1>
-            </div>
-          </div>
-        </div>
-      </header>
+      <EnhancedPageHeader 
+        title="Student Enrollments" 
+        showBackButton={true}
+      />
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
@@ -177,19 +156,7 @@ export default function EnrollmentsPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Academic Year</label>
-                <select
-                  value={filters.academicYearId}
-                  onChange={(e) => setFilters(prev => ({ ...prev, academicYearId: e.target.value }))}
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                >
-                  <option value="">All Academic Years</option>
-                  {/* Academic years will be populated */}
-                </select>
-              </div>
-              
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium">Class</label>
                 <select
@@ -291,7 +258,7 @@ export default function EnrollmentsPage() {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => router.push(`/students/${enrollment.student.id}`)}
+                                onClick={() => navigateTo(`/students/${enrollment.student.id}`)}
                               >
                                 <Eye className="h-4 w-4" />
                               </Button>
@@ -299,7 +266,7 @@ export default function EnrollmentsPage() {
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  onClick={() => router.push(`/fees/collect?enrollmentId=${enrollment.id}`)}
+                                  onClick={() => navigateTo(`/fees/collect?enrollmentId=${enrollment.id}`)}
                                 >
                                   <CreditCard className="h-4 w-4" />
                                 </Button>

@@ -3,6 +3,11 @@
 import { useEffect, useState, useCallback } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter, useSearchParams } from "next/navigation"
+import EnhancedPageHeader from "@/components/ui/enhanced-page-header"
+
+interface OutstandingFeesPageProps {
+  params: Promise<Record<string, never>>
+}
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -10,7 +15,6 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { 
-  ArrowLeft,
   Download,
   Search,
   Filter,
@@ -68,7 +72,7 @@ interface ReportData {
   }
 }
 
-export default function OutstandingFeesReportPage() {
+export default function OutstandingFeesReportPage({}: OutstandingFeesPageProps) {
   const { data: session, status } = useSession()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -336,37 +340,21 @@ export default function OutstandingFeesReportPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-4">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => router.push("/reports")}
-              >
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Reports
-              </Button>
-              <h1 className="text-xl font-semibold text-gray-900">
-                Outstanding Fees Report
-              </h1>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={exportToCSV}
-                disabled={!reportData || loading}
-              >
-                <Download className="h-4 w-4 mr-2" />
-                Export CSV
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
+      <EnhancedPageHeader 
+        title="Outstanding Fees Report"
+        showBackButton={true}
+        backPath="/reports"
+      >
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={exportToCSV}
+          disabled={!reportData || loading}
+        >
+          <Download className="h-4 w-4 mr-2" />
+          Export CSV
+        </Button>
+      </EnhancedPageHeader>
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">

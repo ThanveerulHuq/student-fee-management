@@ -31,7 +31,7 @@ export default function LoginPage() {
       if (result?.error) {
         setErrorMessage("Invalid username or password")
       } else {
-        router.push("/dashboard")
+        router.push("/select-academic-year")
       }
     } catch {
       setErrorMessage("An error occurred. Please try again.")

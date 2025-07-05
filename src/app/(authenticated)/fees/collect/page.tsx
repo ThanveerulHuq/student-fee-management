@@ -10,7 +10,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { 
-  ArrowLeft, 
   Save, 
   CreditCard,
   User,
@@ -18,6 +17,8 @@ import {
   Receipt
 } from "lucide-react"
 import { formatCurrency, formatDate } from "@/lib/utils/receipt"
+import { useAcademicYear, useAcademicYearNavigation } from "@/contexts/academic-year-context"
+import EnhancedPageHeader from "@/components/ui/enhanced-page-header"
 
 interface StudentEnrollment {
   id: string
@@ -53,6 +54,8 @@ function FeeCollectContent() {
   const { data: session } = useSession()
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { academicYear } = useAcademicYear()
+  const { navigateTo } = useAcademicYearNavigation()
   const enrollmentId = searchParams.get("enrollmentId")
   const studentId = searchParams.get("studentId")
 
@@ -240,7 +243,7 @@ function FeeCollectContent() {
         
         // Redirect to receipt page after 2 seconds
         setTimeout(() => {
-          router.push(`/fees/receipt/${result.id}`)
+          router.push(`/fees/receipt/${result.id}?academicYear=${academicYear?.id}`)
         }, 2000)
       } else {
         const errorData = await response.json()
@@ -266,26 +269,10 @@ function FeeCollectContent() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-4">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => router.push("/fees")}
-              >
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Fees
-              </Button>
-              <h1 className="text-xl font-semibold text-gray-900">
-                Collect Fee Payment
-              </h1>
-            </div>
-          </div>
-        </div>
-      </header>
+      <EnhancedPageHeader 
+        title="Collect Fee Payment" 
+        showBackButton={true}
+      />
 
       {/* Main Content */}
       <main className="max-w-6xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
@@ -548,7 +535,7 @@ function FeeCollectContent() {
                       <Button
                         type="button"
                         variant="outline"
-                        onClick={() => router.push("/fees")}
+                        onClick={() => navigateTo('/fees')}
                         disabled={loading}
                       >
                         Cancel

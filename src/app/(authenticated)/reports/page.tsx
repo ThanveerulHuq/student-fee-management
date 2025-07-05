@@ -1,46 +1,26 @@
 "use client"
 
-import { useEffect } from "react"
-import { useSession } from "next-auth/react"
-import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { 
-  ArrowLeft,
   FileText,
   DollarSign,
   TrendingUp,
   Download,
   Calendar
 } from "lucide-react"
+import { useAcademicYearNavigation } from "@/contexts/academic-year-context"
+import EnhancedPageHeader from "@/components/ui/enhanced-page-header"
 
 export default function ReportsPage() {
-  const { data: session, status } = useSession()
-  const router = useRouter()
-
-  useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/auth/login")
-    }
-  }, [status, router])
-
-  if (status === "loading" || !session) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
-        </div>
-      </div>
-    )
-  }
+  const { navigateTo } = useAcademicYearNavigation()
 
   const reportTypes = [
     {
       title: "Outstanding Fees Report",
       description: "View all students with pending fee payments and outstanding balances",
       icon: TrendingUp,
-      href: "/reports/outstanding-fees",
+      href: `/reports/outstanding-fees`,
       color: "bg-red-500",
       features: [
         "Outstanding balance tracking",
@@ -53,7 +33,7 @@ export default function ReportsPage() {
       title: "Fee Collection Report",
       description: "Track fee payments with date range and collector filters",
       icon: DollarSign,
-      href: "/reports/fee-collections",
+      href: `/reports/fee-collections`,
       color: "bg-green-500",
       features: [
         "Date range filtering",
@@ -70,7 +50,7 @@ export default function ReportsPage() {
       description: "Fee collections for today",
       action: () => {
         const today = new Date().toISOString().split('T')[0]
-        router.push(`/reports/fee-collections?from=${today}&to=${today}`)
+        navigateTo(`/reports/fee-collections?from=${today}&to=${today}`)
       },
       icon: Calendar,
     },
@@ -81,40 +61,24 @@ export default function ReportsPage() {
         const now = new Date()
         const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]
         const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0]
-        router.push(`/reports/fee-collections?from=${monthStart}&to=${monthEnd}`)
+        navigateTo(`/reports/fee-collections?from=${monthStart}&to=${monthEnd}`)
       },
       icon: TrendingUp,
     },
     {
       title: "All Outstanding Fees",
       description: "Students with pending fees",
-      action: () => router.push("/reports/outstanding-fees?minOutstanding=1"),
+      action: () => navigateTo(`/reports/outstanding-fees?minOutstanding=1`),
       icon: DollarSign,
     }
   ]
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-4">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => router.push("/dashboard")}
-              >
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Dashboard
-              </Button>
-              <h1 className="text-xl font-semibold text-gray-900">
-                Reports & Analytics
-              </h1>
-            </div>
-          </div>
-        </div>
-      </header>
+      <EnhancedPageHeader 
+        title="Reports & Analytics" 
+        showBackButton={true}
+      />
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
@@ -167,7 +131,7 @@ export default function ReportsPage() {
                 <Card 
                   key={report.title}
                   className="cursor-pointer hover:shadow-lg transition-shadow duration-200"
-                  onClick={() => router.push(report.href)}
+                  onClick={() => navigateTo(report.href)}
                 >
                   <CardHeader>
                     <div className="flex items-center space-x-3 mb-3">

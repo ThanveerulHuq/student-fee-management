@@ -12,7 +12,7 @@ export default function Home() {
     if (status === "loading") return // Still loading
 
     if (session) {
-      router.push("/dashboard")
+      router.push("/select-academic-year")
     } else {
       router.push("/auth/login")
     }

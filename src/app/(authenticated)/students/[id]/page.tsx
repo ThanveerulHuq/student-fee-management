@@ -1,8 +1,10 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { useRouter, useParams } from "next/navigation"
+import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
+import { useAcademicYearNavigation } from "@/contexts/academic-year-context"
+import EnhancedPageHeader from "@/components/ui/enhanced-page-header"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -15,7 +17,6 @@ import {
   TableRow 
 } from "@/components/ui/table"
 import { 
-  ArrowLeft, 
   Edit, 
   UserPlus, 
   User,
@@ -73,11 +74,21 @@ interface Student {
   }>
 }
 
-export default function StudentDetailPage() {
+interface StudentDetailPageProps {
+  params: Promise<{
+    id: string
+  }>
+}
+
+export default function StudentDetailPage({ params }: StudentDetailPageProps) {
   const { data: session, status } = useSession()
   const router = useRouter()
-  const params = useParams()
-  const studentId = params.id as string
+  const { navigateTo } = useAcademicYearNavigation()
+  const [studentId, setStudentId] = useState<string | null>(null)
+
+  useEffect(() => {
+    params.then(p => setStudentId(p.id))
+  }, [params])
 
   const [student, setStudent] = useState<Student | null>(null)
   const [loading, setLoading] = useState(true)
@@ -89,6 +100,7 @@ export default function StudentDetailPage() {
   }, [status, router])
 
   const fetchStudent = useCallback(async () => {
+    if (!studentId) return
     try {
       setLoading(true)
       const response = await fetch(`/api/students/${studentId}`)
@@ -153,43 +165,28 @@ export default function StudentDetailPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-4">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => router.push("/students")}
-              >
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Students
-              </Button>
-              <h1 className="text-xl font-semibold text-gray-900">
-                Student Details
-              </h1>
-            </div>
-            
-            <div className="flex items-center space-x-2">
-              <Button
-                variant="outline"
-                onClick={() => router.push(`/students/${studentId}/enroll`)}
-              >
-                <UserPlus className="h-4 w-4 mr-2" />
-                Enroll
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => router.push(`/students/${studentId}/edit`)}
-              >
-                <Edit className="h-4 w-4 mr-2" />
-                Edit
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
+      <EnhancedPageHeader 
+        title="Student Details"
+        showBackButton={true}
+        backPath="/students"
+      >
+        <Button
+          variant="outline"
+          onClick={() => navigateTo(`/students/${studentId}/enroll`)}
+          disabled={!studentId}
+        >
+          <UserPlus className="h-4 w-4 mr-2" />
+          Enroll
+        </Button>
+        <Button
+          variant="outline"
+          onClick={() => navigateTo(`/students/${studentId}/edit`)}
+          disabled={!studentId}
+        >
+          <Edit className="h-4 w-4 mr-2" />
+          Edit
+        </Button>
+      </EnhancedPageHeader>
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
@@ -322,7 +319,8 @@ export default function StudentDetailPage() {
                     <Button
                       variant="outline"
                       className="mt-4"
-                      onClick={() => router.push(`/students/${studentId}/enroll`)}
+                      onClick={() => navigateTo(`/students/${studentId}/enroll`)}
+                      disabled={!studentId}
                     >
                       <UserPlus className="h-4 w-4 mr-2" />
                       Enroll Student
@@ -379,7 +377,7 @@ export default function StudentDetailPage() {
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  onClick={() => router.push(`/fees/collect?enrollmentId=${enrollment.id}`)}
+                                  onClick={() => navigateTo(`/fees/collect?enrollmentId=${enrollment.id}`)}
                                 >
                                   <CreditCard className="h-4 w-4" />
                                 </Button>
@@ -406,7 +404,8 @@ export default function StudentDetailPage() {
                 <Button
                   variant="outline"
                   className="w-full justify-start"
-                  onClick={() => router.push(`/students/${studentId}/enroll`)}
+                  onClick={() => navigateTo(`/students/${studentId}/enroll`)}
+                  disabled={!studentId}
                 >
                   <UserPlus className="h-4 w-4 mr-2" />
                   Enroll in Class
@@ -414,7 +413,8 @@ export default function StudentDetailPage() {
                 <Button
                   variant="outline"
                   className="w-full justify-start"
-                  onClick={() => router.push(`/fees/collect?studentId=${studentId}`)}
+                  onClick={() => navigateTo(`/fees/collect?studentId=${studentId}`)}
+                  disabled={!studentId}
                 >
                   <CreditCard className="h-4 w-4 mr-2" />
                   Collect Fees
@@ -422,7 +422,8 @@ export default function StudentDetailPage() {
                 <Button
                   variant="outline"
                   className="w-full justify-start"
-                  onClick={() => router.push(`/students/${studentId}/edit`)}
+                  onClick={() => navigateTo(`/students/${studentId}/edit`)}
+                  disabled={!studentId}
                 >
                   <Edit className="h-4 w-4 mr-2" />
                   Edit Details

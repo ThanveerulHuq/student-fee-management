@@ -1,13 +1,12 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { useRouter, useParams } from "next/navigation"
+import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { 
-  ArrowLeft, 
   Download,
   Printer,
   Receipt,
@@ -15,6 +14,7 @@ import {
   CheckCircle
 } from "lucide-react"
 import { formatCurrency, formatDateTime, formatDate } from "@/lib/utils/receipt"
+import EnhancedPageHeader from "@/components/ui/enhanced-page-header"
 
 interface ReceiptData {
   id: string
@@ -58,11 +58,16 @@ interface ReceiptData {
   }
 }
 
-export default function ReceiptPage() {
+interface ReceiptPageProps {
+  params: Promise<{
+    id: string
+  }>
+}
+
+export default function ReceiptPage({ params }: ReceiptPageProps) {
   const { data: session, status } = useSession()
   const router = useRouter()
-  const params = useParams()
-  const receiptId = params.id as string
+  const [receiptId, setReceiptId] = useState<string>("")
 
   const [receipt, setReceipt] = useState<ReceiptData | null>(null)
   const [loading, setLoading] = useState(true)
@@ -73,7 +78,17 @@ export default function ReceiptPage() {
     }
   }, [status, router])
 
+  useEffect(() => {
+    async function resolveParams() {
+      const resolvedParams = await params
+      setReceiptId(resolvedParams.id)
+    }
+    resolveParams()
+  }, [params])
+
   const fetchReceipt = useCallback(async () => {
+    if (!receiptId) return
+    
     try {
       setLoading(true)
       const response = await fetch(`/api/fees/receipt/${receiptId}`)
@@ -121,25 +136,12 @@ export default function ReceiptPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header - Hidden in print */}
-      <header className="bg-white shadow-sm border-b print:hidden">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-4">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => router.push("/fees")}
-              >
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Fees
-              </Button>
-              <h1 className="text-xl font-semibold text-gray-900">
-                Fee Receipt
-              </h1>
-            </div>
-            
-            <div className="flex items-center space-x-2">
+      <div className="print:hidden">
+        <EnhancedPageHeader 
+          title="Fee Receipt" 
+          showBackButton={true}
+        >
+          <div className="flex items-center space-x-2">
               <Button variant="outline" onClick={handlePrint}>
                 <Printer className="h-4 w-4 mr-2" />
                 Print
@@ -149,9 +151,8 @@ export default function ReceiptPage() {
                 Download PDF
               </Button>
             </div>
-          </div>
-        </div>
-      </header>
+        </EnhancedPageHeader>
+      </div>
 
       {/* Receipt Content */}
       <main className="max-w-4xl mx-auto py-6 px-4 sm:px-6 lg:px-8 print:max-w-full print:py-0 print:px-0">

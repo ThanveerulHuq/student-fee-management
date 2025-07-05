@@ -1,16 +1,21 @@
 "use client"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useAcademicYearNavigation } from "@/contexts/academic-year-context"
+import EnhancedPageHeader from "@/components/ui/enhanced-page-header"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert } from "@/components/ui/alert"
-import { ArrowLeft, Save, User } from "lucide-react"
+import { Save, User } from "lucide-react"
 
-export default function AddStudentPage() {
-  const router = useRouter()
+interface AddStudentPageProps {
+  params: Promise<Record<string, never>>
+}
+
+export default function AddStudentPage({}: AddStudentPageProps) {
+  const { navigateTo } = useAcademicYearNavigation()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const [formData, setFormData] = useState({
@@ -59,7 +64,7 @@ export default function AddStudentPage() {
       })
 
       if (response.ok) {
-        router.push("/students")
+        navigateTo('/students')
       } else {
         const errorData = await response.json()
         setError(errorData.error || "Failed to create student")
@@ -73,26 +78,11 @@ export default function AddStudentPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-4">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => router.push("/students")}
-              >
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Students
-              </Button>
-              <h1 className="text-xl font-semibold text-gray-900">
-                Add New Student
-              </h1>
-            </div>
-          </div>
-        </div>
-      </header>
+      <EnhancedPageHeader 
+        title="Add New Student"
+        showBackButton={true}
+        backPath="/students"
+      />
 
       {/* Main Content */}
       <main className="max-w-4xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
@@ -352,7 +342,7 @@ export default function AddStudentPage() {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => router.push("/students")}
+                  onClick={() => navigateTo('/students')}
                   disabled={loading}
                 >
                   Cancel

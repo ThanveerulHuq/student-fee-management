@@ -1,13 +1,14 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { useRouter, useParams } from "next/navigation"
+import { useAcademicYearNavigation } from "@/contexts/academic-year-context"
+import EnhancedPageHeader from "@/components/ui/enhanced-page-header"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert } from "@/components/ui/alert"
-import { ArrowLeft, Save, UserPlus } from "lucide-react"
+import { Save, UserPlus } from "lucide-react"
 
 interface Student {
   id: string
@@ -34,10 +35,19 @@ interface CommonFee {
   bookFee: number
 }
 
-export default function EnrollStudentPage() {
-  const router = useRouter()
-  const params = useParams()
-  const studentId = params.id as string
+interface EnrollStudentPageProps {
+  params: Promise<{
+    id: string
+  }>
+}
+
+export default function EnrollStudentPage({ params }: EnrollStudentPageProps) {
+  const { navigateTo } = useAcademicYearNavigation()
+  const [studentId, setStudentId] = useState<string | null>(null)
+
+  useEffect(() => {
+    params.then(p => setStudentId(p.id))
+  }, [params])
 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
@@ -57,6 +67,7 @@ export default function EnrollStudentPage() {
   })
 
   const fetchStudent = useCallback(async () => {
+    if (!studentId) return
     try {
       const response = await fetch(`/api/students/${studentId}`)
       if (response.ok) {
@@ -152,6 +163,8 @@ export default function EnrollStudentPage() {
       setLoading(true)
       setError("")
 
+      if (!studentId) return
+      
       const submitData = {
         studentId,
         ...formData,
@@ -168,7 +181,7 @@ export default function EnrollStudentPage() {
       })
 
       if (response.ok) {
-        router.push(`/students/${studentId}`)
+        navigateTo(`/students/${studentId}`)
       } else {
         const errorData = await response.json()
         setError(errorData.error || "Failed to enroll student")
@@ -193,26 +206,11 @@ export default function EnrollStudentPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-4">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => router.push(`/students/${studentId}`)}
-              >
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Student
-              </Button>
-              <h1 className="text-xl font-semibold text-gray-900">
-                Enroll Student
-              </h1>
-            </div>
-          </div>
-        </div>
-      </header>
+      <EnhancedPageHeader 
+        title="Enroll Student"
+        showBackButton={true}
+        backPath={`/students/${studentId}`}
+      />
 
       {/* Main Content */}
       <main className="max-w-4xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
@@ -414,8 +412,8 @@ export default function EnrollStudentPage() {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => router.push(`/students/${studentId}`)}
-                  disabled={loading}
+                  onClick={() => navigateTo(`/students/${studentId}`)}
+                  disabled={loading || !studentId}
                 >
                   Cancel
                 </Button>
