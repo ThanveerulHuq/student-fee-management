@@ -22,6 +22,7 @@ import {
 import { formatCurrency } from "@/lib/utils/receipt"
 import { useAcademicYear, useAcademicYearNavigation } from "@/contexts/academic-year-context"
 import EnhancedPageHeader from "@/components/ui/enhanced-page-header"
+import SecondaryHeader from "@/components/ui/secondary-header"
 
 interface OutstandingFee {
   id: string
@@ -128,6 +129,9 @@ export default function FeesPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <EnhancedPageHeader 
+        title="Dhaarussalam Matriculation Higher Secondary School"
+      />
+      <SecondaryHeader 
         title="Fee Management" 
         showBackButton={true}
       >
@@ -135,7 +139,7 @@ export default function FeesPage() {
           <CreditCard className="h-4 w-4 mr-2" />
           Collect Fees
         </Button>
-      </EnhancedPageHeader>
+      </SecondaryHeader>
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">

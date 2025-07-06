@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { useAcademicYearNavigation } from "@/contexts/academic-year-context"
 import EnhancedPageHeader from "@/components/ui/enhanced-page-header"
+import SecondaryHeader from "@/components/ui/secondary-header"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -166,6 +167,9 @@ export default function StudentDetailPage({ params }: StudentDetailPageProps) {
   return (
     <div className="min-h-screen bg-gray-50">
       <EnhancedPageHeader 
+        title="Dhaarussalam Matriculation Higher Secondary School"
+      />
+      <SecondaryHeader 
         title="Student Details"
         showBackButton={true}
         backPath="/students"
@@ -186,7 +190,7 @@ export default function StudentDetailPage({ params }: StudentDetailPageProps) {
           <Edit className="h-4 w-4 mr-2" />
           Edit
         </Button>
-      </EnhancedPageHeader>
+      </SecondaryHeader>
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">

@@ -20,6 +20,7 @@ import {
 } from "lucide-react"
 import { useAcademicYear, useAcademicYearNavigation } from "@/contexts/academic-year-context"
 import EnhancedPageHeader from "@/components/ui/enhanced-page-header"
+import SecondaryHeader from "@/components/ui/secondary-header"
 
 interface Enrollment {
   id: string
@@ -140,6 +141,9 @@ export default function EnrollmentsPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <EnhancedPageHeader 
+        title="Dhaarussalam Matriculation Higher Secondary School"
+      />
+      <SecondaryHeader 
         title="Student Enrollments" 
         showBackButton={true}
       />

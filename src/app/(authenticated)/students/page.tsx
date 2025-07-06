@@ -16,6 +16,7 @@ import {
 import { Plus, Search, Eye, Edit, Users } from "lucide-react"
 import { useAcademicYear, useAcademicYearNavigation } from "@/contexts/academic-year-context"
 import EnhancedPageHeader from "@/components/ui/enhanced-page-header"
+import SecondaryHeader from "@/components/ui/secondary-header"
 
 interface Student {
   id: string
@@ -113,6 +114,9 @@ export default function StudentsPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <EnhancedPageHeader 
+        title="Dhaarussalam Matriculation Higher Secondary School"
+      />
+      <SecondaryHeader 
         title="Student Management" 
         showBackButton={true}
       >
@@ -120,7 +124,7 @@ export default function StudentsPage() {
           <Plus className="h-4 w-4 mr-2" />
           Add Student
         </Button>
-      </EnhancedPageHeader>
+      </SecondaryHeader>
 
       <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         {/* Search and Filters */}

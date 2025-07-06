@@ -15,6 +15,7 @@ import {
 } from "lucide-react"
 import { formatCurrency, formatDateTime, formatDate } from "@/lib/utils/receipt"
 import EnhancedPageHeader from "@/components/ui/enhanced-page-header"
+import SecondaryHeader from "@/components/ui/secondary-header"
 
 interface ReceiptData {
   id: string
@@ -138,6 +139,9 @@ export default function ReceiptPage({ params }: ReceiptPageProps) {
     <div className="min-h-screen bg-gray-50">
       <div className="print:hidden">
         <EnhancedPageHeader 
+          title="Dhaarussalam Matriculation Higher Secondary School"
+        />
+        <SecondaryHeader 
           title="Fee Receipt" 
           showBackButton={true}
         >
@@ -151,7 +155,7 @@ export default function ReceiptPage({ params }: ReceiptPageProps) {
                 Download PDF
               </Button>
             </div>
-        </EnhancedPageHeader>
+        </SecondaryHeader>
       </div>
 
       {/* Receipt Content */}
