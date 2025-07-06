@@ -14,6 +14,5 @@ export default function AuthenticatedLayout({
         {children}
       </AcademicYearGuard>
     </AcademicYearProvider>
-    
   )
 }
