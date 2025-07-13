@@ -8,11 +8,10 @@ import {
   BarChart3,
   GraduationCap
 } from "lucide-react"
-import { useAcademicYear, useAcademicYearNavigation } from "@/contexts/academic-year-context"
+import { useAcademicYearNavigation } from "@/contexts/academic-year-context"
 import EnhancedPageHeader from "@/components/ui/enhanced-page-header"
 
 export default function DashboardPage() {
-  const { academicYear } = useAcademicYear()
   const { goToStudents, goToFees, goToReports, navigateTo } = useAcademicYearNavigation()
   const isDemo = process.env.NEXT_PUBLIC_IS_DEMO === "true"
 

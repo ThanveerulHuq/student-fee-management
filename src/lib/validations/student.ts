@@ -84,7 +84,7 @@ export const studentSchema = z.object({
     .refine((val) => !val || val.length <= 500, {
       message: "Remarks must be at most 500 characters"
     }),
-  isActive: z.boolean().default(true),
+  isActive: z.boolean(),
 })
 
 export const studentUpdateSchema = studentSchema.partial()

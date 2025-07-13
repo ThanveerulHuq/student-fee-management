@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
     const validatedData = studentSchema.parse(body)
 
     // Calculate age from date of birth
-    const age = new Date().getFullYear() - validatedData.dateOfBirth.getFullYear()
+    const age = new Date().getFullYear() - new Date(validatedData.dateOfBirth).getFullYear()
 
     // Check if admission number already exists
     const existingStudent = await prisma.student.findUnique({

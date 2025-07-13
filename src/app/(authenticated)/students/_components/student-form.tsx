@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { useForm, type SubmitHandler } from "react-hook-form"
+import { useForm, type SubmitHandler, type Resolver } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -32,27 +32,27 @@ export default function StudentForm({
     handleSubmit,
     formState: { errors, isValid },
   } = useForm<StudentFormData>({
-    resolver: zodResolver(studentSchema),
+    resolver: zodResolver(studentSchema) as Resolver<StudentFormData>,
     mode: "onChange",
     defaultValues: {
       admissionNo: initialData.admissionNo || "",
-      aadharNo: initialData.aadharNo || "",
-      emisNo: initialData.emisNo || "",
+      aadharNo: initialData.aadharNo || undefined,
+      emisNo: initialData.emisNo || undefined,
       name: initialData.name || "",
       gender: initialData.gender as "MALE" | "FEMALE" | undefined,
       dateOfBirth: initialData.dateOfBirth || "",
       community: initialData.community || "",
       motherTongue: initialData.motherTongue || "",
       mobileNo1: initialData.mobileNo1 || "",
-      mobileNo2: initialData.mobileNo2 || "",
+      mobileNo2: initialData.mobileNo2 || undefined,
       fatherName: initialData.fatherName || "",
       motherName: initialData.motherName || "",
       address: initialData.address || "",
-      previousSchool: initialData.previousSchool || "",
+      previousSchool: initialData.previousSchool || undefined,
       religion: initialData.religion || "",
       caste: initialData.caste || "",
       nationality: initialData.nationality || "Indian",
-      remarks: initialData.remarks || "",
+      remarks: initialData.remarks || undefined,
       isActive: initialData.isActive ?? true,
     },
   })

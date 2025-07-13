@@ -89,7 +89,7 @@ export async function PUT(
       ...(validatedData.gender && { gender: validatedData.gender as Gender })
     }
     if (validatedData.dateOfBirth) {
-      updateData.age = new Date().getFullYear() - validatedData.dateOfBirth.getFullYear()
+      updateData.age = new Date().getFullYear() - new Date(validatedData.dateOfBirth).getFullYear()
     }
 
     const student = await prisma.student.update({
