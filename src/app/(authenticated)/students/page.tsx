@@ -17,6 +17,7 @@ import { Plus, Search, Eye, Edit, Users } from "lucide-react"
 import { useAcademicYear, useAcademicYearNavigation } from "@/contexts/academic-year-context"
 import EnhancedPageHeader from "@/components/ui/enhanced-page-header"
 import SecondaryHeader from "@/components/ui/secondary-header"
+import { Spinner } from "@/components/ui/spinner"
 
 interface Student {
   id: string
@@ -102,12 +103,7 @@ export default function StudentsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
-        </div>
-      </div>
+      <Spinner size="2xl" fullScreen />
     )
   }
 
@@ -155,9 +151,8 @@ export default function StudentsPage() {
         <Card>
           <CardContent className="p-0">
             {loading ? (
-              <div className="p-8 text-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-                <p className="mt-2 text-gray-600">Loading students...</p>
+              <div className="p-8">
+                <Spinner center label="Loading students..." />
               </div>
             ) : (
               <Table>

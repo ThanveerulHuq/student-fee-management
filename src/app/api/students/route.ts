@@ -95,6 +95,8 @@ export async function POST(request: NextRequest) {
     const student = await prisma.student.create({
       data: {
         ...validatedData,
+        dateOfBirth: new Date(validatedData.dateOfBirth),
+        admissionDate: new Date(validatedData.admissionDate),
         age,
       },
     })

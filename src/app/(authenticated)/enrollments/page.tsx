@@ -21,6 +21,7 @@ import {
 import { useAcademicYear, useAcademicYearNavigation } from "@/contexts/academic-year-context"
 import EnhancedPageHeader from "@/components/ui/enhanced-page-header"
 import SecondaryHeader from "@/components/ui/secondary-header"
+import { Spinner } from "@/components/ui/spinner"
 
 interface Enrollment {
   id: string
@@ -128,14 +129,7 @@ export default function EnrollmentsPage() {
   }
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
-        </div>
-      </div>
-    )
+    return <Spinner size="2xl" fullScreen />
   }
 
   return (
@@ -189,10 +183,7 @@ export default function EnrollmentsPage() {
         <Card>
           <CardContent className="p-0">
             {loading ? (
-              <div className="flex items-center justify-center p-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                <span className="ml-2">Loading enrollments...</span>
-              </div>
+              <Spinner center label="Loading enrollments..." />
             ) : (
               <Table>
                 <TableHeader>

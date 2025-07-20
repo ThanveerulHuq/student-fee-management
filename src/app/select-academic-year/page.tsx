@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert } from "@/components/ui/alert"
 import AcademicYearSelector from "@/components/ui/academic-year-selector"
+import { Spinner } from "@/components/ui/spinner"
 import { CalendarDays, ArrowRight } from "lucide-react"
 
 interface AcademicYear {
@@ -53,7 +54,7 @@ export default function SelectAcademicYearPage() {
           }))
           
           // Redirect to dashboard with academic year parameter
-          router.push(`/${academicYearId}/dashboard`)
+          router.push(`/dashboard?academicYearId=${academicYearId}`)
         }
       }
     } catch (error) {
@@ -67,10 +68,7 @@ export default function SelectAcademicYearPage() {
   if (status === "loading") {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
-        </div>
+        <Spinner size="2xl" />
       </div>
     )
   }

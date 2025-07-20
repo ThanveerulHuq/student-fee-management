@@ -8,6 +8,21 @@ export const studentSchema = z.object({
     .min(1, "Admission number is required")
     .max(20, "Admission number must be at most 20 characters")
     .regex(/^[A-Z0-9]+$/, "Admission number must contain only uppercase letters and numbers"),
+  admissionDate: z.string()
+    .min(1, "Admission date is required")
+    .refine((val) => {
+      const date = new Date(val)
+      return !isNaN(date.getTime())
+    }, {
+      message: "Invalid admission date format"
+    })
+    .refine((val) => {
+      const date = new Date(val)
+      const today = new Date()
+      return date <= today
+    }, {
+      message: "Admission date cannot be in the future"
+    }),
   aadharNo: z.string()
     .optional()
     .refine((val) => !val || aadharRegex.test(val), {
@@ -30,11 +45,9 @@ export const studentSchema = z.object({
     .min(1, "Date of birth is required")
     .refine((val) => {
       const date = new Date(val)
-      const today = new Date()
-      const age = today.getFullYear() - date.getFullYear()
-      return age >= 3 && age <= 25
+      return !isNaN(date.getTime())
     }, {
-      message: "Student must be between 3 and 25 years old"
+      message: "Invalid date of birth format"
     }),
   community: z.string()
     .min(1, "Community is required")

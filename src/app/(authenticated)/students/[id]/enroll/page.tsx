@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert } from "@/components/ui/alert"
 import { Save, UserPlus } from "lucide-react"
+import { Spinner } from "@/components/ui/spinner"
 
 interface Student {
   id: string
@@ -195,14 +196,7 @@ export default function EnrollStudentPage({ params }: EnrollStudentPageProps) {
   }
 
   if (!student) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading student...</p>
-        </div>
-      </div>
-    )
+    return <Spinner size="2xl" fullScreen label="Loading student..." />
   }
 
   return (

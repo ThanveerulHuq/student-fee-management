@@ -83,13 +83,17 @@ export async function PUT(
       }
     }
 
-    // Calculate age if date of birth is updated
+    // Calculate age if date of birth is updated and convert date strings to Date objects
     const updateData: Record<string, unknown> = { 
       ...validatedData,
       ...(validatedData.gender && { gender: validatedData.gender as Gender })
     }
     if (validatedData.dateOfBirth) {
+      updateData.dateOfBirth = new Date(validatedData.dateOfBirth)
       updateData.age = new Date().getFullYear() - new Date(validatedData.dateOfBirth).getFullYear()
+    }
+    if (validatedData.admissionDate) {
+      updateData.admissionDate = new Date(validatedData.admissionDate)
     }
 
     const student = await prisma.student.update({

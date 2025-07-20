@@ -26,6 +26,7 @@ import {
   Phone,
   MapPin
 } from "lucide-react"
+import { Spinner } from "@/components/ui/spinner"
 
 interface Student {
   id: string
@@ -144,14 +145,7 @@ export default function StudentDetailPage({ params }: StudentDetailPageProps) {
   }
 
   if (status === "loading" || loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading student details...</p>
-        </div>
-      </div>
-    )
+    return <Spinner size="2xl" fullScreen label="Loading student details..." />
   }
 
   if (!session || !student) {

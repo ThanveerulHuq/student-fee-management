@@ -8,6 +8,7 @@ import EnhancedPageHeader from "@/components/ui/enhanced-page-header"
 import SecondaryHeader from "@/components/ui/secondary-header"
 import StudentForm from "@/app/(authenticated)/students/_components/student-form"
 import { type StudentFormData } from "@/lib/validations/student"
+import { Spinner } from "@/components/ui/spinner"
 
 interface EditStudentPageProps {
   params: Promise<{
@@ -43,6 +44,7 @@ export default function EditStudentPage({ params }: EditStudentPageProps) {
         // Convert the student data to form format
         const formData: StudentFormData = {
           admissionNo: data.admissionNo,
+          admissionDate: data.admissionDate,
           aadharNo: data.aadharNo || "",
           emisNo: data.emisNo || "",
           name: data.name,
@@ -103,14 +105,7 @@ export default function EditStudentPage({ params }: EditStudentPageProps) {
   }
 
   if (status === "loading" || loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading student details...</p>
-        </div>
-      </div>
-    )
+    return <Spinner size="2xl" fullScreen label="Loading student details..." />
   }
 
   if (!session || !student) {

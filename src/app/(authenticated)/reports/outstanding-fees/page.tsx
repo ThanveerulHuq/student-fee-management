@@ -26,6 +26,7 @@ import {
   DollarSign,
   Phone
 } from "lucide-react"
+import { Spinner } from "@/components/ui/spinner"
 
 interface OutstandingStudent {
   id: string
@@ -329,14 +330,7 @@ export default function OutstandingFeesReportPage({}: OutstandingFeesPageProps) 
   }
 
   if (status === "loading" || !session) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
-        </div>
-      </div>
-    )
+    return <Spinner size="2xl" fullScreen />
   }
 
   return (
@@ -591,10 +585,7 @@ export default function OutstandingFeesReportPage({}: OutstandingFeesPageProps) 
         {loading && (
           <Card>
             <CardContent className="p-8">
-              <div className="flex items-center justify-center">
-                <RefreshCw className="h-8 w-8 animate-spin text-blue-600 mr-4" />
-                <p className="text-gray-600">Generating report...</p>
-              </div>
+              <Spinner center label="Generating report..." />
             </CardContent>
           </Card>
         )}
