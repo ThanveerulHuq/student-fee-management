@@ -6,7 +6,6 @@ import { useForm } from "react-hook-form"
 import { Button } from "@/components/ui/button"
 import { Alert } from "@/components/ui/alert"
 import { Form } from "@/components/ui/form"
-import { Separator } from "@/components/ui/separator"
 import { Save, ArrowLeft, ArrowRight, CheckCircle } from "lucide-react"
 import { studentSchema, type StudentFormData } from "@/lib/validations/student"
 import { defineStepper } from "@stepperize/react"
@@ -213,160 +212,175 @@ export default function StudentFormWizard({
   const currentIndex = utils.getIndex(stepper.current.id)
 
   return (
-    <div className="space-y-6">
-      {/* Error Alert */}
-      {error && (
-        <Alert variant="destructive">
-          {error}
-        </Alert>
-      )}
-
-      <Form {...form}>
-        <form
-          onSubmit={async (e) => {
-            e.preventDefault()
-            const values = form.getValues()
-            await handleStepSubmit(values)
-          }}
-          className="space-y-6"
-        >
-          {/* Header */}
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50/30">
+      <div className="w-full px-4 sm:px-6 lg:px-8 py-8">
+        {/* Modern Header Card */}
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8 mb-8">
           <div className="flex justify-between items-center">
-            <h2 className="text-xl font-semibold">
-              {isEdit ? "Edit Student" : "Add New Student"}
-            </h2>
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                {isEdit ? "Edit Student" : "Add New Student"}
+              </h1>
+              <p className="text-gray-600 text-lg">
+                {isEdit ? "Update student information" : "Complete all steps to add a new student"}
+              </p>
+            </div>
+            <div className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-6 py-3 rounded-xl shadow-md">
+              <span className="text-sm font-medium">
                 Step {currentIndex + 1} of {steps.length}
               </span>
             </div>
           </div>
+        </div>
 
-          {/* Stepper Navigation */}
-          <nav aria-label="Student Form Steps" className="group my-6">
-            <ol className="flex items-center justify-between gap-2">
-              {stepper.all.map((step, index, array) => (
-                <React.Fragment key={step.id}>
-                  <li className="flex items-center gap-4 flex-shrink-0">
-                    <Button
+        {/* Error Alert */}
+        {error && (
+          <div className="mb-6">
+            <Alert variant="destructive" className="border-red-200 bg-red-50">
+              <div className="flex items-center space-x-2">
+                <div className="w-5 h-5 rounded-full bg-red-100 flex items-center justify-center">
+                  <span className="text-red-600 text-xs font-bold">!</span>
+                </div>
+                <span className="text-red-800">{error}</span>
+              </div>
+            </Alert>
+          </div>
+        )}
+
+        <Form {...form}>
+          <form
+            onSubmit={async (e) => {
+              e.preventDefault()
+              const values = form.getValues()
+              await handleStepSubmit(values)
+            }}
+            className="space-y-8"
+          >
+
+            {/* Modern Stepper Navigation */}
+            <nav aria-label="Student Form Steps" className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 mb-8">
+              <div className="flex items-center justify-between relative">
+                {/* Progress Line Background */}
+                <div className="absolute top-6 left-6 right-6 h-0.5 bg-gray-200 -z-10"></div>
+                {/* Active Progress Line */}
+                <div 
+                  className="absolute top-6 left-6 h-0.5 bg-gradient-to-r from-blue-500 to-indigo-600 -z-10 transition-all duration-500 ease-in-out"
+                  style={{ width: `${(currentIndex / (steps.length - 1)) * 100}%` }}
+                ></div>
+                
+                {stepper.all.map((step, index) => (
+                  <div key={step.id} className="flex flex-col items-center relative z-10">
+                    <button
                       type="button"
                       role="tab"
-                      variant={index <= currentIndex ? "default" : "secondary"}
-                      aria-current={
-                        stepper.current.id === step.id ? "step" : undefined
-                      }
-                      aria-posinset={index + 1}
-                      aria-setsize={steps.length}
-                      aria-selected={stepper.current.id === step.id}
-                      className="flex size-10 items-center justify-center rounded-full"
+                      aria-current={stepper.current.id === step.id ? "step" : undefined}
+                      className={`w-12 h-12 rounded-full border-4 transition-all duration-300 flex items-center justify-center font-bold text-sm shadow-lg hover:scale-105 ${
+                        index <= currentIndex 
+                          ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white border-white shadow-blue-200' 
+                          : index === currentIndex + 1
+                          ? 'bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100'
+                          : 'bg-white text-gray-400 border-gray-200 hover:border-gray-300'
+                      }`}
                       onClick={async () => {
-                        // Can't skip steps forwards but can go back anywhere
                         if (index > currentIndex) {
-                          // Validate current step before moving forward
                           const currentFormValues = form.getValues()
                           const isStepValid = await validateCurrentStep(currentFormValues)
                           if (!isStepValid) return
-                          // Save current step data before moving
                           setFormData(prev => ({ ...prev, ...currentFormValues }))
                         }
                         stepper.goTo(step.id)
                       }}
-                      disabled={loading}
+                      disabled={loading || (index > currentIndex + 1)}
                     >
-                      {index + 1}
+                      {index < currentIndex ? '✓' : index + 1}
+                    </button>
+                    <span className={`mt-3 text-sm font-medium transition-colors ${
+                      index <= currentIndex ? 'text-blue-600' : 'text-gray-500'
+                    }`}>
+                      {step.label}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </nav>
+
+            {/* Step Content Card - Full Width */}
+            <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden mb-8">
+              <div className="min-h-[500px] w-full">
+                {stepper.switch({
+                  "basic-info": () => <BasicInfoStep loading={loading} />,
+                  "family-info": () => <FamilyInfoStep loading={loading} />,
+                  "additional-info": () => <AdditionalInfoStep loading={loading} />,
+                })}
+              </div>
+            </div>
+
+            {/* Modern Controls */}
+            <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+              <div className="flex justify-between items-center">
+                <div className="flex space-x-3">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={onCancel}
+                    disabled={loading}
+                    className="px-6 py-3 border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-colors"
+                  >
+                    Cancel
+                  </Button>
+                  {!stepper.isFirst && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        const currentFormValues = form.getValues()
+                        setFormData(prev => ({ ...prev, ...currentFormValues }))
+                        stepper.prev()
+                      }}
+                      disabled={loading}
+                      className="px-6 py-3 border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-colors"
+                    >
+                      <ArrowLeft className="h-4 w-4 mr-2" />
+                      Previous
                     </Button>
-                    <span className="text-sm font-medium">{step.label}</span>
-                  </li>
-                  {index < array.length - 1 && (
-                    <Separator
-                      className={`flex-1 ${
-                        index < currentIndex ? "bg-primary" : "bg-muted"
-                      }`}
-                    />
                   )}
-                </React.Fragment>
-              ))}
-            </ol>
-          </nav>
-
-          {/* Step Content */}
-          <div className="min-h-[400px] space-y-4">
-            {stepper.switch({
-              "basic-info": () => <BasicInfoStep loading={loading} />,
-              "family-info": () => <FamilyInfoStep loading={loading} />,
-              "additional-info": () => <AdditionalInfoStep loading={loading} />,
-            })}
-          </div>
-
-          {/* Controls */}
-          <div className="flex justify-between pt-6 border-t">
-            <div className="flex space-x-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={onCancel}
-                disabled={loading}
-                className="min-w-[100px]"
-              >
-                Cancel
-              </Button>
-              
-              {!stepper.isFirst && (
+                </div>
                 <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    // Save current step data before going back
-                    const currentFormValues = form.getValues()
-                    setFormData(prev => ({ ...prev, ...currentFormValues }))
-                    stepper.prev()
-                  }}
+                  type="submit"
                   disabled={loading}
-                  className="min-w-[100px]"
+                  className="px-8 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-medium rounded-xl shadow-lg hover:shadow-xl transition-all transform hover:scale-105"
                 >
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Previous
+                  {loading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2"></div>
+                      Processing...
+                    </>
+                  ) : stepper.isLast ? (
+                    <>
+                      {isEdit ? (
+                        <>
+                          <Save className="h-4 w-4 mr-2" />
+                          Update Student
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle className="h-4 w-4 mr-2" />
+                          Save Student
+                        </>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      Next Step
+                      <ArrowRight className="h-4 w-4 ml-2" />
+                    </>
+                  )}
                 </Button>
-              )}
+              </div>
             </div>
-
-            <div className="flex space-x-4">
-              <Button 
-                type="submit" 
-                disabled={loading}
-                className={`min-w-[120px] ${
-                  stepper.isLast 
-                    ? "bg-green-600 hover:bg-green-700" 
-                    : "bg-blue-600 hover:bg-blue-700"
-                }`}
-              >
-                {loading ? (
-                  "Processing..."
-                ) : stepper.isLast ? (
-                  <>
-                    {isEdit ? (
-                      <>
-                        <Save className="h-4 w-4 mr-2" />
-                        Update Student
-                      </>
-                    ) : (
-                      <>
-                        <CheckCircle className="h-4 w-4 mr-2" />
-                        Save Student
-                      </>
-                    )}
-                  </>
-                ) : (
-                  <>
-                    Next
-                    <ArrowRight className="h-4 w-4 ml-2" />
-                  </>
-                )}
-              </Button>
-            </div>
-          </div>
-        </form>
-      </Form>
+          </form>
+        </Form>
+      </div>
     </div>
   )
 }

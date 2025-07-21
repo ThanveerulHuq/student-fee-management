@@ -207,7 +207,7 @@ export default function EnrollStudentPage({ params }: EnrollStudentPageProps) {
       />
 
       {/* Main Content */}
-      <main className="max-w-4xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+      <main className="max-w-6xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         {/* Student Info */}
         <Card className="mb-6">
           <CardHeader>

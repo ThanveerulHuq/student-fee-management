@@ -41,7 +41,7 @@ export default function AddStudentPage({}: AddStudentPageProps) {
         backPath="/students"
       />
 
-      <main className="max-w-4xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+      <main className="max-w-6xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         <StudentForm 
           onSubmit={handleSubmit}
           onCancel={handleCancel}

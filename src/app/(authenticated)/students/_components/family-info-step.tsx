@@ -22,8 +22,8 @@ export default function FamilyInfoStep({ loading }: FamilyInfoStepProps) {
           <span>Family Information</span>
         </CardTitle>
       </CardHeader>
-      <CardContent className="p-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <CardContent className="p-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8 max-w-none">
           {/* Father's Name */}
           <div className="space-y-2">
             <Label htmlFor="fatherName" className="text-sm font-medium text-gray-700">

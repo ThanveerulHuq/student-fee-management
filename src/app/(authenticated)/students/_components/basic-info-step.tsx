@@ -27,8 +27,8 @@ export default function BasicInfoStep({ loading }: BasicInfoStepProps) {
           <span>Basic Information</span>
         </CardTitle>
       </CardHeader>
-      <CardContent className="p-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <CardContent className="p-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-none">
           {/* Admission Number */}
           <div className="space-y-2">
             <Label htmlFor="admissionNo" className="text-sm font-medium text-gray-700">
