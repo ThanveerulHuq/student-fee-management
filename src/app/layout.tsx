@@ -4,6 +4,7 @@ import "./globals.css";
 import { Providers } from "@/components/providers/session-provider";
 import { Suspense } from "react";
 import { Analytics } from "@vercel/analytics/react";
+import { Toaster } from "@/components/ui/sonner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -35,6 +36,7 @@ export default function RootLayout({
           <Providers>
             {children}
           </Providers>
+          <Toaster />
         </Suspense>
       </body>
     </html>

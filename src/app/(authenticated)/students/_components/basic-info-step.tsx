@@ -1,6 +1,6 @@
 "use client"
 
-import { Control, FieldErrors, UseFormRegister, Controller } from "react-hook-form"
+import { Controller, useFormContext } from "react-hook-form"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -14,13 +14,11 @@ import { cn } from "@/lib/utils"
 import { type StudentFormData } from "@/lib/validations/student"
 
 interface BasicInfoStepProps {
-  register: UseFormRegister<StudentFormData>
-  control: Control<StudentFormData>
-  errors: FieldErrors<StudentFormData>
   loading: boolean
 }
 
-export default function BasicInfoStep({ register, control, errors, loading }: BasicInfoStepProps) {
+export default function BasicInfoStep({ loading }: BasicInfoStepProps) {
+  const { register, control, formState: { errors } } = useFormContext<StudentFormData>()
   return (
     <Card className="shadow-sm">
       <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50">

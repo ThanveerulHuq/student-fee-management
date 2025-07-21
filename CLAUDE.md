@@ -92,3 +92,10 @@ npx tsc --noEmit       # Type check without emitting files
 - Academic year and class management
 - Comprehensive reporting system
 - Document management for students
+
+
+
+**UI Standards**
+- Always use loading skeleton while loading data
+- use `loading.tsx` page in the directory if whole page is being loaded and there is no meaningful data to be shown
+- make the components as modular as possible for better readability
