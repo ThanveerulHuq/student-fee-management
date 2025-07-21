@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { useAcademicYearNavigation } from "@/contexts/academic-year-context"
-import EnhancedPageHeader from "@/components/ui/enhanced-page-header"
 import SecondaryHeader from "@/components/ui/secondary-header"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -200,10 +199,7 @@ export default function EnrollStudentPage({ params }: EnrollStudentPageProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <EnhancedPageHeader 
-        title="Dhaarussalam Matriculation Higher Secondary School"
-      />
+    <>
       <SecondaryHeader 
         title="Enroll Student"
         showBackButton={true}
@@ -430,6 +426,6 @@ export default function EnrollStudentPage({ params }: EnrollStudentPageProps) {
           </CardContent>
         </Card>
       </main>
-    </div>
+    </>
   )
 }

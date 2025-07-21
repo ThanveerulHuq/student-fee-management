@@ -9,7 +9,6 @@ import {
   GraduationCap
 } from "lucide-react"
 import { useAcademicYearNavigation } from "@/contexts/academic-year-context"
-import EnhancedPageHeader from "@/components/ui/enhanced-page-header"
 
 export default function DashboardPage() {
   const { goToStudents, goToFees, goToReports, navigateTo } = useAcademicYearNavigation()
@@ -61,10 +60,7 @@ export default function DashboardPage() {
   const menuItems = allMenuItems.filter(item => !isDemo || item.isDemo)
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <EnhancedPageHeader title="Dhaarussalam Matriculation Higher Secondary School" />
-
-      <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+    <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-2">
             Welcome back!
@@ -137,7 +133,6 @@ export default function DashboardPage() {
             </>
           )}
         </div>
-      </main>
-    </div>
+    </main>
   )
 }

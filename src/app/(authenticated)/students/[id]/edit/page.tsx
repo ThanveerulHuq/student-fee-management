@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { useAcademicYearNavigation } from "@/contexts/academic-year-context"
-import EnhancedPageHeader from "@/components/ui/enhanced-page-header"
 import SecondaryHeader from "@/components/ui/secondary-header"
 import StudentForm from "@/app/(authenticated)/students/_components/student-form"
 import { type StudentFormData } from "@/lib/validations/student"
@@ -119,10 +118,7 @@ export default function EditStudentPage({ params }: EditStudentPageProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <EnhancedPageHeader 
-        title="Dhaarussalam Matriculation Higher Secondary School"
-      />
+    <>
       <SecondaryHeader 
         title="Edit Student"
         showBackButton={true}
@@ -137,6 +133,6 @@ export default function EditStudentPage({ params }: EditStudentPageProps) {
           isEdit={true}
         />
       </main>
-    </div>
+    </>
   )
 }

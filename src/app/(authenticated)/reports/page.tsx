@@ -10,7 +10,6 @@ import {
   Calendar
 } from "lucide-react"
 import { useAcademicYearNavigation } from "@/contexts/academic-year-context"
-import EnhancedPageHeader from "@/components/ui/enhanced-page-header"
 import SecondaryHeader from "@/components/ui/secondary-header"
 
 export default function ReportsPage() {
@@ -75,10 +74,7 @@ export default function ReportsPage() {
   ]
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <EnhancedPageHeader 
-        title="Dhaarussalam Matriculation Higher Secondary School"
-      />
+    <>
       <SecondaryHeader 
         title="Reports & Analytics" 
         showBackButton={true}
@@ -199,6 +195,6 @@ export default function ReportsPage() {
           </div>
         </div>
       </main>
-    </div>
+    </>
   )
 }

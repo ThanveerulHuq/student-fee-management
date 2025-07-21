@@ -14,7 +14,6 @@ import {
 } from "@/components/ui/table"
 import { Plus, Search, Users } from "lucide-react"
 import { useAcademicYear, useAcademicYearNavigation } from "@/contexts/academic-year-context"
-import EnhancedPageHeader from "@/components/ui/enhanced-page-header"
 import { Spinner } from "@/components/ui/spinner"
 import { Skeleton } from "@/components/ui/skeleton"
 import { StudentStatusBadge } from "@/components/students/student-status-badge"
@@ -139,12 +138,7 @@ export default function StudentsPage() {
 
   if (loading && students.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <EnhancedPageHeader 
-          title="Dhaarussalam Matriculation Higher Secondary School"
-        />
-
-        <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+      <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
           {/* Page Skeleton */}
           <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
             {/* Header Skeleton */}
@@ -191,18 +185,12 @@ export default function StudentsPage() {
               </div>
             </div>
           </div>
-        </main>
-      </div>
+      </main>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <EnhancedPageHeader 
-        title="Dhaarussalam Matriculation Higher Secondary School"
-      />
-
-      <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+    <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         {/* Students Management Container - Modern Borderless Design */}
         <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
           {/* Header Section */}
@@ -493,8 +481,6 @@ export default function StudentsPage() {
             </div>
           </div>
         )}
-      </main>
-
-    </div>
+    </main>
   )
 }

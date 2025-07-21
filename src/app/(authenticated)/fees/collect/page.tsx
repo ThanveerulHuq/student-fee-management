@@ -18,7 +18,6 @@ import {
 } from "lucide-react"
 import { formatCurrency, formatDate } from "@/lib/utils/receipt"
 import { useAcademicYear, useAcademicYearNavigation } from "@/contexts/academic-year-context"
-import EnhancedPageHeader from "@/components/ui/enhanced-page-header"
 import SecondaryHeader from "@/components/ui/secondary-header"
 import { Spinner } from "@/components/ui/spinner"
 
@@ -263,10 +262,7 @@ function FeeCollectContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <EnhancedPageHeader 
-        title="Dhaarussalam Matriculation Higher Secondary School"
-      />
+    <>
       <SecondaryHeader 
         title="Collect Fee Payment" 
         showBackButton={true}
@@ -623,7 +619,7 @@ function FeeCollectContent() {
           )}
         </div>
       </main>
-    </div>
+    </>
   )
 }
 

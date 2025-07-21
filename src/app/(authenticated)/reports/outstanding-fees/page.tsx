@@ -3,7 +3,6 @@
 import { useEffect, useState, useCallback } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter, useSearchParams } from "next/navigation"
-import EnhancedPageHeader from "@/components/ui/enhanced-page-header"
 import SecondaryHeader from "@/components/ui/secondary-header"
 
 interface OutstandingFeesPageProps {
@@ -334,10 +333,7 @@ export default function OutstandingFeesReportPage({}: OutstandingFeesPageProps) 
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <EnhancedPageHeader 
-        title="Dhaarussalam Matriculation Higher Secondary School"
-      />
+    <>
       <SecondaryHeader 
         title="Outstanding Fees Report"
         showBackButton={true}
@@ -603,6 +599,6 @@ export default function OutstandingFeesReportPage({}: OutstandingFeesPageProps) 
           </Card>
         )}
       </main>
-    </div>
+    </>
   )
 }

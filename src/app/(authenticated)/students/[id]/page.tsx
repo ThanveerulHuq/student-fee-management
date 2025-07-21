@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { useAcademicYearNavigation } from "@/contexts/academic-year-context"
-import EnhancedPageHeader from "@/components/ui/enhanced-page-header"
 import { Button } from "@/components/ui/button"
 
 import { Badge } from "@/components/ui/badge"
@@ -251,9 +250,6 @@ export default function StudentDetailPage({ params }: StudentDetailPageProps) {
 
   return (
     <div className="min-h-screen bg-gray-50/30">
-      <EnhancedPageHeader 
-        title="Dhaarussalam Matriculation Higher Secondary School"
-      />
       
       {/* Modern Header Section */}
       <div className="bg-white border-b border-gray-200">
