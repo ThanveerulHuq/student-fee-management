@@ -3,7 +3,6 @@
 import { useFormContext } from "react-hook-form"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Users, Phone, User } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { type StudentFormData } from "@/lib/validations/student"
@@ -15,15 +14,14 @@ interface FamilyInfoStepProps {
 export default function FamilyInfoStep({ loading }: FamilyInfoStepProps) {
   const { register, formState: { errors } } = useFormContext<StudentFormData>()
   return (
-    <Card className="shadow-sm">
-      <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50">
-        <CardTitle className="flex items-center space-x-2 text-green-900">
+    <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
+      <div className="bg-gradient-to-r from-green-50 to-emerald-50 -mx-8 -mt-8 mb-8 p-6 rounded-t-2xl">
+        <h2 className="flex items-center space-x-2 text-green-900 text-lg font-semibold">
           <Users className="h-5 w-5" />
           <span>Family Information</span>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="p-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8 max-w-none">
+        </h2>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8 max-w-none">
           {/* Father's Name */}
           <div className="space-y-2">
             <Label htmlFor="fatherName" className="text-sm font-medium text-gray-700">
@@ -118,7 +116,6 @@ export default function FamilyInfoStep({ loading }: FamilyInfoStepProps) {
             )}
           </div>
         </div>
-      </CardContent>
-    </Card>
+      </div>
   )
 }

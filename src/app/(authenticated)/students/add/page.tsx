@@ -34,20 +34,12 @@ export default function AddStudentPage({}: AddStudentPageProps) {
   }
 
   return (
-    <>
-      <SecondaryHeader 
-        title="Add New Student"
-        showBackButton={true}
-        backPath="/students"
-      />
-
-      <main className="max-w-6xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+    <main className="w-full py-6 px-4 sm:px-6 lg:px-8">
         <StudentForm 
           onSubmit={handleSubmit}
           onCancel={handleCancel}
           isEdit={false}
         />
       </main>
-    </>
   )
 }

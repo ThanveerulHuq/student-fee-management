@@ -4,7 +4,6 @@ import { Controller, useFormContext } from "react-hook-form"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -20,15 +19,14 @@ interface BasicInfoStepProps {
 export default function BasicInfoStep({ loading }: BasicInfoStepProps) {
   const { register, control, formState: { errors } } = useFormContext<StudentFormData>()
   return (
-    <Card className="shadow-sm">
-      <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50">
-        <CardTitle className="flex items-center space-x-2 text-blue-900">
+    <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
+      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 -mx-8 -mt-8 mb-8 p-6 rounded-t-2xl">
+        <h2 className="flex items-center space-x-2 text-blue-900 text-lg font-semibold">
           <User className="h-5 w-5" />
           <span>Basic Information</span>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="p-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-none">
+        </h2>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-none">
           {/* Admission Number */}
           <div className="space-y-2">
             <Label htmlFor="admissionNo" className="text-sm font-medium text-gray-700">
@@ -270,7 +268,6 @@ export default function BasicInfoStep({ loading }: BasicInfoStepProps) {
             )}
           </div>
         </div>
-      </CardContent>
-    </Card>
+      </div>
   )
 }

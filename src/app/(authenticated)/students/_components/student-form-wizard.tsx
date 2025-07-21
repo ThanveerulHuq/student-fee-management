@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form"
 import { Button } from "@/components/ui/button"
 import { Alert } from "@/components/ui/alert"
 import { Form } from "@/components/ui/form"
-import { Save, ArrowLeft, ArrowRight, CheckCircle } from "lucide-react"
+import { Save, ArrowLeft, ArrowRight, CheckCircle, UserPen } from "lucide-react"
 import { studentSchema, type StudentFormData } from "@/lib/validations/student"
 import { defineStepper } from "@stepperize/react"
 import BasicInfoStep from "./basic-info-step"
@@ -213,68 +213,47 @@ export default function StudentFormWizard({
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50/30">
-      <div className="w-full px-4 sm:px-6 lg:px-8 py-8">
-        {/* Modern Header Card */}
-        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8 mb-8">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                {isEdit ? "Edit Student" : "Add New Student"}
-              </h1>
-              <p className="text-gray-600 text-lg">
-                {isEdit ? "Update student information" : "Complete all steps to add a new student"}
-              </p>
+      <div className="flex">
+        {/* Left Sidebar */}
+        <div className="w-80">
+          <div className="p-6">
+            {/* Header */}
+            <div className="mb-8">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <UserPen className="h-6 w-6 text-blue-600" />
+                </div>
+                <h1 className="text-2xl font-bold text-gray-900">
+                  {isEdit ? "Edit Student" : "Add New Student"}
+                </h1>
+              </div>
             </div>
-            <div className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-6 py-3 rounded-xl shadow-md">
+
+            {/* Step Counter */}
+            <div className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-4 py-2 rounded-lg shadow-md mb-6">
               <span className="text-sm font-medium">
                 Step {currentIndex + 1} of {steps.length}
               </span>
             </div>
-          </div>
-        </div>
 
-        {/* Error Alert */}
-        {error && (
-          <div className="mb-6">
-            <Alert variant="destructive" className="border-red-200 bg-red-50">
-              <div className="flex items-center space-x-2">
-                <div className="w-5 h-5 rounded-full bg-red-100 flex items-center justify-center">
-                  <span className="text-red-600 text-xs font-bold">!</span>
-                </div>
-                <span className="text-red-800">{error}</span>
-              </div>
-            </Alert>
-          </div>
-        )}
-
-        <Form {...form}>
-          <form
-            onSubmit={async (e) => {
-              e.preventDefault()
-              const values = form.getValues()
-              await handleStepSubmit(values)
-            }}
-            className="space-y-8"
-          >
-
-            {/* Modern Stepper Navigation */}
-            <nav aria-label="Student Form Steps" className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 mb-8">
-              <div className="flex items-center justify-between relative">
+            {/* Vertical Stepper Navigation */}
+            <nav aria-label="Student Form Steps" className="space-y-4">
+              <div className="relative">
                 {/* Progress Line Background */}
-                <div className="absolute top-6 left-6 right-6 h-0.5 bg-gray-200 -z-10"></div>
+                <div className="absolute left-6 top-6 bottom-0 w-0.5 bg-gray-200 -z-10"></div>
                 {/* Active Progress Line */}
                 <div 
-                  className="absolute top-6 left-6 h-0.5 bg-gradient-to-r from-blue-500 to-indigo-600 -z-10 transition-all duration-500 ease-in-out"
-                  style={{ width: `${(currentIndex / (steps.length - 1)) * 100}%` }}
+                  className="absolute left-6 top-6 w-0.5 bg-gradient-to-b from-blue-500 to-indigo-600 -z-10 transition-all duration-500 ease-in-out"
+                  style={{ height: `${(currentIndex / (steps.length - 1)) * 100}%` }}
                 ></div>
                 
                 {stepper.all.map((step, index) => (
-                  <div key={step.id} className="flex flex-col items-center relative z-10">
+                  <div key={step.id} className="flex items-center space-x-4 relative z-10 pb-8 last:pb-0">
                     <button
                       type="button"
                       role="tab"
                       aria-current={stepper.current.id === step.id ? "step" : undefined}
-                      className={`w-12 h-12 rounded-full border-4 transition-all duration-300 flex items-center justify-center font-bold text-sm shadow-lg hover:scale-105 ${
+                      className={`w-12 h-12 rounded-full border-4 transition-all duration-300 flex items-center justify-center font-bold text-sm shadow-lg hover:scale-105 flex-shrink-0 ${
                         index <= currentIndex 
                           ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white border-white shadow-blue-200' 
                           : index === currentIndex + 1
@@ -294,30 +273,59 @@ export default function StudentFormWizard({
                     >
                       {index < currentIndex ? '✓' : index + 1}
                     </button>
-                    <span className={`mt-3 text-sm font-medium transition-colors ${
-                      index <= currentIndex ? 'text-blue-600' : 'text-gray-500'
-                    }`}>
-                      {step.label}
-                    </span>
+                    <div className="flex-grow">
+                      <span className={`text-sm font-medium transition-colors block ${
+                        index <= currentIndex ? 'text-blue-600' : 'text-gray-500'
+                      }`}>
+                        {step.label}
+                      </span>
+                      {index === currentIndex && (
+                        <span className="text-xs text-blue-500 font-medium">Current Step</span>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
             </nav>
+          </div>
+        </div>
 
-            {/* Step Content Card - Full Width */}
-            <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden mb-8">
-              <div className="min-h-[500px] w-full">
+        {/* Main Content Area */}
+        <div className="flex-1 px-4 sm:px-6 lg:px-8 py-8">
+          {/* Error Alert */}
+          {error && (
+            <div className="mb-6">
+              <Alert variant="destructive" className="border-red-200 bg-red-50">
+                <div className="flex items-center space-x-2">
+                  <div className="w-5 h-5 rounded-full bg-red-100 flex items-center justify-center">
+                    <span className="text-red-600 text-xs font-bold">!</span>
+                  </div>
+                  <span className="text-red-800">{error}</span>
+                </div>
+              </Alert>
+            </div>
+          )}
+
+          <Form {...form}>
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault()
+                const values = form.getValues()
+                await handleStepSubmit(values)
+              }}
+              className="space-y-8"
+            >
+              {/* Step Content */}
+              <div className="mb-8">
                 {stepper.switch({
                   "basic-info": () => <BasicInfoStep loading={loading} />,
                   "family-info": () => <FamilyInfoStep loading={loading} />,
                   "additional-info": () => <AdditionalInfoStep loading={loading} />,
                 })}
               </div>
-            </div>
 
-            {/* Modern Controls */}
-            <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
-              <div className="flex justify-between items-center">
+              {/* Controls */}
+              <div className="flex justify-between items-center pt-6 border-t border-gray-200">
                 <div className="flex space-x-3">
                   <Button
                     type="button"
@@ -377,9 +385,9 @@ export default function StudentFormWizard({
                   )}
                 </Button>
               </div>
-            </div>
-          </form>
-        </Form>
+            </form>
+          </Form>
+        </div>
       </div>
     </div>
   )

@@ -116,16 +116,10 @@ export default function EditStudentPage({ params }: EditStudentPageProps) {
       </div>
     )
   }
+  
 
   return (
-    <>
-      <SecondaryHeader 
-        title="Edit Student"
-        showBackButton={true}
-        backPath={`/students/${studentId}`}
-      />
-
-      <main className="max-w-6xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+    <main className="w-full py-6 px-4 sm:px-6 lg:px-8">
         <StudentForm 
           initialData={student}
           onSubmit={handleSubmit}
@@ -133,6 +127,5 @@ export default function EditStudentPage({ params }: EditStudentPageProps) {
           isEdit={true}
         />
       </main>
-    </>
   )
 }

@@ -3,7 +3,6 @@
 import { useFormContext } from "react-hook-form"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
 import { Globe, Languages, Church, Users2, MapPin, School, FileText } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -16,14 +15,13 @@ interface AdditionalInfoStepProps {
 export default function AdditionalInfoStep({ loading }: AdditionalInfoStepProps) {
   const { register, formState: { errors } } = useFormContext<StudentFormData>()
   return (
-    <Card className="shadow-sm">
-      <CardHeader className="bg-gradient-to-r from-purple-50 to-violet-50">
-        <CardTitle className="flex items-center space-x-2 text-purple-900">
+    <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
+      <div className="bg-gradient-to-r from-purple-50 to-violet-50 -mx-8 -mt-8 mb-8 p-6 rounded-t-2xl">
+        <h2 className="flex items-center space-x-2 text-purple-900 text-lg font-semibold">
           <FileText className="h-5 w-5" />
           <span>Additional Information</span>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="p-6">
+        </h2>
+      </div>
         <div className="space-y-6">
           {/* First Row */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -220,7 +218,7 @@ export default function AdditionalInfoStep({ loading }: AdditionalInfoStepProps)
             )}
           </div>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+
   )
 }
