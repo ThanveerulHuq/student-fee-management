@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { useAcademicYearNavigation } from "@/contexts/academic-year-context"
-import SecondaryHeader from "@/components/ui/secondary-header"
 import StudentForm from "@/app/(authenticated)/students/_components/student-form"
 import { type StudentFormData } from "@/lib/validations/student"
 import { Spinner } from "@/components/ui/spinner"
@@ -116,7 +115,7 @@ export default function EditStudentPage({ params }: EditStudentPageProps) {
       </div>
     )
   }
-  
+
 
   return (
     <main className="w-full py-6 px-4 sm:px-6 lg:px-8">

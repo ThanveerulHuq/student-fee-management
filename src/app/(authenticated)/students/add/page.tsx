@@ -1,7 +1,6 @@
 "use client"
 
 import { useAcademicYearNavigation } from "@/contexts/academic-year-context"
-import SecondaryHeader from "@/components/ui/secondary-header"
 import StudentForm from "@/app/(authenticated)/students/_components/student-form"
 import { type StudentFormData } from "@/lib/validations/student"
 
