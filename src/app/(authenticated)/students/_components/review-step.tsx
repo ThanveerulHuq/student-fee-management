@@ -3,8 +3,7 @@
 import React from "react"
 import { useFormContext } from "react-hook-form"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
+
 import { 
   User, 
   Users, 
