@@ -12,12 +12,15 @@ export default function AddStudentPage({}: AddStudentPageProps) {
   const { navigateTo } = useAcademicYearNavigation()
 
   const handleSubmit = async (data: StudentFormData) => {
+    // Add isActive field for database save
+    const completeData = { ...data, isActive: true }
+
     const response = await fetch("/api/students", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(data),
+      body: JSON.stringify(completeData),
     })
 
     if (response.ok) {

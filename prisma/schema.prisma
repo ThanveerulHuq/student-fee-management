@@ -94,7 +94,7 @@ model CommonFee {
   id             String @id @default(auto()) @map("_id") @db.ObjectId
   academicYearId String @db.ObjectId
   classId        String @db.ObjectId
-  schoolFee      Float  @default(0)
+  tutionFee      Float  @default(0)
   bookFee        Float  @default(0)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt

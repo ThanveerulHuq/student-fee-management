@@ -7,11 +7,19 @@ import { Button } from "@/components/ui/button"
 import { Alert } from "@/components/ui/alert"
 import { Form } from "@/components/ui/form"
 import { Save, ArrowLeft, ArrowRight, CheckCircle, UserPen } from "lucide-react"
-import { studentSchema, type StudentFormData } from "@/lib/validations/student"
+import { 
+  basicInfoSchema, 
+  familyInfoSchema, 
+  additionalInfoSchema, 
+  studentFormSchema,
+  studentSchema,
+  type StudentFormData 
+} from "@/lib/validations/student"
 import { defineStepper } from "@stepperize/react"
 import BasicInfoStep from "./basic-info-step"
 import FamilyInfoStep from "./family-info-step"
 import AdditionalInfoStep from "./additional-info-step"
+import ReviewStep from "./review-step"
 
 interface StudentFormWizardProps {
   initialData?: Partial<StudentFormData>
@@ -20,41 +28,14 @@ interface StudentFormWizardProps {
   isEdit?: boolean
 }
 
-// Define step-specific schemas for validation
-const basicInfoSchema = studentSchema.pick({
-  admissionNo: true,
-  admissionDate: true,
-  name: true,
-  gender: true,
-  dateOfBirth: true,
-  aadharNo: true,
-  emisNo: true,
-})
-
-const familyInfoSchema = studentSchema.pick({
-  fatherName: true,
-  motherName: true,
-  mobileNo1: true,
-  mobileNo2: true,
-})
-
-const additionalInfoSchema = studentSchema.pick({
-  community: true,
-  motherTongue: true,
-  religion: true,
-  caste: true,
-  nationality: true,
-  address: true,
-  previousSchool: true,
-  remarks: true,
-  isActive: true,
-})
+// Step schemas are now imported from validations - no need to redefine them
 
 
 const { useStepper, steps, utils } = defineStepper(
   { id: "basic-info", label: "Basic Information", schema: basicInfoSchema },
   { id: "family-info", label: "Family Information", schema: familyInfoSchema },
   { id: "additional-info", label: "Additional Information", schema: additionalInfoSchema },
+  { id: "review", label: "Review & Submit", schema: studentFormSchema },
 )
 
 export default function StudentFormWizard({ 
@@ -92,16 +73,16 @@ export default function StudentFormWizard({
       caste: formData.caste || "",
       nationality: formData.nationality || "Indian",
       remarks: formData.remarks || undefined,
-      isActive: formData.isActive ?? true,
     },
   })
 
-  // Step field mappings for validation
+  // Step field mappings for validation - auto-generated from schemas
   const stepFields = {
-    "basic-info": ["admissionNo", "admissionDate", "name", "gender", "dateOfBirth"] as const,
-    "family-info": ["fatherName", "motherName", "mobileNo1"] as const,
-    "additional-info": ["community", "motherTongue", "religion", "caste", "nationality", "address"] as const,
-  }
+    "basic-info": Object.keys(basicInfoSchema.shape),
+    "family-info": Object.keys(familyInfoSchema.shape),
+    "additional-info": Object.keys(additionalInfoSchema.shape),
+    "review": [], // Review step doesn't have specific fields to validate
+  } as const
 
   // Update form when formData changes
   React.useEffect(() => {
@@ -125,7 +106,6 @@ export default function StudentFormWizard({
       caste: formData.caste || "",
       nationality: formData.nationality || "Indian",
       remarks: formData.remarks || undefined,
-      isActive: formData.isActive ?? true,
     })
   }, [formData, form])
 
@@ -133,6 +113,11 @@ export default function StudentFormWizard({
   const validateCurrentStep = async (values: StudentFormData) => {
     const currentStepId = stepper.current.id as keyof typeof stepFields
     const fieldsToValidate = stepFields[currentStepId]
+    
+    // Skip validation for review step
+    if (currentStepId === "review") {
+      return true
+    }
     
     // Get current step schema
     let currentSchema
@@ -156,7 +141,6 @@ export default function StudentFormWizard({
       fieldsToValidate.forEach(field => {
         stepData[field] = values[field as keyof StudentFormData]
       })
-      
       // Validate current step data
       currentSchema.parse(stepData)
       return true
@@ -189,17 +173,60 @@ export default function StudentFormWizard({
       try {
         setLoading(true)
         setError("")
-        const validatedData = studentSchema.parse(values)
+        
+        // Clear any existing errors
+        form.clearErrors()
+        
+        // Validate complete form with proper error handling  
+        const validatedFormData = studentFormSchema.parse(values)
+        // Add isActive field for database save
+        const completeData = { ...validatedFormData, isActive: true }
+        const validatedData = studentSchema.parse(completeData)
         await onSubmit(validatedData)
       } catch (err) {
-        setError(err instanceof Error ? err.message : "An error occurred. Please try again.")
+        if (err && typeof err === 'object' && 'issues' in err) {
+          // Handle validation errors by setting them on specific fields
+          const zodError = err as { issues: Array<{ path: string[]; message: string }> }
+          let hasErrors = false
+          
+          zodError.issues.forEach((issue) => {
+            if (issue.path?.length > 0) {
+              hasErrors = true
+              form.setError(issue.path[0] as keyof StudentFormData, {
+                type: "manual",
+                message: issue.message
+              })
+            }
+          })
+          
+          if (hasErrors) {
+            // Navigate back to the first step with errors
+            const errorFields = zodError.issues.map(issue => issue.path[0])
+            const basicInfoFields = Object.keys(basicInfoSchema.shape)
+            const familyInfoFields = Object.keys(familyInfoSchema.shape)
+            const additionalInfoFields = Object.keys(additionalInfoSchema.shape)
+            
+            if (errorFields.some(field => basicInfoFields.includes(field))) {
+              stepper.goTo("basic-info")
+            } else if (errorFields.some(field => familyInfoFields.includes(field))) {
+              stepper.goTo("family-info")
+            } else if (errorFields.some(field => additionalInfoFields.includes(field))) {
+              stepper.goTo("additional-info")
+            }
+            
+            setError("Please correct the highlighted errors and try again.")
+          } else {
+            setError("Please check all required fields and try again.")
+          }
+        } else {
+          setError(err instanceof Error ? err.message : "An error occurred. Please try again.")
+        }
       } finally {
         setLoading(false)
       }
     } else {
       // Validate only current step and move to next step
       const isStepValid = await validateCurrentStep(values)
-      
       if (isStepValid) {
         // Store current step data and move to next step
         const updatedFormData = { ...formData, ...values }
@@ -321,6 +348,7 @@ export default function StudentFormWizard({
                   "basic-info": () => <BasicInfoStep loading={loading} />,
                   "family-info": () => <FamilyInfoStep loading={loading} />,
                   "additional-info": () => <AdditionalInfoStep loading={loading} />,
+                  "review": () => <ReviewStep loading={loading} />,
                 })}
               </div>
 

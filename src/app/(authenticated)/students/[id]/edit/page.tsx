@@ -21,7 +21,7 @@ export default function EditStudentPage({ params }: EditStudentPageProps) {
   const [studentId, setStudentId] = useState<string | null>(null)
   const [student, setStudent] = useState<StudentFormData | null>(null)
   const [loading, setLoading] = useState(true)
-
+  const [isActive, setIsActive] = useState(true)
   useEffect(() => {
     params.then(p => setStudentId(p.id))
   }, [params])
@@ -39,6 +39,7 @@ export default function EditStudentPage({ params }: EditStudentPageProps) {
       const response = await fetch(`/api/students/${studentId}`)
       if (response.ok) {
         const data = await response.json()
+        setIsActive(data.isActive)
         // Convert the student data to form format
         const formData: StudentFormData = {
           admissionNo: data.admissionNo,
@@ -60,7 +61,6 @@ export default function EditStudentPage({ params }: EditStudentPageProps) {
           caste: data.caste,
           nationality: data.nationality,
           remarks: data.remarks || "",
-          isActive: data.isActive,
         }
         setStudent(formData)
       } else {
@@ -82,12 +82,15 @@ export default function EditStudentPage({ params }: EditStudentPageProps) {
   const handleSubmit = async (data: StudentFormData) => {
     if (!studentId) throw new Error("Student ID not found")
 
+    // Add isActive field for database update
+    const completeData = { ...data, isActive }
+
     const response = await fetch(`/api/students/${studentId}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(data),
+      body: JSON.stringify(completeData),
     })
 
     if (response.ok) {
