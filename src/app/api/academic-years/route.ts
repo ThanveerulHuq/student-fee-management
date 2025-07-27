@@ -18,14 +18,6 @@ export async function GET(request: NextRequest) {
     const academicYears = await prisma.academicYear.findMany({
       where,
       orderBy: { startDate: "desc" },
-      include: {
-        _count: {
-          select: {
-            enrollments: true,
-            feeStructures: true,
-          },
-        },
-      },
     })
 
     return NextResponse.json(academicYears)
