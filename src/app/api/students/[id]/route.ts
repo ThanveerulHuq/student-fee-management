@@ -19,15 +19,6 @@ export async function GET(
     const student = await prisma.student.findUnique({
       where: { id: params.id },
       include: {
-        enrollments: {
-          include: {
-            academicYear: true,
-            class: true,
-            commonFee: true,
-            feeTransactions: true,
-            paidFee: true,
-          },
-        },
         documents: true,
       },
     })
@@ -36,7 +27,19 @@ export async function GET(
       return NextResponse.json({ error: "Student not found" }, { status: 404 })
     }
 
-    return NextResponse.json(student)
+    // Get enrollments using the new StudentEnrollment schema
+    const enrollments = await prisma.studentEnrollment.findMany({
+      where: { studentId: params.id },
+      orderBy: { enrollmentDate: 'desc' },
+    })
+
+    // Combine student data with enrollments
+    const studentWithEnrollments = {
+      ...student,
+      enrollments,
+    }
+
+    return NextResponse.json(studentWithEnrollments)
   } catch (error) {
     console.error("Error fetching student:", error)
     return NextResponse.json(

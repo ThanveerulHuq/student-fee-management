@@ -6,7 +6,10 @@ import {
   CreditCard, 
   FileText, 
   BarChart3,
-  GraduationCap
+  GraduationCap,
+  Settings,
+  Award,
+  Layers
 } from "lucide-react"
 import { useAcademicYearNavigation } from "@/contexts/academic-year-context"
 
@@ -53,6 +56,30 @@ export default function DashboardPage() {
       icon: BarChart3,
       action: () => navigateTo("/analytics"),
       color: "bg-orange-500",
+      isDemo: false
+    },
+    {
+      title: "Fee Templates",
+      description: "Manage fee types and categories",
+      icon: Layers,
+      action: () => navigateTo("/admin/fee-templates"),
+      color: "bg-teal-500",
+      isDemo: false
+    },
+    {
+      title: "Scholarship Templates",
+      description: "Manage scholarship types and categories",
+      icon: Award,
+      action: () => navigateTo("/admin/scholarship-templates"),
+      color: "bg-yellow-500",
+      isDemo: false
+    },
+    {
+      title: "Fee Structures",
+      description: "Configure fee structures per class and year",
+      icon: Settings,
+      action: () => navigateTo("/admin/fee-structures"),
+      color: "bg-slate-500",
       isDemo: false
     }
   ]

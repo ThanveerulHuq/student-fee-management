@@ -1,632 +1,664 @@
-"use client"
+'use client'
 
-import { useState, useEffect, Suspense } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
-import { useSession } from "next-auth/react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Alert } from "@/components/ui/alert"
-import { Badge } from "@/components/ui/badge"
+import { useState, useEffect, useCallback } from 'react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Badge } from '@/components/ui/badge'
+import { Separator } from '@/components/ui/separator'
+import { Textarea } from '@/components/ui/textarea'
 import { 
-  Save, 
+  Plus, 
+  Search, 
+  Receipt, 
+  User, 
+  Calendar,
+  IndianRupee,
+  Hash,
+  Phone,
+  BookOpen,
   CreditCard,
-  User,
-  Calculator,
-  Receipt
-} from "lucide-react"
-import { formatCurrency, formatDate } from "@/lib/utils/receipt"
-import { useAcademicYear, useAcademicYearNavigation } from "@/contexts/academic-year-context"
-import SecondaryHeader from "@/components/ui/secondary-header"
-import { Spinner } from "@/components/ui/spinner"
+  Download
+} from 'lucide-react'
+import { toast } from 'sonner'
+import { useAcademicYear } from '@/contexts/academic-year-context'
 
 interface StudentEnrollment {
   id: string
+  studentId: string
+  academicYearId: string
+  classId: string
   section: string
+  enrollmentDate: string
+  isActive: boolean
   student: {
-    id: string
-    name: string
-    admissionNo: string
+    admissionNumber: string
+    firstName: string
+    lastName: string
     fatherName: string
-    mobileNo1: string
+    phone: string
+    class: string
+    status: string
   }
   academicYear: {
     year: string
-    isActive: boolean
   }
   class: {
     className: string
   }
-  feeBreakdown: {
-    schoolFee: { total: number; paid: number; outstanding: number }
-    bookFee: { total: number; paid: number; outstanding: number }
-    uniformFee: { total: number; paid: number; outstanding: number }
-    islamicStudies: { total: number; paid: number; outstanding: number }
-    vanFee: { total: number; paid: number; outstanding: number }
-    scholarship: number
-    totalFee: number
-    totalPaid: number
-    outstanding: number
+  totals: {
+    fees: {
+      total: number
+      paid: number
+      due: number
+    }
+    scholarships: {
+      applied: number
+    }
+    netAmount: {
+      total: number
+      paid: number
+      due: number
+    }
   }
+  feeStatus: {
+    status: string
+    overdueAmount: number
+  }
+  fees: Array<{
+    id: string
+    templateName: string
+    amount: number
+    amountPaid: number
+    amountDue: number
+    isCompulsory: boolean
+    isWaived: boolean
+    recentPayments: Array<{
+      paymentId: string
+      amount: number
+      paymentDate: string
+      receiptNo: string
+      paymentMethod: string
+    }>
+  }>
+  scholarships: Array<{
+    templateName: string
+    amount: number
+    isActive: boolean
+  }>
 }
 
-function FeeCollectContent() {
-  const { data: session } = useSession()
-  const router = useRouter()
-  const searchParams = useSearchParams()
+interface Payment {
+  id: string
+  receiptNo: string
+  studentEnrollmentId: string
+  totalAmount: number
+  paymentDate: string
+  paymentMethod: string
+  remarks?: string
+  createdBy: string
+  status: string
+  student: {
+    admissionNumber: string
+    firstName: string
+    lastName: string
+    fatherName: string
+    phone: string
+  }
+  academicYear: {
+    year: string
+  }
+  paymentItems: Array<{
+    id: string
+    feeId: string
+    feeTemplateId: string
+    feeTemplateName: string
+    amount: number
+    feeBalance: number
+  }>
+}
+
+const statusColors = {
+  PAID: 'bg-green-100 text-green-800',
+  PARTIAL: 'bg-yellow-100 text-yellow-800',
+  OVERDUE: 'bg-red-100 text-red-800',
+  WAIVED: 'bg-gray-100 text-gray-800'
+}
+
+export default function FlexiblePaymentsPage() {
   const { academicYear } = useAcademicYear()
-  const { navigateTo } = useAcademicYearNavigation()
-  const enrollmentId = searchParams.get("enrollmentId")
-  const studentId = searchParams.get("studentId")
-
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState("")
-  const [success, setSuccess] = useState("")
-  const [enrollment, setEnrollment] = useState<StudentEnrollment | null>(null)
-  const [availableEnrollments, setAvailableEnrollments] = useState<StudentEnrollment[]>([])
-
-  const [paymentData, setPaymentData] = useState({
-    enrollmentId: enrollmentId || "",
-    schoolFee: 0,
-    bookFee: 0,
-    uniformFee: 0,
-    islamicStudies: 0,
-    vanFee: 0,
-    totalAmountPaid: 0,
-    paymentMethod: "CASH",
-    remarks: "",
+  const [enrollments, setEnrollments] = useState<StudentEnrollment[]>([])
+  
+  const [selectedEnrollment, setSelectedEnrollment] = useState<StudentEnrollment | null>(null)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false)
+  const [isReceiptDialogOpen, setIsReceiptDialogOpen] = useState(false)
+  const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null)
+  
+  const [paymentForm, setPaymentForm] = useState({
+    paymentMethod: 'CASH' as 'CASH' | 'ONLINE' | 'CHEQUE',
+    remarks: '',
+    paymentItems: {} as Record<string, number>
   })
 
   useEffect(() => {
-    if (enrollmentId) {
-      fetchEnrollmentDetails(enrollmentId)
-    } else if (studentId) {
-      fetchStudentEnrollments(studentId)
-    }
-  }, [enrollmentId, studentId])
+    fetchEnrollments()
+  }, [academicYear])
 
   useEffect(() => {
-    // Calculate total when individual fees change
-    const total = 
-      paymentData.schoolFee +
-      paymentData.bookFee +
-      paymentData.uniformFee +
-      paymentData.islamicStudies +
-      paymentData.vanFee
+    fetchPayments()
+  }, [])
 
-    setPaymentData(prev => ({ ...prev, totalAmountPaid: total }))
-  }, [paymentData.schoolFee, paymentData.bookFee, paymentData.uniformFee, paymentData.islamicStudies, paymentData.vanFee])
-
-  const fetchEnrollmentDetails = async (id: string) => {
+  const fetchEnrollments = useCallback(async () => {
     try {
-      setLoading(true)
-      const response = await fetch(`/api/enrollments/${id}`)
+      const url = academicYear 
+        ? `/api/enrollments?academicYearId=${academicYear.id}`
+        : '/api/enrollments'
+      
+      const response = await fetch(url)
       if (response.ok) {
         const data = await response.json()
-        
-        // Calculate fee breakdown
-        const feeBreakdown = {
-          schoolFee: {
-            total: data.commonFee.schoolFee,
-            paid: data.paidFee?.schoolFeePaid || 0,
-            outstanding: Math.max(0, data.commonFee.schoolFee - (data.paidFee?.schoolFeePaid || 0)),
-          },
-          bookFee: {
-            total: data.commonFee.bookFee,
-            paid: data.paidFee?.bookFeePaid || 0,
-            outstanding: Math.max(0, data.commonFee.bookFee - (data.paidFee?.bookFeePaid || 0)),
-          },
-          uniformFee: {
-            total: data.uniformFee,
-            paid: data.paidFee?.uniformFeePaid || 0,
-            outstanding: Math.max(0, data.uniformFee - (data.paidFee?.uniformFeePaid || 0)),
-          },
-          islamicStudies: {
-            total: data.islamicStudies,
-            paid: data.paidFee?.islamicStudiesPaid || 0,
-            outstanding: Math.max(0, data.islamicStudies - (data.paidFee?.islamicStudiesPaid || 0)),
-          },
-          vanFee: {
-            total: data.vanFee,
-            paid: data.paidFee?.vanFeePaid || 0,
-            outstanding: Math.max(0, data.vanFee - (data.paidFee?.vanFeePaid || 0)),
-          },
-          scholarship: data.scholarship,
-          totalFee: data.commonFee.schoolFee + data.commonFee.bookFee + data.uniformFee + data.islamicStudies + data.vanFee - data.scholarship,
-          totalPaid: data.paidFee?.totalPaid || 0,
-          outstanding: 0,
-        }
-        
-        feeBreakdown.outstanding = Math.max(0, feeBreakdown.totalFee - feeBreakdown.totalPaid)
-
-        setEnrollment({ ...data, feeBreakdown })
-        setPaymentData(prev => ({ ...prev, enrollmentId: id }))
+        setEnrollments(data.enrollments || [])
+      } else {
+        toast.error('Failed to fetch enrollments')
       }
     } catch (error) {
-      console.error("Error fetching enrollment:", error)
-      setError("Failed to load enrollment details")
+      console.error('Error fetching enrollments:', error)
+      toast.error('Error fetching enrollments')
     } finally {
       setLoading(false)
     }
-  }
+  }, [academicYear])
 
-  const fetchStudentEnrollments = async (id: string) => {
+  const fetchPayments = async () => {
     try {
-      setLoading(true)
-      const response = await fetch(`/api/fees/student/${id}`)
+      const response = await fetch('/api/payments')
       if (response.ok) {
         const data = await response.json()
-        setAvailableEnrollments(data.enrollments.filter((e: { feeBreakdown: { outstanding: number } }) => e.feeBreakdown.outstanding > 0))
+        fetchEnrollments()
+      } else {
+        toast.error('Failed to fetch payments')
       }
     } catch (error) {
-      console.error("Error fetching student enrollments:", error)
-      setError("Failed to load student enrollments")
-    } finally {
-      setLoading(false)
+      console.error('Error fetching payments:', error)
+      toast.error('Error fetching payments')
     }
   }
 
-  const handleEnrollmentSelect = (id: string) => {
-    setPaymentData(prev => ({ ...prev, enrollmentId: id }))
-    fetchEnrollmentDetails(id)
-  }
-
-  const handleFeeChange = (feeType: string, value: string) => {
-    const numValue = parseFloat(value) || 0
-    setPaymentData(prev => ({ ...prev, [feeType]: numValue }))
-  }
-
-  const handlePayFullAmount = () => {
-    if (!enrollment) return
-
-    setPaymentData(prev => ({
-      ...prev,
-      schoolFee: enrollment.feeBreakdown.schoolFee.outstanding,
-      bookFee: enrollment.feeBreakdown.bookFee.outstanding,
-      uniformFee: enrollment.feeBreakdown.uniformFee.outstanding,
-      islamicStudies: enrollment.feeBreakdown.islamicStudies.outstanding,
-      vanFee: enrollment.feeBreakdown.vanFee.outstanding,
-    }))
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handlePayment = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    if (!enrollment) {
-      setError("Please select an enrollment")
+    if (!selectedEnrollment) {
+      toast.error('No student selected')
       return
     }
 
-    if (paymentData.totalAmountPaid <= 0) {
-      setError("Payment amount must be greater than 0")
+    const paymentItems = Object.entries(paymentForm.paymentItems)
+      .filter(([__, amount]) => amount > 0)
+      .map(([feeId, amount]) => ({ feeId, amount }))
+
+    if (paymentItems.length === 0) {
+      toast.error('Please enter payment amounts')
       return
     }
+
+    const totalAmount = paymentItems.reduce((sum, item) => sum + item.amount, 0)
 
     try {
-      setLoading(true)
-      setError("")
-
-      const response = await fetch("/api/fees/collect", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+      const response = await fetch('/api/payments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          studentYearId: paymentData.enrollmentId,
-          schoolFee: paymentData.schoolFee,
-          bookFee: paymentData.bookFee,
-          uniformFee: paymentData.uniformFee,
-          islamicStudies: paymentData.islamicStudies,
-          vanFee: paymentData.vanFee,
-          totalAmountPaid: paymentData.totalAmountPaid,
-          paymentMethod: paymentData.paymentMethod,
-          remarks: paymentData.remarks,
-        }),
+          studentEnrollmentId: selectedEnrollment.id,
+          totalAmount,
+          paymentMethod: paymentForm.paymentMethod,
+          remarks: paymentForm.remarks,
+          paymentItems
+        })
       })
 
       if (response.ok) {
-        const result = await response.json()
-        setSuccess(`Payment collected successfully! Receipt No: ${result.receiptNo}`)
+        const data = await response.json()
+        toast.success('Payment recorded successfully')
+        setIsPaymentDialogOpen(false)
+        resetPaymentForm()
+        fetchEnrollments()
+        fetchPayments()
         
-        // Reset form
-        setPaymentData({
-          enrollmentId: "",
-          schoolFee: 0,
-          bookFee: 0,
-          uniformFee: 0,
-          islamicStudies: 0,
-          vanFee: 0,
-          totalAmountPaid: 0,
-          paymentMethod: "CASH",
-          remarks: "",
-        })
-        
-        // Redirect to receipt page after 2 seconds
-        setTimeout(() => {
-          router.push(`/fees/receipt/${result.id}?academicYear=${academicYear?.id}`)
-        }, 2000)
+        // Show receipt
+        setSelectedPayment(data.payment)
+        setIsReceiptDialogOpen(true)
       } else {
-        const errorData = await response.json()
-        setError(errorData.error || "Failed to collect payment")
+        const error = await response.json()
+        toast.error(error.error || 'Failed to record payment')
       }
-    } catch {
-      setError("An error occurred. Please try again.")
-    } finally {
-      setLoading(false)
+    } catch (error) {
+      console.error('Error recording payment:', error)
+      toast.error('Error recording payment')
     }
   }
 
-  if (!session) {
-    return <Spinner size="2xl" fullScreen />
+  const resetPaymentForm = () => {
+    setPaymentForm({
+      paymentMethod: 'CASH',
+      remarks: '',
+      paymentItems: {}
+    })
+    setSelectedEnrollment(null)
+  }
+
+  const updatePaymentAmount = (feeId: string, amount: number) => {
+    setPaymentForm(prev => ({
+      ...prev,
+      paymentItems: {
+        ...prev.paymentItems,
+        [feeId]: amount
+      }
+    }))
+  }
+
+  const getTotalPaymentAmount = () => {
+    return Object.values(paymentForm.paymentItems).reduce((sum, amount) => sum + (amount || 0), 0)
+  }
+
+  const filteredEnrollments = enrollments.filter(enrollment => {
+    if (!searchTerm) return true
+    const searchLower = searchTerm.toLowerCase()
+    return (
+      enrollment.student.firstName.toLowerCase().includes(searchLower) ||
+      enrollment.student.lastName.toLowerCase().includes(searchLower) ||
+      enrollment.student.admissionNumber.toLowerCase().includes(searchLower) ||
+      enrollment.student.fatherName.toLowerCase().includes(searchLower)
+    )
+  })
+
+  // Filter to show only enrollments with due amounts
+  const enrollmentsWithDues = filteredEnrollments.filter(
+    enrollment => enrollment.totals.netAmount.due > 0
+  )
+
+  if (loading) {
+    return (
+      <div className="container mx-auto py-6">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-lg">Loading payment data...</div>
+        </div>
+      </div>
+    )
   }
 
   return (
-    <>
-      <SecondaryHeader 
-        title="Collect Fee Payment" 
-        showBackButton={true}
-      />
-
-      {/* Main Content */}
-      <main className="max-w-6xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Student Selection */}
-          {availableEnrollments.length > 0 && (
-            <div className="lg:col-span-3">
-              <Card className="mb-6">
-                <CardHeader>
-                  <CardTitle>Select Enrollment</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {availableEnrollments.map((enroll) => (
-                      <Card
-                        key={enroll.id}
-                        className={`cursor-pointer transition-colors ${
-                          paymentData.enrollmentId === enroll.id 
-                            ? "ring-2 ring-blue-500 bg-blue-50" 
-                            : "hover:bg-gray-50"
-                        }`}
-                        onClick={() => handleEnrollmentSelect(enroll.id)}
-                      >
-                        <CardContent className="p-4">
-                          <div className="space-y-2">
-                            <div className="flex justify-between items-start">
-                              <span className="font-medium">{enroll.academicYear.year}</span>
-                              <Badge variant="outline">{enroll.class.className}</Badge>
-                            </div>
-                            <p className="text-sm text-gray-600">Section: {enroll.section}</p>
-                            <div className="flex justify-between items-center">
-                              <span className="text-sm text-gray-600">Outstanding:</span>
-                              <span className="font-semibold text-red-600">
-                                {formatCurrency(enroll.feeBreakdown.outstanding)}
-                              </span>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          )}
-
-          {/* Student Information */}
-          {enrollment && (
-            <div className="lg:col-span-2">
-              <Card className="mb-6">
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <User className="h-5 w-5" />
-                    <span>Student Information</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label className="text-sm font-medium text-gray-600">Name</Label>
-                      <p className="text-lg font-semibold">{enrollment.student.name}</p>
-                    </div>
-                    <div>
-                      <Label className="text-sm font-medium text-gray-600">Admission No</Label>
-                      <p className="text-lg font-semibold">{enrollment.student.admissionNo}</p>
-                    </div>
-                    <div>
-                      <Label className="text-sm font-medium text-gray-600">Father&apos;s Name</Label>
-                      <p className="text-sm">{enrollment.student.fatherName}</p>
-                    </div>
-                    <div>
-                      <Label className="text-sm font-medium text-gray-600">Mobile</Label>
-                      <p className="text-sm">{enrollment.student.mobileNo1}</p>
-                    </div>
-                    <div>
-                      <Label className="text-sm font-medium text-gray-600">Academic Year</Label>
-                      <div className="flex items-center space-x-2">
-                        <span>{enrollment.academicYear.year}</span>
-                        {enrollment.academicYear.isActive && (
-                          <Badge variant="outline" className="text-xs">Active</Badge>
-                        )}
-                      </div>
-                    </div>
-                    <div>
-                      <Label className="text-sm font-medium text-gray-600">Class & Section</Label>
-                      <p className="text-sm">{enrollment.class.className} - {enrollment.section}</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Fee Collection Form */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <CreditCard className="h-5 w-5" />
-                    <span>Payment Details</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <form onSubmit={handleSubmit} className="space-y-6">
-                    {error && (
-                      <Alert variant="destructive">
-                        {error}
-                      </Alert>
-                    )}
-
-                    {success && (
-                      <Alert className="border-green-200 bg-green-50 text-green-800">
-                        {success}
-                      </Alert>
-                    )}
-
-                    {/* Fee Breakdown */}
-                    <div className="space-y-4">
-                      <div className="flex justify-between items-center">
-                        <h3 className="text-lg font-medium">Fee Breakdown</h3>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={handlePayFullAmount}
-                        >
-                          Pay Full Outstanding
-                        </Button>
-                      </div>
-
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {/* School Fee */}
-                        <div className="space-y-2">
-                          <Label htmlFor="schoolFee">
-                            School Fee (Outstanding: {formatCurrency(enrollment.feeBreakdown.schoolFee.outstanding)})
-                          </Label>
-                          <Input
-                            id="schoolFee"
-                            type="number"
-                            min="0"
-                            max={enrollment.feeBreakdown.schoolFee.outstanding}
-                            step="0.01"
-                            value={paymentData.schoolFee}
-                            onChange={(e) => handleFeeChange("schoolFee", e.target.value)}
-                            disabled={loading}
-                          />
-                        </div>
-
-                        {/* Book Fee */}
-                        <div className="space-y-2">
-                          <Label htmlFor="bookFee">
-                            Book Fee (Outstanding: {formatCurrency(enrollment.feeBreakdown.bookFee.outstanding)})
-                          </Label>
-                          <Input
-                            id="bookFee"
-                            type="number"
-                            min="0"
-                            max={enrollment.feeBreakdown.bookFee.outstanding}
-                            step="0.01"
-                            value={paymentData.bookFee}
-                            onChange={(e) => handleFeeChange("bookFee", e.target.value)}
-                            disabled={loading}
-                          />
-                        </div>
-
-                        {/* Uniform Fee */}
-                        <div className="space-y-2">
-                          <Label htmlFor="uniformFee">
-                            Uniform Fee (Outstanding: {formatCurrency(enrollment.feeBreakdown.uniformFee.outstanding)})
-                          </Label>
-                          <Input
-                            id="uniformFee"
-                            type="number"
-                            min="0"
-                            max={enrollment.feeBreakdown.uniformFee.outstanding}
-                            step="0.01"
-                            value={paymentData.uniformFee}
-                            onChange={(e) => handleFeeChange("uniformFee", e.target.value)}
-                            disabled={loading}
-                          />
-                        </div>
-
-                        {/* Islamic Studies */}
-                        <div className="space-y-2">
-                          <Label htmlFor="islamicStudies">
-                            Islamic Studies (Outstanding: {formatCurrency(enrollment.feeBreakdown.islamicStudies.outstanding)})
-                          </Label>
-                          <Input
-                            id="islamicStudies"
-                            type="number"
-                            min="0"
-                            max={enrollment.feeBreakdown.islamicStudies.outstanding}
-                            step="0.01"
-                            value={paymentData.islamicStudies}
-                            onChange={(e) => handleFeeChange("islamicStudies", e.target.value)}
-                            disabled={loading}
-                          />
-                        </div>
-
-                        {/* Van Fee */}
-                        <div className="space-y-2">
-                          <Label htmlFor="vanFee">
-                            Van Fee (Outstanding: {formatCurrency(enrollment.feeBreakdown.vanFee.outstanding)})
-                          </Label>
-                          <Input
-                            id="vanFee"
-                            type="number"
-                            min="0"
-                            max={enrollment.feeBreakdown.vanFee.outstanding}
-                            step="0.01"
-                            value={paymentData.vanFee}
-                            onChange={(e) => handleFeeChange("vanFee", e.target.value)}
-                            disabled={loading}
-                          />
-                        </div>
-
-                        {/* Payment Method */}
-                        <div className="space-y-2">
-                          <Label htmlFor="paymentMethod">Payment Method</Label>
-                          <select
-                            id="paymentMethod"
-                            value={paymentData.paymentMethod}
-                            onChange={(e) => setPaymentData(prev => ({ ...prev, paymentMethod: e.target.value }))}
-                            disabled={loading}
-                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                          >
-                            <option value="CASH">Cash</option>
-                            <option value="ONLINE">Online</option>
-                            <option value="CHEQUE">Cheque</option>
-                          </select>
-                        </div>
-                      </div>
-
-                      {/* Total Amount */}
-                      <div className="p-4 bg-blue-50 rounded-lg">
-                        <div className="flex justify-between items-center">
-                          <span className="text-lg font-semibold text-blue-900">
-                            Total Payment:
-                          </span>
-                          <span className="text-2xl font-bold text-blue-900">
-                            {formatCurrency(paymentData.totalAmountPaid)}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Remarks */}
-                      <div className="space-y-2">
-                        <Label htmlFor="remarks">Remarks (Optional)</Label>
-                        <textarea
-                          id="remarks"
-                          rows={3}
-                          value={paymentData.remarks}
-                          onChange={(e) => setPaymentData(prev => ({ ...prev, remarks: e.target.value }))}
-                          disabled={loading}
-                          placeholder="Any additional notes..."
-                          className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                        />
-                      </div>
-                    </div>
-
-                    {/* Submit Button */}
-                    <div className="flex justify-end space-x-4 pt-6 border-t">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => navigateTo('/fees')}
-                        disabled={loading}
-                      >
-                        Cancel
-                      </Button>
-                      <Button 
-                        type="submit" 
-                        disabled={loading || paymentData.totalAmountPaid <= 0}
-                      >
-                        {loading ? (
-                          "Processing..."
-                        ) : (
-                          <>
-                            <Save className="h-4 w-4 mr-2" />
-                            Collect Payment
-                          </>
-                        )}
-                      </Button>
-                    </div>
-                  </form>
-                </CardContent>
-              </Card>
-            </div>
-          )}
-
-          {/* Fee Summary Sidebar */}
-          {enrollment && (
-            <div className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <Calculator className="h-5 w-5" />
-                    <span>Fee Summary</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-3">
-                    <div className="flex justify-between text-sm">
-                      <span>Total Annual Fee:</span>
-                      <span className="font-medium">{formatCurrency(enrollment.feeBreakdown.totalFee)}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span>Total Paid:</span>
-                      <span className="font-medium text-green-600">{formatCurrency(enrollment.feeBreakdown.totalPaid)}</span>
-                    </div>
-                    <div className="flex justify-between text-sm border-t pt-2">
-                      <span className="font-medium">Outstanding:</span>
-                      <span className="font-bold text-red-600">{formatCurrency(enrollment.feeBreakdown.outstanding)}</span>
-                    </div>
-                  </div>
-
-                  {enrollment.feeBreakdown.scholarship > 0 && (
-                    <div className="mt-4 p-3 bg-green-50 rounded-lg">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-green-800">Scholarship Applied:</span>
-                        <span className="font-medium text-green-800">
-                          -{formatCurrency(enrollment.feeBreakdown.scholarship)}
-                        </span>
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <Receipt className="h-5 w-5" />
-                    <span>Payment Info</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="text-sm">
-                    <span className="text-gray-600">Date:</span>
-                    <span className="ml-2">{formatDate(new Date())}</span>
-                  </div>
-                  <div className="text-sm">
-                    <span className="text-gray-600">Collected By:</span>
-                    <span className="ml-2">{(session?.user as { username?: string })?.username}</span>
-                  </div>
-                  <div className="text-sm">
-                    <span className="text-gray-600">Method:</span>
-                    <span className="ml-2">{paymentData.paymentMethod}</span>
-                  </div>
-                </CardContent>
-              </Card>
+    <div className="container mx-auto py-6">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-3xl font-bold flex items-center">
+            <CreditCard className="w-8 h-8 mr-3 text-green-600" />
+            Fee Collection
+          </h1>
+          <p className="text-muted-foreground">Collect student fees with flexible payment options</p>
+          {academicYear && (
+            <div className="flex items-center mt-2">
+              <Calendar className="w-4 h-4 mr-2 text-green-600" />
+              <span className="text-sm font-medium">Academic Year: {academicYear.year}</span>
             </div>
           )}
         </div>
-      </main>
-    </>
-  )
-}
+        
+        <div className="flex items-center space-x-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <Input
+              placeholder="Search students..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 w-64"
+            />
+          </div>
+        </div>
+      </div>
 
-export default function FeeCollectPage() {
-  return (
-    <Suspense fallback={<Spinner size="2xl" fullScreen />}>
-      <FeeCollectContent />
-    </Suspense>
+      <div className="grid gap-6">
+        {enrollmentsWithDues.length === 0 ? (
+          <Card>
+            <CardContent className="pt-6">
+              <div className="text-center py-8">
+                <CreditCard className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
+                <p className="text-muted-foreground mb-2">
+                  {searchTerm ? 'No students found matching your search.' : 'No pending fees found.'}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  All students have paid their fees for this academic year.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          enrollmentsWithDues.map((enrollment) => (
+            <Card key={enrollment.id} className="hover:shadow-md transition-shadow">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-4">
+                    <User className="w-8 h-8 text-green-600" />
+                    <div>
+                      <CardTitle className="text-xl">
+                        {enrollment.student.firstName} {enrollment.student.lastName}
+                      </CardTitle>
+                      <div className="flex items-center space-x-4 text-sm text-muted-foreground mt-1">
+                        <span className="flex items-center">
+                          <Hash className="w-4 h-4 mr-1" />
+                          {enrollment.student.admissionNumber}
+                        </span>
+                        <span className="flex items-center">
+                          <User className="w-4 h-4 mr-1" />
+                          {enrollment.student.fatherName}
+                        </span>
+                        <span className="flex items-center">
+                          <Phone className="w-4 h-4 mr-1" />
+                          {enrollment.student.phone}
+                        </span>
+                        <span className="flex items-center">
+                          <BookOpen className="w-4 h-4 mr-1" />
+                          {enrollment.class.className} - {enrollment.section}
+                        </span>
+                      </div>
+                    </div>
+                    <Badge className={statusColors[enrollment.feeStatus.status as keyof typeof statusColors]}>
+                      {enrollment.feeStatus.status}
+                    </Badge>
+                  </div>
+                  <Button
+                    onClick={() => {
+                      setSelectedEnrollment(enrollment)
+                      setIsPaymentDialogOpen(true)
+                    }}
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Collect Fee
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-3 gap-6">
+                  <div>
+                    <h4 className="font-semibold mb-2 flex items-center">
+                      <IndianRupee className="w-4 h-4 mr-1" />
+                      Fee Summary
+                    </h4>
+                    <div className="space-y-1 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Total Fees</span>
+                        <span>₹{enrollment.totals.fees.total.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Scholarships</span>
+                        <span className="text-green-600">-₹{enrollment.totals.scholarships.applied.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between font-semibold">
+                        <span>Net Amount</span>
+                        <span>₹{enrollment.totals.netAmount.total.toFixed(2)}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 className="font-semibold mb-2">Payment Status</h4>
+                    <div className="space-y-1 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Paid</span>
+                        <span className="text-green-600">₹{enrollment.totals.netAmount.paid.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Due</span>
+                        <span className="text-red-600 font-bold">₹{enrollment.totals.netAmount.due.toFixed(2)}</span>
+                      </div>
+                      {enrollment.feeStatus.overdueAmount > 0 && (
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Overdue</span>
+                          <span className="text-red-600">₹{enrollment.feeStatus.overdueAmount.toFixed(2)}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 className="font-semibold mb-2">Fee Breakdown</h4>
+                    <div className="space-y-1 text-sm">
+                      {enrollment.fees.filter(fee => fee.amountDue > 0).slice(0, 3).map((fee, index) => (
+                        <div key={index} className="flex justify-between">
+                          <span className="text-muted-foreground truncate">{fee.templateName}</span>
+                          <span className="text-red-600">₹{fee.amountDue.toFixed(2)}</span>
+                        </div>
+                      ))}
+                      {enrollment.fees.filter(fee => fee.amountDue > 0).length > 3 && (
+                        <div className="text-xs text-muted-foreground">
+                          +{enrollment.fees.filter(fee => fee.amountDue > 0).length - 3} more fees
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))
+        )}
+      </div>
+
+      {/* Payment Dialog */}
+      <Dialog open={isPaymentDialogOpen} onOpenChange={(open) => {
+        setIsPaymentDialogOpen(open)
+        if (!open) resetPaymentForm()
+      }}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Collect Fee Payment</DialogTitle>
+            {selectedEnrollment && (
+              <p className="text-muted-foreground">
+                {selectedEnrollment.student.firstName} {selectedEnrollment.student.lastName} - 
+                {selectedEnrollment.class.className} {selectedEnrollment.section}
+              </p>
+            )}
+          </DialogHeader>
+          
+          {selectedEnrollment && (
+            <form onSubmit={handlePayment} className="space-y-6">
+              {/* Student Summary */}
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <div className="grid grid-cols-3 gap-4 text-sm">
+                  <div>
+                    <span className="text-muted-foreground">Net Amount</span>
+                    <p className="font-bold text-lg">₹{selectedEnrollment.totals.netAmount.total.toFixed(2)}</p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Already Paid</span>
+                    <p className="font-semibold text-green-600">₹{selectedEnrollment.totals.netAmount.paid.toFixed(2)}</p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Amount Due</span>
+                    <p className="font-bold text-red-600">₹{selectedEnrollment.totals.netAmount.due.toFixed(2)}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Fee Items */}
+              <div>
+                <h4 className="font-semibold mb-3">Select Fees to Pay</h4>
+                <div className="space-y-3">
+                  {selectedEnrollment.fees.filter(fee => fee.amountDue > 0).map(fee => (
+                    <Card key={fee.id}>
+                      <CardContent className="pt-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="font-medium">{fee.templateName}</p>
+                            <div className="text-sm text-muted-foreground">
+                              Amount: ₹{fee.amount.toFixed(2)} | 
+                              Paid: ₹{fee.amountPaid.toFixed(2)} | 
+                              Due: ₹{fee.amountDue.toFixed(2)}
+                              {fee.isCompulsory && <Badge className="ml-2">Compulsory</Badge>}
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Label htmlFor={`fee-${fee.id}`}>₹</Label>
+                            <Input
+                              id={`fee-${fee.id}`}
+                              type="number"
+                              value={paymentForm.paymentItems[fee.id] || ''}
+                              onChange={(e) => updatePaymentAmount(fee.id, parseFloat(e.target.value) || 0)}
+                              placeholder="0.00"
+                              max={fee.amountDue}
+                              min="0"
+                              step="0.01"
+                              className="w-24"
+                            />
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => updatePaymentAmount(fee.id, fee.amountDue)}
+                            >
+                              Full
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Payment Details */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="paymentMethod">Payment Method *</Label>
+                  <Select 
+                    value={paymentForm.paymentMethod} 
+                    onValueChange={(value: 'CASH' | 'ONLINE' | 'CHEQUE') => setPaymentForm({ ...paymentForm, paymentMethod: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="CASH">Cash</SelectItem>
+                      <SelectItem value="ONLINE">Online Transfer</SelectItem>
+                      <SelectItem value="CHEQUE">Cheque</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="totalAmount">Total Payment Amount</Label>
+                  <div className="flex items-center">
+                    <span className="mr-2">₹</span>
+                    <Input
+                      value={getTotalPaymentAmount().toFixed(2)}
+                      readOnly
+                      className="font-bold"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="remarks">Remarks (Optional)</Label>
+                <Textarea
+                  id="remarks"
+                  value={paymentForm.remarks}
+                  onChange={(e) => setPaymentForm({ ...paymentForm, remarks: e.target.value })}
+                  placeholder="Any additional notes..."
+                  rows={3}
+                />
+              </div>
+
+              <div className="flex justify-end space-x-2">
+                <Button type="button" variant="outline" onClick={() => setIsPaymentDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button 
+                  type="submit" 
+                  disabled={getTotalPaymentAmount() <= 0}
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  <Receipt className="w-4 h-4 mr-2" />
+                  Record Payment (₹{getTotalPaymentAmount().toFixed(2)})
+                </Button>
+              </div>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Receipt Dialog */}
+      <Dialog open={isReceiptDialogOpen} onOpenChange={setIsReceiptDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center justify-between">
+              <span>Payment Receipt</span>
+              <Button variant="outline" size="sm">
+                <Download className="w-4 h-4 mr-2" />
+                Download
+              </Button>
+            </DialogTitle>
+          </DialogHeader>
+          
+          {selectedPayment && (
+            <div className="space-y-4">
+              <div className="text-center border-b pb-4">
+                <h3 className="text-lg font-bold">BlueMoon School</h3>
+                <p className="text-sm text-muted-foreground">Fee Payment Receipt</p>
+                <p className="text-sm font-mono">Receipt No: {selectedPayment.receiptNo}</p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <p><strong>Student:</strong> {selectedPayment.student.firstName} {selectedPayment.student.lastName}</p>
+                  <p><strong>Admission No:</strong> {selectedPayment.student.admissionNumber}</p>
+                  <p><strong>Father Name:</strong> {selectedPayment.student.fatherName}</p>
+                </div>
+                <div>
+                  <p><strong>Payment Date:</strong> {new Date(selectedPayment.paymentDate).toLocaleDateString()}</p>
+                  <p><strong>Payment Method:</strong> {selectedPayment.paymentMethod}</p>
+                  <p><strong>Academic Year:</strong> {selectedPayment.academicYear.year}</p>
+                </div>
+              </div>
+
+              <div>
+                <h4 className="font-semibold mb-2">Payment Details</h4>
+                <div className="space-y-2">
+                  {selectedPayment.paymentItems.map((item, index) => (
+                    <div key={index} className="flex justify-between text-sm">
+                      <span>{item.feeTemplateName}</span>
+                      <span>₹{item.amount.toFixed(2)}</span>
+                    </div>
+                  ))}
+                  <Separator />
+                  <div className="flex justify-between font-bold">
+                    <span>Total Amount Paid</span>
+                    <span>₹{selectedPayment.totalAmount.toFixed(2)}</span>
+                  </div>
+                </div>
+              </div>
+
+              {selectedPayment.remarks && (
+                <div>
+                  <h4 className="font-semibold mb-1">Remarks</h4>
+                  <p className="text-sm text-muted-foreground">{selectedPayment.remarks}</p>
+                </div>
+              )}
+
+              <div className="text-center text-xs text-muted-foreground pt-4 border-t">
+                <p>Thank you for your payment!</p>
+                <p>Generated on {new Date().toLocaleString()}</p>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </div>
   )
 }

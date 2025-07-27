@@ -20,7 +20,7 @@ import {
   Calendar,
   TrendingUp
 } from "lucide-react"
-import { Spinner } from "@/components/ui/spinner"
+import LoaderWrapper from "@/components/ui/loader-wrapper"
 
 interface Transaction {
   id: string
@@ -230,7 +230,7 @@ export default function FeeCollectionsReportPage() {
   }
 
   if (status === "loading" || !session) {
-    return <Spinner size="2xl" fullScreen />
+    return <LoaderWrapper fullScreen label="Loading fee collections report..." />
   }
 
   return (
@@ -651,7 +651,7 @@ export default function FeeCollectionsReportPage() {
         {loading && (
           <Card>
             <CardContent className="p-8">
-              <Spinner center label="Generating report..." />
+              <LoaderWrapper center label="Generating report..." />
             </CardContent>
           </Card>
         )}

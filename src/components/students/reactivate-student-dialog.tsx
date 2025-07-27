@@ -21,7 +21,7 @@ import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { UserPlus, CheckCircle, AlertTriangle } from "lucide-react"
-import { Spinner } from "@/components/ui/spinner"
+import LoaderOne from "@/components/ui/loader-one"
 
 interface Student {
   id: string
@@ -195,7 +195,7 @@ export function ReactivateStudentDialog({
               <div className="space-y-3 pl-6">
                 {isLoadingData ? (
                   <div className="flex items-center space-x-2">
-                    <Spinner size="sm" />
+                    <LoaderOne />
                     <span className="text-sm text-gray-600">Loading academic data...</span>
                   </div>
                 ) : (
@@ -273,7 +273,7 @@ export function ReactivateStudentDialog({
             disabled={isLoading || !canSubmit}
             className="bg-blue-600 hover:bg-blue-700"
           >
-            {isLoading && <Spinner size="sm" className="mr-2" />}
+            {isLoading && <div className="mr-2"><LoaderOne /></div>}
             Reactivate Student
           </Button>
         </DialogFooter>

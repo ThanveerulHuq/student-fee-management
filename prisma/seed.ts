@@ -72,7 +72,7 @@ async function main() {
       create: {
         academicYearId: academicYear.id,
         classId: classRecord.id,
-        schoolFee: 1000 + (classData.order * 100), // Increasing fee by class
+        tutionFee: 1000 + (classData.order * 100), // Increasing fee by class
         bookFee: 500 + (classData.order * 50),
       },
     })

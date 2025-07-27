@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert } from "@/components/ui/alert"
 import AcademicYearSelector from "@/components/ui/academic-year-selector"
-import { Spinner } from "@/components/ui/spinner"
+import LoaderOne from "@/components/ui/loader-one"
 import { CalendarDays, ArrowRight } from "lucide-react"
 
 interface AcademicYear {
@@ -68,7 +68,7 @@ export default function SelectAcademicYearPage() {
   if (status === "loading") {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <Spinner size="2xl" />
+        <LoaderOne />
       </div>
     )
   }

@@ -1,164 +1,227 @@
-import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth/next"
-import { authOptions } from "@/lib/auth"
-import { prisma } from "@/lib/prisma"
-import { enrollmentUpdateSchema } from "@/lib/validations/enrollment"
+import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { prisma } from '@/lib/prisma'
+import { authOptions } from '@/lib/auth'
 
+// GET /api/flexible-enrollments/[id] - Get specific enrollment
 export async function GET(
   request: NextRequest,
-  context: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
     if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const params = await context.params
-    const enrollment = await prisma.studentYear.findUnique({
-      where: { id: params.id },
-      include: {
-        student: true,
-        academicYear: true,
-        class: true,
-        commonFee: true,
-        feeTransactions: {
-          orderBy: { createdAt: "desc" },
-        },
-        paidFee: true,
-      },
+    const resolvedParams = await params
+    const enrollment = await prisma.studentEnrollment.findUnique({
+      where: { id: resolvedParams.id }
     })
 
     if (!enrollment) {
-      return NextResponse.json({ error: "Enrollment not found" }, { status: 404 })
+      return NextResponse.json(
+        { error: 'Enrollment not found' },
+        { status: 404 }
+      )
     }
 
     return NextResponse.json(enrollment)
   } catch (error) {
-    console.error("Error fetching enrollment:", error)
+    console.error('Error fetching enrollment:', error)
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: 'Failed to fetch enrollment' },
       { status: 500 }
     )
   }
 }
 
+// PUT /api/flexible-enrollments/[id] - Update enrollment
 export async function PUT(
   request: NextRequest,
-  context: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
     if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const params = await context.params
+    const resolvedParams = await params
     const body = await request.json()
-    const validatedData = enrollmentUpdateSchema.parse(body)
+    const { section, customFees, scholarshipUpdates } = body
 
     // Check if enrollment exists
-    const existingEnrollment = await prisma.studentYear.findUnique({
-      where: { id: params.id },
+    const existingEnrollment = await prisma.studentEnrollment.findUnique({
+      where: { id: resolvedParams.id }
     })
 
     if (!existingEnrollment) {
-      return NextResponse.json({ error: "Enrollment not found" }, { status: 404 })
+      return NextResponse.json(
+        { error: 'Enrollment not found' },
+        { status: 404 }
+      )
     }
 
-    // If changing class or academic year, check for conflicts
-    if (validatedData.academicYearId || validatedData.classId) {
-      const academicYearId = validatedData.academicYearId || existingEnrollment.academicYearId
-      const classId = validatedData.classId || existingEnrollment.classId
+    const updateData: Record<string, unknown> = {}
 
-      // Check if student is already enrolled in this academic year (if changing year)
-      if (validatedData.academicYearId && validatedData.academicYearId !== existingEnrollment.academicYearId) {
-        const conflictingEnrollment = await prisma.studentYear.findUnique({
-          where: {
-            studentId_academicYearId: {
-              studentId: existingEnrollment.studentId,
-              academicYearId: validatedData.academicYearId,
-            },
-          },
-        })
+    // Update section if provided
+    if (section) {
+      updateData.section = section
+    }
 
-        if (conflictingEnrollment && conflictingEnrollment.id !== params.id) {
-          return NextResponse.json(
-            { error: "Student is already enrolled in this academic year" },
-            { status: 400 }
-          )
+    // Update custom fees if provided
+    if (customFees) {
+      const updatedFees = existingEnrollment.fees.map(fee => {
+        const customAmount = customFees[fee.templateId]
+        if (customAmount !== undefined) {
+          const newAmountDue = customAmount - fee.amountPaid
+          return {
+            ...fee,
+            amount: customAmount,
+            amountDue: newAmountDue
+          }
         }
+        return fee
+      })
+
+      updateData.fees = updatedFees
+
+      // Recalculate totals
+      const feeTotals = {
+        compulsory: updatedFees.filter(f => f.isCompulsory).reduce((sum, f) => sum + f.amount, 0),
+        optional: updatedFees.filter(f => !f.isCompulsory).reduce((sum, f) => sum + f.amount, 0),
+        total: updatedFees.reduce((sum, f) => sum + f.amount, 0),
+        paid: updatedFees.reduce((sum, f) => sum + f.amountPaid, 0),
+        due: updatedFees.reduce((sum, f) => sum + f.amountDue, 0)
       }
 
-      // Update common fee if class or academic year changed
-      if (validatedData.classId || validatedData.academicYearId) {
-        const commonFee = await prisma.commonFee.findUnique({
-          where: {
-            academicYearId_classId: {
-              academicYearId,
-              classId,
-            },
-          },
-        })
+      const scholarshipTotals = existingEnrollment.totals.scholarships
+      const netTotals = {
+        total: feeTotals.total - scholarshipTotals.applied,
+        paid: feeTotals.paid,
+        due: feeTotals.due - scholarshipTotals.applied
+      }
 
-        if (!commonFee) {
-          return NextResponse.json(
-            { error: "Fee structure not found for this class and academic year" },
-            { status: 400 }
-          )
-        }
+      updateData.totals = {
+        fees: feeTotals,
+        scholarships: scholarshipTotals,
+        netAmount: netTotals
+      }
 
-        validatedData.commonFeeId = commonFee.id
+      updateData.feeStatus = {
+        ...existingEnrollment.feeStatus,
+        status: netTotals.due <= 0 ? 'PAID' : netTotals.paid > 0 ? 'PARTIAL' : 'OVERDUE'
       }
     }
 
-    const enrollment = await prisma.studentYear.update({
-      where: { id: params.id },
-      data: validatedData,
-      include: {
-        student: true,
-        academicYear: true,
-        class: true,
-        commonFee: true,
-      },
+    // Update scholarships if provided
+    if (scholarshipUpdates) {
+      const updatedScholarships = existingEnrollment.scholarships.map(scholarship => {
+        interface ScholarshipUpdate {
+          scholarshipItemId: string;
+          amount: number;
+          isActive?: boolean;
+        }
+        const update = scholarshipUpdates.find(
+          (u: ScholarshipUpdate) => u.scholarshipItemId === scholarship.scholarshipItemId
+        )
+        if (update) {
+          return {
+            ...scholarship,
+            amount: update.amount,
+            isActive: update.isActive !== undefined ? update.isActive : scholarship.isActive
+          }
+        }
+        return scholarship
+      })
+
+      updateData.scholarships = updatedScholarships
+
+      // Recalculate scholarship totals
+      const activeScholarships = updatedScholarships.filter(s => s.isActive)
+      const scholarshipTotals = {
+        applied: activeScholarships.reduce((sum, s) => sum + s.amount, 0),
+        autoApplied: activeScholarships.filter(s => s.isAutoApplied).reduce((sum, s) => sum + s.amount, 0),
+        manual: activeScholarships.filter(s => !s.isAutoApplied).reduce((sum, s) => sum + s.amount, 0)
+      }
+
+      const feeTotals = updateData.totals?.fees || existingEnrollment.totals.fees
+      const netTotals = {
+        total: feeTotals.total - scholarshipTotals.applied,
+        paid: feeTotals.paid,
+        due: feeTotals.due - scholarshipTotals.applied
+      }
+
+      updateData.totals = {
+        fees: feeTotals,
+        scholarships: scholarshipTotals,
+        netAmount: netTotals
+      }
+
+      updateData.feeStatus = {
+        ...existingEnrollment.feeStatus,
+        status: netTotals.due <= 0 ? 'PAID' : netTotals.paid > 0 ? 'PARTIAL' : 'OVERDUE'
+      }
+    }
+
+    const updatedEnrollment = await prisma.studentEnrollment.update({
+      where: { id: resolvedParams.id },
+      data: updateData
     })
 
-    return NextResponse.json(enrollment)
+    return NextResponse.json(updatedEnrollment)
   } catch (error) {
-    if (error instanceof Error) {
-      return NextResponse.json({ error: error.message }, { status: 400 })
-    }
-    console.error("Error updating enrollment:", error)
+    console.error('Error updating enrollment:', error)
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: 'Failed to update enrollment' },
       { status: 500 }
     )
   }
 }
 
+// DELETE /api/flexible-enrollments/[id] - Delete enrollment (mark as inactive)
 export async function DELETE(
   request: NextRequest,
-  context: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
     if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const params = await context.params
+    const resolvedParams = await params
     
-    // Soft delete by setting isActive to false
-    const enrollment = await prisma.studentYear.update({
-      where: { id: params.id },
-      data: { isActive: false },
+    // Check if enrollment exists
+    const existingEnrollment = await prisma.studentEnrollment.findUnique({
+      where: { id: resolvedParams.id }
     })
 
-    return NextResponse.json(enrollment)
+    if (!existingEnrollment) {
+      return NextResponse.json(
+        { error: 'Enrollment not found' },
+        { status: 404 }
+      )
+    }
+
+    // Mark as inactive instead of hard delete
+    const updatedEnrollment = await prisma.studentEnrollment.update({
+      where: { id: resolvedParams.id },
+      data: { 
+        isActive: false,
+        'student.status': 'INACTIVE'
+      }
+    })
+
+    return NextResponse.json({
+      message: 'Enrollment deactivated successfully',
+      enrollment: updatedEnrollment
+    })
   } catch (error) {
-    console.error("Error deleting enrollment:", error)
+    console.error('Error deleting enrollment:', error)
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: 'Failed to delete enrollment' },
       { status: 500 }
     )
   }

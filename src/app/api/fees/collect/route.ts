@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Calculate maximum payable amounts for each fee type
-    const maxSchoolFee = Math.max(0, enrollment.commonFee.schoolFee - (enrollment.paidFee?.schoolFeePaid || 0))
+    const maxSchoolFee = Math.max(0, enrollment.commonFee.tutionFee - (enrollment.paidFee?.schoolFeePaid || 0))
     const maxBookFee = Math.max(0, enrollment.commonFee.bookFee - (enrollment.paidFee?.bookFeePaid || 0))
     const maxUniformFee = Math.max(0, enrollment.uniformFee - (enrollment.paidFee?.uniformFeePaid || 0))
     const maxIslamicStudies = Math.max(0, enrollment.islamicStudies - (enrollment.paidFee?.islamicStudiesPaid || 0))

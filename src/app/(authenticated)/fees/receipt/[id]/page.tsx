@@ -15,7 +15,7 @@ import {
 } from "lucide-react"
 import { formatCurrency, formatDateTime, formatDate } from "@/lib/utils/receipt"
 import SecondaryHeader from "@/components/ui/secondary-header"
-import { Spinner } from "@/components/ui/spinner"
+import LoaderWrapper from "@/components/ui/loader-wrapper"
 
 interface ReceiptData {
   id: string
@@ -115,7 +115,7 @@ export default function ReceiptPage({ params }: ReceiptPageProps) {
   }
 
   if (status === "loading" || loading) {
-    return <Spinner size="2xl" fullScreen label="Loading receipt..." />
+    return <LoaderWrapper fullScreen label="Loading receipt..." />
   }
 
   if (!session || !receipt) {

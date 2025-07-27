@@ -4,7 +4,7 @@ import { useAcademicYear } from '@/contexts/academic-year-context'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
-import { Spinner } from '@/components/ui/spinner'
+import LoaderOne from '@/components/ui/loader-one'
 
 interface AcademicYearGuardProps {
   children: React.ReactNode
@@ -29,7 +29,9 @@ export default function AcademicYearGuard({ children }: AcademicYearGuardProps) 
 
   // Show loading while session or academic year is loading
   if (status === "loading" || loading || !isReady) {
-    return <Spinner size="2xl" fullScreen />
+    return <div className="flex items-center justify-center h-screen">
+      <LoaderOne />
+    </div>
   }
 
   // Show error state

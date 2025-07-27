@@ -22,7 +22,7 @@ import {
 import { formatCurrency } from "@/lib/utils/receipt"
 import { useAcademicYear, useAcademicYearNavigation } from "@/contexts/academic-year-context"
 import SecondaryHeader from "@/components/ui/secondary-header"
-import { Spinner } from "@/components/ui/spinner"
+import LoaderWrapper from "@/components/ui/loader-wrapper"
 
 interface OutstandingFee {
   id: string
@@ -116,7 +116,7 @@ export default function FeesPage() {
   }, [fetchOutstandingFees])
 
   if (loading) {
-    return <Spinner size="2xl" fullScreen />
+    return <LoaderWrapper fullScreen label="Loading fees..." />
   }
 
   return (
@@ -196,7 +196,7 @@ export default function FeesPage() {
           </CardHeader>
           <CardContent className="p-0">
             {loading ? (
-              <Spinner center label="Loading outstanding fees..." />
+              <LoaderWrapper center label="Loading outstanding fees..." />
             ) : (
               <Table>
                 <TableHeader>

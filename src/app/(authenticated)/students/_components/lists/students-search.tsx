@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import { Plus, Search, Users } from "lucide-react"
-import { Spinner } from "@/components/ui/spinner"
+import LoaderOne from "@/components/ui/loader-one"
 
 interface StudentsSearchProps {
   searchTerm: string
@@ -91,7 +91,7 @@ export default function StudentsSearch({
             )}
             {isSearching && (
               <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
-                <Spinner size="sm" />
+                <LoaderOne />
               </div>
             )}
           </div>

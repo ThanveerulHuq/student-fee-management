@@ -25,7 +25,7 @@ import {
   DollarSign,
   Phone
 } from "lucide-react"
-import { Spinner } from "@/components/ui/spinner"
+import LoaderWrapper from "@/components/ui/loader-wrapper"
 
 interface OutstandingStudent {
   id: string
@@ -329,7 +329,7 @@ export default function OutstandingFeesReportPage({}: OutstandingFeesPageProps) 
   }
 
   if (status === "loading" || !session) {
-    return <Spinner size="2xl" fullScreen />
+    return <LoaderWrapper fullScreen label="Loading outstanding fees report..." />
   }
 
   return (
@@ -581,7 +581,7 @@ export default function OutstandingFeesReportPage({}: OutstandingFeesPageProps) 
         {loading && (
           <Card>
             <CardContent className="p-8">
-              <Spinner center label="Generating report..." />
+              <LoaderWrapper center label="Generating report..." />
             </CardContent>
           </Card>
         )}

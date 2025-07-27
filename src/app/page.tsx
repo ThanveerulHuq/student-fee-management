@@ -3,7 +3,7 @@
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { useEffect } from "react"
-import { Spinner } from "@/components/ui/spinner"
+import LoaderOne from "@/components/ui/loader-one"
 
 export default function Home() {
   const { data: session, status } = useSession()
@@ -20,6 +20,8 @@ export default function Home() {
   }, [session, status, router])
 
   return (
-    <Spinner size="2xl" label="Loading BlueMoon SDMS..." fullScreen />
+    <div className="flex items-center justify-center h-screen">
+      <LoaderOne />
+    </div>
   )
 }

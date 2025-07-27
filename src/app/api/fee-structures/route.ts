@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
       data: {
         academicYearId,
         classId,
-        schoolFee: parseFloat(schoolFee),
+        tutionFee: parseFloat(schoolFee),
         bookFee: parseFloat(bookFee),
       },
       include: {

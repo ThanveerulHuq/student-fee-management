@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { useAcademicYearNavigation } from "@/contexts/academic-year-context"
-import { Spinner } from "@/components/ui/spinner"
+import LoaderWrapper from "@/components/ui/loader-wrapper"
 import { DeactivateStudentDialog } from "@/components/students/deactivate-student-dialog"
 import { ReactivateStudentDialog } from "@/components/students/reactivate-student-dialog"
 import { toast } from "sonner"
@@ -197,7 +197,7 @@ export default function StudentDetailPage({ params }: StudentDetailPageProps) {
   }
 
   if (status === "loading" || loading) {
-    return <Spinner size="2xl" fullScreen label="Loading student details..." />
+    return <LoaderWrapper fullScreen label="Loading student details..." />
   }
 
   if (!session || !student) {
@@ -215,7 +215,7 @@ export default function StudentDetailPage({ params }: StudentDetailPageProps) {
       <StudentHeader
         student={student}
         onEdit={() => navigateTo(`/students/${studentId}/edit`)}
-        onEnroll={() => navigateTo(`/students/${studentId}/enroll`)}
+        onEnroll={() => navigateTo(`/enroll/${studentId}`)}
         onDeactivate={handleDeactivateStudent}
         onReactivate={handleReactivateStudent}
         onBack={() => navigateTo("/students")}
@@ -226,7 +226,7 @@ export default function StudentDetailPage({ params }: StudentDetailPageProps) {
         <FamilyContactCard student={student} />
         <EnrollmentHistoryCard 
           enrollments={student.enrollments}
-          onEnrollClick={() => navigateTo(`/students/${studentId}/enroll`)}
+          onEnrollClick={() => navigateTo(`/enroll/${studentId}`)}
           onFeeCollectionClick={(enrollmentId) => navigateTo(`/fees/collect?enrollmentId=${enrollmentId}`)}
         />
       </main>

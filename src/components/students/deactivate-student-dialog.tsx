@@ -21,7 +21,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { UserMinus, AlertTriangle } from "lucide-react"
-import { Spinner } from "@/components/ui/spinner"
+import LoaderOne from "@/components/ui/loader-one"
 
 interface Student {
   id: string
@@ -156,7 +156,7 @@ export function DeactivateStudentDialog({
             onClick={handleConfirm}
             disabled={isLoading}
           >
-            {isLoading && <Spinner size="sm" className="mr-2" />}
+            {isLoading && <div className="mr-2"><LoaderOne /></div>}
             Deactivate Student
           </Button>
         </DialogFooter>

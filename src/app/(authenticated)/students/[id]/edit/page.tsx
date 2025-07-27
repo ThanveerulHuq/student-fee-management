@@ -6,7 +6,7 @@ import { useSession } from "next-auth/react"
 import { useAcademicYearNavigation } from "@/contexts/academic-year-context"
 import StudentForm from "@/app/(authenticated)/students/_components/student-form"
 import { type StudentFormData } from "@/lib/validations/student"
-import { Spinner } from "@/components/ui/spinner"
+import LoaderWrapper from "@/components/ui/loader-wrapper"
 
 interface EditStudentPageProps {
   params: Promise<{
@@ -106,7 +106,7 @@ export default function EditStudentPage({ params }: EditStudentPageProps) {
   }
 
   if (status === "loading" || loading) {
-    return <Spinner size="2xl" fullScreen label="Loading student details..." />
+    return <LoaderWrapper fullScreen label="Loading student details..." />
   }
 
   if (!session || !student) {
