@@ -14,8 +14,7 @@ import {
 import { useAcademicYearNavigation } from "@/contexts/academic-year-context"
 
 export default function DashboardPage() {
-  const { goToStudents, goToFees, goToReports, navigateTo } = useAcademicYearNavigation()
-  const isDemo = process.env.NEXT_PUBLIC_IS_DEMO === "true"
+  const { goToStudents, goToFees, goToReports, navigateTo } = useAcademicYearNavigation();
 
   const allMenuItems = [
     {
@@ -24,7 +23,6 @@ export default function DashboardPage() {
       icon: Users,
       action: goToStudents,
       color: "bg-blue-500",
-      isDemo: true
     },
     {
       title: "Student Enrollments", 
@@ -32,7 +30,6 @@ export default function DashboardPage() {
       icon: GraduationCap,
       action: () => navigateTo("/enrollments"),
       color: "bg-indigo-500",
-      isDemo: false
     },
     {
       title: "Fee Management",
@@ -40,7 +37,6 @@ export default function DashboardPage() {
       icon: CreditCard,
       action: goToFees,
       color: "bg-green-500",
-      isDemo: false
     },
     {
       title: "Reports",
@@ -48,7 +44,6 @@ export default function DashboardPage() {
       icon: FileText,
       action: goToReports,
       color: "bg-purple-500",
-      isDemo: false
     },
     {
       title: "Analytics",
@@ -56,7 +51,6 @@ export default function DashboardPage() {
       icon: BarChart3,
       action: () => navigateTo("/analytics"),
       color: "bg-orange-500",
-      isDemo: false
     },
     {
       title: "Fee Templates",
@@ -64,7 +58,6 @@ export default function DashboardPage() {
       icon: Layers,
       action: () => navigateTo("/admin/fee-templates"),
       color: "bg-teal-500",
-      isDemo: false
     },
     {
       title: "Scholarship Templates",
@@ -72,7 +65,6 @@ export default function DashboardPage() {
       icon: Award,
       action: () => navigateTo("/admin/scholarship-templates"),
       color: "bg-yellow-500",
-      isDemo: false
     },
     {
       title: "Fee Structures",
@@ -80,11 +72,10 @@ export default function DashboardPage() {
       icon: Settings,
       action: () => navigateTo("/admin/fee-structures"),
       color: "bg-slate-500",
-      isDemo: false
     }
   ]
 
-  const menuItems = allMenuItems.filter(item => !isDemo || item.isDemo)
+  const menuItems = allMenuItems
 
   return (
     <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
@@ -132,7 +123,7 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
           
-          {!isDemo && (
+          
             <>
               <Card>
                 <CardHeader>
@@ -158,7 +149,7 @@ export default function DashboardPage() {
                 </CardContent>
               </Card>
             </>
-          )}
+          
         </div>
     </main>
   )
