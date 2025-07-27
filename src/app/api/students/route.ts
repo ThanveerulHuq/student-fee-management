@@ -52,17 +52,6 @@ export async function GET(request: NextRequest) {
         skip,
         take: limit,
         orderBy: { createdAt: "desc" },
-        include: {
-          enrollments: {
-            include: {
-              academicYear: true,
-              class: true,
-            },
-            where: {
-              isActive: true,
-            },
-          },
-        },
       }),
       prisma.student.count({ where }),
     ])

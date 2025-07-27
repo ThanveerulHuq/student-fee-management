@@ -49,7 +49,6 @@ model Student {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  enrollments StudentYear[]
   documents   Document[]
 
   @@map("students")
@@ -64,8 +63,6 @@ model AcademicYear {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  feeStructures CommonFee[]
-  enrollments   StudentYear[]
 
   @@map("academic_years")
 }
@@ -77,9 +74,6 @@ model Class {
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  feeStructures CommonFee[]
-  enrollments   StudentYear[]
 
   @@map("classes")
 }
@@ -335,97 +329,7 @@ type PaymentItem {
   feeBalance      Float
 }
 
-model CommonFee {
-  id             String @id @default(auto()) @map("_id") @db.ObjectId
-  academicYearId String @db.ObjectId
-  classId        String @db.ObjectId
-  tutionFee      Float  @default(0)
-  bookFee        Float  @default(0)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
 
-  academicYear AcademicYear @relation(fields: [academicYearId], references: [id])
-  class        Class        @relation(fields: [classId], references: [id])
-  enrollments  StudentYear[]
-
-  @@unique([academicYearId, classId])
-  @@map("common_fees")
-}
-
-model StudentYear {
-  id             String @id @default(auto()) @map("_id") @db.ObjectId
-  studentId      String @db.ObjectId
-  academicYearId String @db.ObjectId
-  classId        String @db.ObjectId
-  commonFeeId    String @db.ObjectId
-  section        String
-  
-  // Individual fee customizations
-  uniformFee     Float @default(0)
-  islamicStudies Float @default(0)
-  vanFee         Float @default(0)
-  scholarship    Float @default(0)
-  
-  enrollmentDate DateTime @default(now())
-  isActive       Boolean  @default(true)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-
-  student      Student      @relation(fields: [studentId], references: [id])
-  academicYear AcademicYear @relation(fields: [academicYearId], references: [id])
-  class        Class        @relation(fields: [classId], references: [id])
-  commonFee    CommonFee    @relation(fields: [commonFeeId], references: [id])
-  
-  feeTransactions FeeTxn[]
-  paidFee         PaidFee?
-
-  @@unique([studentId, academicYearId])
-  @@map("student_years")
-}
-
-model FeeTxn {
-  id             String @id @default(auto()) @map("_id") @db.ObjectId
-  studentYearId  String @db.ObjectId
-  
-  // Payment breakdown
-  schoolFee      Float @default(0)
-  bookFee        Float @default(0)
-  uniformFee     Float @default(0)
-  islamicStudies Float @default(0)
-  vanFee         Float @default(0)
-  totalAmountPaid Float
-  
-  paymentDate    DateTime      @default(now())
-  receiptNo      String        @unique
-  paymentMethod  PaymentMethod @default(CASH)
-  remarks        String?
-  createdBy      String
-  createdAt      DateTime      @default(now())
-
-  studentYear StudentYear @relation(fields: [studentYearId], references: [id])
-
-  @@map("fee_transactions")
-}
-
-model PaidFee {
-  id                  String @id @default(auto()) @map("_id") @db.ObjectId
-  studentYearId       String @unique @db.ObjectId
-  
-  // Cumulative amounts paid
-  schoolFeePaid       Float @default(0)
-  bookFeePaid         Float @default(0)
-  uniformFeePaid      Float @default(0)
-  islamicStudiesPaid  Float @default(0)
-  vanFeePaid          Float @default(0)
-  totalPaid           Float @default(0)
-  
-  lastPaymentDate     DateTime?
-  updatedAt           DateTime @updatedAt
-
-  studentYear StudentYear @relation(fields: [studentYearId], references: [id])
-
-  @@map("paid_fees")
-}
 
 model Document {
   id        String       @id @default(auto()) @map("_id") @db.ObjectId

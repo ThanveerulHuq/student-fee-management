@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter, useSearchParams } from "next/navigation"
+import { useAcademicYear } from "@/contexts/academic-year-context"
 import SecondaryHeader from "@/components/ui/secondary-header"
 
 interface OutstandingFeesPageProps {
@@ -68,13 +69,19 @@ interface ReportData {
   students: OutstandingStudent[]
   summary: {
     totalStudents: number
-    totalOutstanding: number
-    averageOutstanding: number
+    studentsWithOutstanding: number
+    totalOutstandingAmount: number
+    classTotals: Array<{
+      class: string
+      studentsCount: number
+      outstandingAmount: number
+    }>
   }
 }
 
 export default function OutstandingFeesReportPage({}: OutstandingFeesPageProps) {
   const { data: session, status } = useSession()
+  const { academicYear } = useAcademicYear()
   const router = useRouter()
   const searchParams = useSearchParams()
   
@@ -83,10 +90,8 @@ export default function OutstandingFeesReportPage({}: OutstandingFeesPageProps) 
   const [error, setError] = useState("")
   
   // Filter states
-  const [academicYears, setAcademicYears] = useState<{ id: string; year: string }[]>([])
   const [classes, setClasses] = useState<{ id: string; className: string }[]>([])
   const [filters, setFilters] = useState({
-    academicYearId: searchParams.get("academicYearId") || "",
     classId: searchParams.get("classId") || "",
     section: searchParams.get("section") || "",
     minOutstanding: searchParams.get("minOutstanding") || "1",
@@ -99,7 +104,6 @@ export default function OutstandingFeesReportPage({}: OutstandingFeesPageProps) 
   }, [status, router])
 
   useEffect(() => {
-    loadAcademicYears()
     loadClasses()
   }, [])
 
@@ -108,107 +112,61 @@ export default function OutstandingFeesReportPage({}: OutstandingFeesPageProps) 
     setError("")
     
     try {
-      // Use the student reports API with filtering for outstanding fees
+      // Use the outstanding fees API with filtering
       const queryParams = new URLSearchParams()
-      if (filters.academicYearId) queryParams.append("academicYearId", filters.academicYearId)
+      if (academicYear?.id) queryParams.append("academicYearId", academicYear.id)
       if (filters.classId) queryParams.append("classId", filters.classId)
       if (filters.section) queryParams.append("section", filters.section)
-      queryParams.append("isActive", "true") // Only active students
+      if (filters.minOutstanding) queryParams.append("minOutstanding", filters.minOutstanding)
 
-      const response = await fetch(`/api/reports/students?${queryParams}`)
+      const response = await fetch(`/api/reports/outstanding-fees?${queryParams}`)
       if (!response.ok) {
         throw new Error("Failed to generate report")
       }
 
       const data = await response.json()
       
-      // Process data to filter only students with outstanding fees
-      const minOutstanding = parseFloat(filters.minOutstanding) || 1
-      const outstandingStudents: OutstandingStudent[] = []
-      
-      data.students.forEach((student: {
-        id: string
-        name: string
-        admissionNo: string
-        fatherName: string
-        mobileNo1: string
-        isActive: boolean
-        enrollments: Array<{
-          id: string
-          section: string
-          academicYear: { year: string }
-          class: { className: string }
-          feeCalculation: { totalFee: number; totalPaid: number; outstanding: number }
-          commonFee: { schoolFee: number; bookFee: number }
-          paidFee: {
-            schoolFeePaid: number
-            bookFeePaid: number
-            uniformFeePaid: number
-            islamicStudiesPaid: number
-            vanFeePaid: number
-          } | null
-          uniformFee: number
-          islamicStudies: number
-          vanFee: number
-          scholarship: number
-        }>
-      }) => {
-        student.enrollments.forEach((enrollment) => {
-          const outstanding = enrollment.feeCalculation.outstanding
-          
-          if (outstanding >= minOutstanding) {
-            outstandingStudents.push({
-              id: enrollment.id,
-              student: {
-                id: student.id,
-                name: student.name,
-                admissionNo: student.admissionNo,
-                fatherName: student.fatherName,
-                mobileNo1: student.mobileNo1,
-                isActive: student.isActive,
-              },
-              academicYear: enrollment.academicYear,
-              class: enrollment.class,
-              section: enrollment.section,
-              totalFee: enrollment.feeCalculation.totalFee,
-              totalPaid: enrollment.feeCalculation.totalPaid,
-              outstanding: outstanding,
-              feeBreakdown: {
-                schoolFee: enrollment.commonFee.schoolFee,
-                bookFee: enrollment.commonFee.bookFee,
-                uniformFee: enrollment.uniformFee,
-                islamicStudies: enrollment.islamicStudies,
-                vanFee: enrollment.vanFee,
-                scholarship: enrollment.scholarship,
-              },
-              paidBreakdown: enrollment.paidFee ? {
-                schoolFeePaid: enrollment.paidFee.schoolFeePaid || 0,
-                bookFeePaid: enrollment.paidFee.bookFeePaid || 0,
-                uniformFeePaid: enrollment.paidFee.uniformFeePaid || 0,
-                islamicStudiesPaid: enrollment.paidFee.islamicStudiesPaid || 0,
-                vanFeePaid: enrollment.paidFee.vanFeePaid || 0,
-              } : {
-                schoolFeePaid: 0,
-                bookFeePaid: 0,
-                uniformFeePaid: 0,
-                islamicStudiesPaid: 0,
-                vanFeePaid: 0,
-              }
-            })
-          }
-        })
-      })
-
-      // Calculate summary statistics
-      const totalOutstanding = outstandingStudents.reduce((sum, s) => sum + s.outstanding, 0)
+      // Map the API response to the UI format
+      const outstandingStudents: OutstandingStudent[] = data.students.map((student: any) => ({
+        id: student.id,
+        student: {
+          id: student.id,
+          name: student.name,
+          admissionNo: student.admissionNo,
+          fatherName: student.fatherName,
+          mobileNo1: student.phone,
+          isActive: true, // API only returns active students
+        },
+        academicYear: {
+          year: academicYear?.year || "Current",
+        },
+        class: {
+          className: student.class,
+        },
+        section: student.section,
+        totalFee: student.totalFees,
+        totalPaid: student.paidAmount,
+        outstanding: student.outstandingAmount,
+        feeBreakdown: {
+          schoolFee: 0, // Will calculate from fees array
+          bookFee: 0,
+          uniformFee: 0,
+          islamicStudies: 0,
+          vanFee: 0,
+          scholarship: 0,
+        },
+        paidBreakdown: {
+          schoolFeePaid: 0, // Will calculate from fees array
+          bookFeePaid: 0,
+          uniformFeePaid: 0,
+          islamicStudiesPaid: 0,
+          vanFeePaid: 0,
+        }
+      }))
 
       const processedData: ReportData = {
-        students: outstandingStudents.sort((a, b) => b.outstanding - a.outstanding),
-        summary: {
-          totalStudents: outstandingStudents.length,
-          totalOutstanding,
-          averageOutstanding: outstandingStudents.length > 0 ? totalOutstanding / outstandingStudents.length : 0,
-        }
+        students: outstandingStudents,
+        summary: data.summary
       }
 
       setReportData(processedData)
@@ -218,25 +176,14 @@ export default function OutstandingFeesReportPage({}: OutstandingFeesPageProps) 
     } finally {
       setLoading(false)
     }
-  }, [filters])
+  }, [filters, academicYear])
 
   useEffect(() => {
-    if (session) {
+    if (session && academicYear) {
       generateReport()
     }
-  }, [session, generateReport])
+  }, [session, academicYear, generateReport])
 
-  const loadAcademicYears = async () => {
-    try {
-      const response = await fetch("/api/academic-years")
-      if (response.ok) {
-        const data = await response.json()
-        setAcademicYears(data)
-      }
-    } catch (error) {
-      console.error("Error loading academic years:", error)
-    }
-  }
 
   const loadClasses = async () => {
     try {
@@ -315,7 +262,6 @@ export default function OutstandingFeesReportPage({}: OutstandingFeesPageProps) 
 
   const resetFilters = () => {
     setFilters({
-      academicYearId: "",
       classId: "",
       section: "",
       minOutstanding: "1",
@@ -361,27 +307,7 @@ export default function OutstandingFeesReportPage({}: OutstandingFeesPageProps) 
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div>
-                <Label htmlFor="academicYear">Academic Year</Label>
-                <Select
-                  value={filters.academicYearId}
-                  onValueChange={(value) => handleFilterChange("academicYearId", value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select academic year" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="NA">All Years</SelectItem>
-                    {academicYears.map((year) => (
-                      <SelectItem key={year.id} value={year.id}>
-                        {year.year}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <Label htmlFor="class">Class</Label>
                 <Select
@@ -392,7 +318,7 @@ export default function OutstandingFeesReportPage({}: OutstandingFeesPageProps) 
                     <SelectValue placeholder="Select class" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="NA">All Classes</SelectItem>
+                    <SelectItem value="all">All Classes</SelectItem>
                     {classes.map((cls) => (
                       <SelectItem key={cls.id} value={cls.id}>
                         {cls.className}
@@ -458,7 +384,7 @@ export default function OutstandingFeesReportPage({}: OutstandingFeesPageProps) 
                   <Users className="h-8 w-8 text-red-600" />
                   <div className="ml-4">
                     <p className="text-sm font-medium text-gray-600">Students with Outstanding</p>
-                    <p className="text-2xl font-bold text-gray-900">{reportData.summary.totalStudents}</p>
+                    <p className="text-2xl font-bold text-gray-900">{reportData.summary.studentsWithOutstanding}</p>
                   </div>
                 </div>
               </CardContent>
@@ -471,7 +397,7 @@ export default function OutstandingFeesReportPage({}: OutstandingFeesPageProps) 
                   <div className="ml-4">
                     <p className="text-sm font-medium text-gray-600">Total Outstanding</p>
                     <p className="text-2xl font-bold text-gray-900">
-                      ₹{reportData.summary.totalOutstanding.toLocaleString()}
+                      ₹{reportData.summary.totalOutstandingAmount.toLocaleString()}
                     </p>
                   </div>
                 </div>
@@ -485,7 +411,7 @@ export default function OutstandingFeesReportPage({}: OutstandingFeesPageProps) 
                   <div className="ml-4">
                     <p className="text-sm font-medium text-gray-600">Average Outstanding</p>
                     <p className="text-2xl font-bold text-gray-900">
-                      ₹{Math.round(reportData.summary.averageOutstanding).toLocaleString()}
+                      ₹{reportData.summary.studentsWithOutstanding > 0 ? Math.round(reportData.summary.totalOutstandingAmount / reportData.summary.studentsWithOutstanding).toLocaleString() : 0}
                     </p>
                   </div>
                 </div>

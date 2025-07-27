@@ -30,11 +30,24 @@ export default function ReportsPage() {
       ]
     },
     {
+      title: "Fee Payments Report",
+      description: "Comprehensive report of all fee payments with advanced filtering",
+      icon: DollarSign,
+      href: `/reports/fee-payments`,
+      color: "bg-green-500",
+      features: [
+        "Date range filtering",
+        "Student-wise payment tracking",
+        "Receipt number search",
+        "Payment method breakdown"
+      ]
+    },
+    {
       title: "Fee Collection Report",
       description: "Track fee payments with date range and collector filters",
-      icon: DollarSign,
+      icon: FileText,
       href: `/reports/fee-collections`,
-      color: "bg-green-500",
+      color: "bg-blue-500",
       features: [
         "Date range filtering",
         "Payment method breakdown",
@@ -46,22 +59,22 @@ export default function ReportsPage() {
 
   const quickReports = [
     {
-      title: "Today's Collections",
-      description: "Fee collections for today",
+      title: "Today's Payments",
+      description: "Fee payments collected today",
       action: () => {
         const today = new Date().toISOString().split('T')[0]
-        navigateTo(`/reports/fee-collections?from=${today}&to=${today}`)
+        navigateTo(`/reports/fee-payments?startDate=${today}&endDate=${today}`)
       },
       icon: Calendar,
     },
     {
-      title: "This Month's Collections",
-      description: "Current month's collection summary",
+      title: "This Month's Payments",
+      description: "Current month's payment summary",
       action: () => {
         const now = new Date()
         const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]
         const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0]
-        navigateTo(`/reports/fee-collections?from=${monthStart}&to=${monthEnd}`)
+        navigateTo(`/reports/fee-payments?startDate=${monthStart}&endDate=${monthEnd}`)
       },
       icon: TrendingUp,
     },
