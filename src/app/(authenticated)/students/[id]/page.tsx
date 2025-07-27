@@ -206,7 +206,7 @@ export default function StudentDetailPage({ params }: StudentDetailPageProps) {
         <EnrollmentHistoryCard 
           enrollments={student.enrollments}
           onEnrollClick={() => navigateTo(`/enroll/${studentId}`)}
-          onFeeCollectionClick={(enrollmentId) => navigateTo(`/fees/collect?enrollmentId=${enrollmentId}`)}
+          onFeeCollectionClick={(enrollmentId) => navigateTo(`/fees/collect/${enrollmentId}`)}
         />
       </main>
 

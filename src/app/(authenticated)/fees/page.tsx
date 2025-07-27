@@ -176,7 +176,6 @@ export default function FeesPage() {
               </div>
               <div>
                 <h1 className="text-xl font-semibold text-gray-900">Fee Management</h1>
-                <p className="text-gray-600 text-sm">Manage and collect student fees</p>
               </div>
             </div>
           </div>
@@ -217,23 +216,6 @@ export default function FeesPage() {
                 </p>
               </CardContent>
             </Card>
-            
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Average Outstanding
-                </CardTitle>
-                <TrendingDown className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {formatCurrency(summary.averageOutstanding)}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Per student
-                </p>
-              </CardContent>
-            </Card>
           </div>
 
           {/* Outstanding Fees Table */}
@@ -256,11 +238,6 @@ export default function FeesPage() {
                       className="pl-10 w-64"
                     />
                   </div>
-                  {/* Collect Fees Button */}
-                  <Button onClick={() => navigateTo("/fees/collect")}>
-                    <CreditCard className="h-4 w-4 mr-2" />
-                    Collect Fees
-                  </Button>
                 </div>
               </div>
             </CardHeader>
@@ -324,17 +301,10 @@ export default function FeesPage() {
                               <Button
                                 variant="default"
                                 size="sm"
-                                onClick={() => navigateTo(`/fees/collect?enrollmentId=${fee.id}`)}
+                                onClick={() => navigateTo(`/fees/collect/${fee.id}`)}
                               >
                                 <CreditCard className="h-4 w-4 mr-1" />
                                 Collect
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => navigateTo(`/students/${fee.student.id}`)}
-                              >
-                                View
                               </Button>
                             </div>
                           </TableCell>

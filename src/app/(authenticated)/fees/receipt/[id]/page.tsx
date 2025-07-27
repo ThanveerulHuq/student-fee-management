@@ -4,14 +4,11 @@ import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { 
   Download,
   Printer,
-  Receipt,
-  School,
-  CheckCircle
+  ArrowLeft
 } from "lucide-react"
 import { formatCurrency, formatDateTime, formatDate } from "@/lib/utils/receipt"
 import SecondaryHeader from "@/components/ui/secondary-header"
@@ -144,6 +141,30 @@ export default function ReceiptPage({ params }: ReceiptPageProps) {
     window.print()
   }
 
+  const convertToWords = (num: number): string => {
+    const a = ['', 'one ', 'two ', 'three ', 'four ', 'five ',
+      'six ', 'seven ', 'eight ', 'nine ', 'ten ',
+      'eleven ', 'twelve ', 'thirteen ', 'fourteen ',
+      'fifteen ', 'sixteen ', 'seventeen ', 'eighteen ',
+      'nineteen ']
+    const b = ['', '', 'twenty', 'thirty', 'forty', 'fifty',
+      'sixty', 'seventy', 'eighty', 'ninety']
+    
+    if (num.toString().length > 9) return 'Not Available'
+    
+    const n = ('000000000' + num).substr(-9).match(/^(\d{2})(\d{2})(\d{2})(\d{1})(\d{2})$/)
+    if (!n) return ''
+    
+    let str = ''
+    str += (n[1] != '00') ? (a[Number(n[1])] || b[Number(n[1][0])] + ' ' + a[Number(n[1][1])]) + 'crore ' : ''
+    str += (n[2] != '00') ? (a[Number(n[2])] || b[Number(n[2][0])] + ' ' + a[Number(n[2][1])]) + 'lakh ' : ''
+    str += (n[3] != '00') ? (a[Number(n[3])] || b[Number(n[3][0])] + ' ' + a[Number(n[3][1])]) + 'thousand ' : ''
+    str += (n[4] != '0') ? (a[Number(n[4])] || b[Number(n[4][0])] + ' ' + a[Number(n[4][1])]) + 'hundred ' : ''
+    str += (n[5] != '00') ? ((str != '') ? 'and ' : '') + (a[Number(n[5])] || b[Number(n[5][0])] + ' ' + a[Number(n[5][1])]) + 'only' : 'only'
+    
+    return str
+  }
+
   if (status === "loading" || loading) {
     return <LoaderWrapper fullScreen label="Loading receipt..." />
   }
@@ -158,250 +179,284 @@ export default function ReceiptPage({ params }: ReceiptPageProps) {
     )
   }
 
+  const ReceiptContent = () => (
+    <div className="w-full bg-white border-4 border-black border-double p-1" style={{ fontSize: '9px', fontFamily: 'Calibri, sans-serif' }}>
+      {/* School Header - Black & White */}
+      <div className="border-b-4 border-double border-black pb-1 mb-1">
+        <table className="w-full">
+          <tbody>
+            <tr>
+              <td className="w-12 text-center">
+                <img src="/school_logo.jpg" alt="School Logo" className="w-10 h-10 mx-auto" />
+              </td>
+              <td className="text-center">
+                <div className="text-sm font-black leading-tight tracking-wide" style={{ fontFamily: 'Times New Roman, serif', letterSpacing: '0.5px' }}>
+                  DHAARUS SALAAM MATRICULATION HIGHER SECONDARY SCHOOL
+                </div>
+                <div className="text-xs leading-tight font-medium" style={{ fontFamily: 'Times New Roman, serif' }}>
+                  (Managed by : Dhaarus Salaam Trust, Salem – 636 005)
+                </div>
+                <div className="text-xs leading-tight" style={{ fontFamily: 'Times New Roman, serif' }}>
+                  Ph: (0427) 2442018, +91 98942 50320 | E-mail: dhaarussalaam1@gmail.com
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      {/* Key Info Bar */}
+      <div className="border-b-2 border-black pb-0.5 mb-1">
+        <table className="w-full" style={{ fontSize: '10px' }}>
+          <tbody>
+            <tr>
+              <td className="border-r border-black px-1 py-0.5">
+                <span className="font-bold">DATE:</span>
+                <span className="ml-2 font-extrabold">{formatDate(receipt.paymentDate)}</span>
+              </td>
+              <td className="border-r border-black px-1 py-0.5 text-center">
+                <span className="font-bold">RECEIPT #:</span>
+                <span className="ml-2 font-extrabold">{receipt.receiptNo}</span>
+              </td>
+              <td className="px-1 py-0.5">
+                <span className="font-bold">ACADEMIC YEAR:</span>
+                <span className="ml-2 font-extrabold">{receipt.academicYear.year}</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      {/* Section Header */}
+      <div className="text-center font-black mb-0.5 py-0.5 border-t-2 border-b-2 border-black tracking-widest" style={{ fontSize: '10px' }}>
+        RECEIVED FROM
+      </div>
+
+      {/* Student Details */}
+      <div className="mb-1 border-l-4 border-black pl-1">
+        <table className="w-full" style={{ fontSize: '10px' }}>
+          <tbody>
+            <tr>
+              <td className="w-2/5 py-0.5">
+                <span className="font-bold">STUDENT:</span>
+                <span className="ml-2 font-extrabold uppercase">{receipt.student.name}</span>
+              </td>
+              <td className="w-1/5 py-0.5">
+                <span className="font-bold">CLASS:</span>
+                <span className="ml-2 font-extrabold">{receipt.student.class}</span>
+              </td>
+              <td className="w-1/5 py-0.5">
+                <span className="font-bold">SECTION:</span>
+                <span className="ml-2 font-extrabold">A</span>
+              </td>
+              <td className="w-1/5 py-0.5">
+                <span className="font-bold">ADM NO:</span>
+                <span className="ml-2 font-extrabold">{receipt.student.admissionNo}</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      {/* Payment Details Header */}
+      <div className="text-center font-black mb-0.5 py-0.5 border-t-2 border-b-2 border-black tracking-widest" style={{ fontSize: '10px' }}>
+        PAYMENT DETAILS
+      </div>
+
+      {/* Payment Table - Black & White */}
+      <table className="w-full border-collapse mb-1" style={{ fontSize: '10px' }}>
+        <thead>
+          <tr className="border-2 border-black">
+            <th className="border border-black py-0.5 px-1 text-center font-black bg-black text-white">DESCRIPTION</th>
+            <th className="border border-black py-0.5 px-1 text-center font-black bg-black text-white">AMOUNT</th>
+            <th className="border border-black py-0.5 px-1 text-center font-black bg-black text-white">PAID</th>
+            <th className="border border-black py-0.5 px-1 text-center font-black bg-black text-white">BALANCE</th>
+          </tr>
+        </thead>
+        <tbody>
+          {receipt.currentFeeStatus.fees.map((feeItem, index) => {
+            // Find if this fee type was paid in current transaction
+            const currentPayment = receipt.paymentBreakdown.find(
+              payment => payment.feeType.toLowerCase() === feeItem.templateName.toLowerCase()
+            );
+            const paidAmount = currentPayment ? currentPayment.amount : 0;
+            
+            return (
+              <tr key={index} className={index % 2 === 0 ? 'bg-gray-100' : 'bg-white'}>
+                <td className="border border-black py-0.5 px-1 font-bold">{feeItem.templateName.toUpperCase()} FEE</td>
+                <td className="border border-black py-0.5 px-1 text-center font-bold">₹{feeItem.total}</td>
+                <td className="border border-black py-0.5 px-1 text-center font-extrabold">₹{paidAmount}</td>
+                <td className="border border-black py-0.5 px-1 text-center font-bold">₹{feeItem.outstanding}</td>
+              </tr>
+            );
+          })}
+          {receipt.currentFeeStatus.scholarships.length > 0 && 
+            receipt.currentFeeStatus.scholarships.map((scholarship, index) => (
+              <tr key={`scholarship-${index}`} className="bg-gray-200">
+                <td className="border border-black py-0.5 px-1 font-bold">{scholarship.templateName.toUpperCase()} (-)</td>
+                <td className="border border-black py-0.5 px-1 text-center font-bold">₹{scholarship.amount}</td>
+                <td className="border border-black py-0.5 px-1 text-center">-</td>
+                <td className="border border-black py-0.5 px-1 text-center">-</td>
+              </tr>
+            ))
+          }
+        </tbody>
+      </table>
+
+      {/* Summary Section */}
+      <table className="w-full border-collapse mb-0.5 text-xs">
+        <tbody>
+          <tr>
+            <td rowSpan={3} className="w-2/5 px-1 py-0.5 align-top border-2 border-black">
+              <div className="font-black text-xs">Payment History:</div>
+              <div className="text-xs font-medium">Recent payments recorded</div>
+            </td>
+            <td className="border border-black py-0.5 px-1 text-right font-black bg-gray-200">
+              TOTAL FEE
+            </td>
+            <td className="border border-black py-0.5 px-1 font-black text-sm">
+              {formatCurrency(receipt.calculatedData.totalAnnualFee)}
+            </td>
+          </tr>
+          <tr>
+            <td className="border border-black py-0.5 px-1 text-right font-black bg-gray-200">
+              TOTAL PAID
+            </td>
+            <td className="border border-black py-0.5 px-1 font-black text-sm">
+              {formatCurrency(receipt.calculatedData.totalPaidSoFar)}
+            </td>
+          </tr>
+          <tr>
+            <td className="border border-black py-0.5 px-1 text-right font-black bg-gray-200">
+              BALANCE
+            </td>
+            <td className="border border-black py-0.5 px-1 font-black text-sm">
+              {formatCurrency(receipt.calculatedData.remainingBalance)}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      {/* Bottom Section */}
+      <table className="w-full border-collapse mb-0.5 text-xs">
+        <tbody>
+          <tr>
+            <td className="border border-black py-0.5 px-1 font-black text-center bg-gray-100">
+              AMOUNT IN WORDS:
+            </td>
+            <td className="border border-black py-0.5 px-1 font-bold">
+              Rs. {convertToWords(receipt.totalAmount)}
+            </td>
+            <td className="border border-black py-0.5 px-1 font-black text-center bg-gray-100">
+              RECEIVED BY:
+            </td>
+            <td className="border border-black py-0.5 px-1 font-extrabold">
+              {receipt.createdBy}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      {/* Remarks */}
+      <table className="w-full border-collapse text-xs">
+        <tbody>
+          <tr>
+            <td className="border border-black py-0.5 px-1 bg-gray-100">
+              <span className="font-black">REMARKS:</span>
+              <span className="ml-2 font-medium">{receipt.remarks || 'No remarks'}</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  )
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="print:hidden">
         <SecondaryHeader 
           title="Fee Receipt" 
           showBackButton={true}
+          backPath={"/fees"}
         >
           <div className="flex items-center space-x-2">
-              <Button variant="outline" onClick={handlePrint}>
-                <Printer className="h-4 w-4 mr-2" />
-                Print
-              </Button>
-              <Button variant="outline">
-                <Download className="h-4 w-4 mr-2" />
-                Download PDF
-              </Button>
-            </div>
+            <Button variant="outline" onClick={handlePrint}>
+              <Printer className="h-4 w-4 mr-2" />
+              Print
+            </Button>
+            <Button variant="outline">
+              <Download className="h-4 w-4 mr-2" />
+              Download PDF
+            </Button>
+          </div>
         </SecondaryHeader>
       </div>
 
       {/* Receipt Content */}
-      <main className="max-w-4xl mx-auto py-6 px-4 sm:px-6 lg:px-8 print:max-w-full print:py-0 print:px-0">
-        <Card className="print:shadow-none print:border-none">
-          <CardHeader className="text-center border-b print:border-b-2 print:border-black">
-            {/* School Header */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-center space-x-3">
-                <School className="h-8 w-8 text-blue-600" />
-                <div>
-                  <h1 className="text-2xl font-bold text-gray-900">BlueMoon School</h1>
-                  <p className="text-sm text-gray-600">School Data Management System</p>
-                </div>
-              </div>
-              
-              <div className="flex items-center justify-center space-x-2 pt-2">
-                <Receipt className="h-5 w-5 text-green-600" />
-                <h2 className="text-lg font-semibold text-green-700">Fee Payment Receipt</h2>
-                <CheckCircle className="h-5 w-5 text-green-600" />
-              </div>
-            </div>
-
-            {/* Receipt Info */}
-            <div className="flex justify-between items-center pt-4 text-sm">
-              <div>
-                <span className="font-semibold">Receipt No:</span> {receipt.receiptNo}
-              </div>
-              <div>
-                <span className="font-semibold">Date:</span> {formatDateTime(receipt.paymentDate)}
-              </div>
-            </div>
-          </CardHeader>
-
-          <CardContent className="p-6 print:p-4">
-            {/* Student Information */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-              <div>
-                <h3 className="text-lg font-semibold mb-3 text-gray-800">Student Details</h3>
-                <div className="space-y-2 text-sm">
-                  <div>
-                    <span className="font-medium text-gray-600">Name:</span>
-                    <span className="ml-2">{receipt.student.name}</span>
-                  </div>
-                  <div>
-                    <span className="font-medium text-gray-600">Admission No:</span>
-                    <span className="ml-2">{receipt.student.admissionNo}</span>
-                  </div>
-                  <div>
-                    <span className="font-medium text-gray-600">Father&apos;s Name:</span>
-                    <span className="ml-2">{receipt.student.fatherName}</span>
-                  </div>
-                  <div>
-                    <span className="font-medium text-gray-600">Mobile:</span>
-                    <span className="ml-2">{receipt.student.phone}</span>
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <h3 className="text-lg font-semibold mb-3 text-gray-800">Academic Details</h3>
-                <div className="space-y-2 text-sm">
-                  <div>
-                    <span className="font-medium text-gray-600">Academic Year:</span>
-                    <span className="ml-2">{receipt.academicYear.year}</span>
-                  </div>
-                  <div>
-                    <span className="font-medium text-gray-600">Class:</span>
-                    <span className="ml-2">{receipt.student.class}</span>
-                  </div>
-                  <div>
-                    <span className="font-medium text-gray-600">Payment Method:</span>
-                    <Badge variant="outline" className="ml-2">
-                      {receipt.paymentMethod}
-                    </Badge>
-                  </div>
-                  <div>
-                    <span className="font-medium text-gray-600">Status:</span>
-                    <Badge variant="outline" className="ml-2 text-green-600">
-                      {receipt.status}
-                    </Badge>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Payment Breakdown */}
-            <div className="mb-6">
-              <h3 className="text-lg font-semibold mb-3 text-gray-800">Payment Breakdown</h3>
-              <div className="overflow-x-auto">
-                <table className="w-full border-collapse border border-gray-300 text-sm">
-                  <thead>
-                    <tr className="bg-gray-50">
-                      <th className="border border-gray-300 px-4 py-2 text-left">Fee Type</th>
-                      <th className="border border-gray-300 px-4 py-2 text-right">Amount Paid</th>
-                      <th className="border border-gray-300 px-4 py-2 text-right">Balance After Payment</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {receipt.paymentBreakdown.map((item, index) => (
-                      <tr key={index}>
-                        <td className="border border-gray-300 px-4 py-2">{item.feeType}</td>
-                        <td className="border border-gray-300 px-4 py-2 text-right">
-                          {formatCurrency(item.amount)}
-                        </td>
-                        <td className="border border-gray-300 px-4 py-2 text-right">
-                          {formatCurrency(item.feeBalance)}
-                        </td>
-                      </tr>
-                    ))}
-                    <tr className="bg-blue-50 font-semibold">
-                      <td className="border border-gray-300 px-4 py-2">Total Payment</td>
-                      <td className="border border-gray-300 px-4 py-2 text-right">
-                        {formatCurrency(receipt.totalAmount)}
-                      </td>
-                      <td className="border border-gray-300 px-4 py-2 text-right">-</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            {/* Fee Summary */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-              <div>
-                <h3 className="text-lg font-semibold mb-3 text-gray-800">Annual Fee Summary</h3>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Total Annual Fee:</span>
-                    <span className="font-medium">{formatCurrency(receipt.calculatedData.totalAnnualFee)}</span>
-                  </div>
-                  {receipt.calculatedData.totalScholarshipApplied > 0 && (
-                    <div className="flex justify-between text-green-600">
-                      <span>Scholarship Applied:</span>
-                      <span className="font-medium">-{formatCurrency(receipt.calculatedData.totalScholarshipApplied)}</span>
-                    </div>
-                  )}
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Net Annual Fee:</span>
-                    <span className="font-medium">{formatCurrency(receipt.calculatedData.netAnnualFee)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Total Paid So Far:</span>
-                    <span className="font-medium text-green-600">{formatCurrency(receipt.calculatedData.totalPaidSoFar)}</span>
-                  </div>
-                  <div className="flex justify-between pt-2 border-t">
-                    <span className="font-semibold">Remaining Balance:</span>
-                    <span className={`font-bold ${receipt.calculatedData.remainingBalance > 0 ? 'text-red-600' : 'text-green-600'}`}>
-                      {formatCurrency(receipt.calculatedData.remainingBalance)}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <div>
-                <h3 className="text-lg font-semibold mb-3 text-gray-800">Transaction Details</h3>
-                <div className="space-y-2 text-sm">
-                  <div>
-                    <span className="font-medium text-gray-600">Payment Date:</span>
-                    <span className="ml-2">{formatDate(receipt.paymentDate)}</span>
-                  </div>
-                  <div>
-                    <span className="font-medium text-gray-600">Payment Method:</span>
-                    <span className="ml-2">{receipt.paymentMethod}</span>
-                  </div>
-                  <div>
-                    <span className="font-medium text-gray-600">Fee Status:</span>
-                    <span className="ml-2">{receipt.calculatedData.feeStatus}</span>
-                  </div>
-                  <div>
-                    <span className="font-medium text-gray-600">Collected By:</span>
-                    <span className="ml-2">{receipt.createdBy}</span>
-                  </div>
-                  {receipt.remarks && (
-                    <div>
-                      <span className="font-medium text-gray-600">Remarks:</span>
-                      <span className="ml-2">{receipt.remarks}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Scholarships Applied */}
-            {receipt.currentFeeStatus.scholarships.length > 0 && (
-              <div className="mb-6">
-                <h3 className="text-lg font-semibold mb-3 text-gray-800">Applied Scholarships</h3>
-                <div className="overflow-x-auto">
-                  <table className="w-full border-collapse border border-gray-300 text-sm">
-                    <thead>
-                      <tr className="bg-gray-50">
-                        <th className="border border-gray-300 px-4 py-2 text-left">Scholarship Type</th>
-                        <th className="border border-gray-300 px-4 py-2 text-left">Category</th>
-                        <th className="border border-gray-300 px-4 py-2 text-right">Amount</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {receipt.currentFeeStatus.scholarships.map((scholarship, index) => (
-                        <tr key={index}>
-                          <td className="border border-gray-300 px-4 py-2">{scholarship.templateName}</td>
-                          <td className="border border-gray-300 px-4 py-2">{scholarship.type}</td>
-                          <td className="border border-gray-300 px-4 py-2 text-right text-green-600">
-                            -{formatCurrency(scholarship.amount)}
-                          </td>
-                        </tr>
-                      ))}
-                      <tr className="bg-green-50 font-semibold">
-                        <td className="border border-gray-300 px-4 py-2" colSpan={2}>Total Scholarships</td>
-                        <td className="border border-gray-300 px-4 py-2 text-right text-green-600">
-                          -{formatCurrency(receipt.calculatedData.totalScholarshipApplied)}
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-
-            {/* Footer */}
-            <div className="border-t pt-4 text-center text-xs text-gray-500">
-              <p>This is a computer-generated receipt and does not require signature.</p>
-              <p className="mt-1">For any queries, please contact the school office.</p>
-              <p className="mt-2">Generated on: {formatDateTime(new Date())}</p>
-            </div>
-          </CardContent>
-        </Card>
+      <main className="max-w-4xl mx-auto py-6 px-4 sm:px-6 lg:px-8 print:max-w-full print:py-0 print:px-2">
+        <style jsx global>{`
+          @media print {
+            @page {
+              size: A4;
+              margin: 0.5in;
+            }
+            
+            /* Hide everything except receipt content */
+            body * {
+              visibility: hidden;
+            }
+            
+            .receipt-container,
+            .receipt-container *,
+            .receipt-separator {
+              visibility: visible;
+            }
+            
+            /* Position receipt content at top of page */
+            .receipt-container {
+              position: absolute;
+              left: 0;
+              top: 0;
+              width: 100%;
+              page-break-inside: avoid;
+              height: 48vh;
+              margin-bottom: 1vh;
+            }
+            
+            .receipt-separator {
+              position: absolute;
+              left: 0;
+              top: 49vh;
+              width: 100%;
+              border-top: 2px dashed black;
+              margin: 1vh 0;
+              page-break-before: avoid;
+              visibility: visible;
+            }
+            
+            .receipt-container:last-of-type {
+              top: 50vh;
+            }
+            
+            /* Ensure print only shows receipt content */
+            header, nav, .print\\:hidden {
+              display: none !important;
+            }
+          }
+        `}</style>
+        
+        {/* First Receipt */}
+        <div className="receipt-container">
+          <ReceiptContent />
+        </div>
+        
+        {/* Separator */}
+        <div className="receipt-separator print:block hidden"></div>
+        
+        {/* Second Receipt */}
+        <div className="receipt-container">
+          <ReceiptContent />
+        </div>
       </main>
     </div>
   )

@@ -7,16 +7,18 @@ import {
   FileText, 
   BarChart3,
   GraduationCap,
-  Settings,
-  Award,
-  Layers
+  Settings
 } from "lucide-react"
 import { useAcademicYearNavigation } from "@/contexts/academic-year-context"
+import { useSession } from "next-auth/react"
 
 export default function DashboardPage() {
   const { goToStudents, goToFees, goToReports, navigateTo } = useAcademicYearNavigation();
+  const { data: session } = useSession();
 
-  const allMenuItems = [
+  const isAdmin = session?.user?.role === "ADMIN";
+
+  const menuItems = [
     {
       title: "Student Management",
       description: "Add, edit, and manage student information",
@@ -52,41 +54,25 @@ export default function DashboardPage() {
       action: () => navigateTo("/analytics"),
       color: "bg-orange-500",
     },
-    {
-      title: "Fee Templates",
-      description: "Manage fee types and categories",
-      icon: Layers,
-      action: () => navigateTo("/admin/fee-templates"),
-      color: "bg-teal-500",
-    },
-    {
-      title: "Scholarship Templates",
-      description: "Manage scholarship types and categories",
-      icon: Award,
-      action: () => navigateTo("/admin/scholarship-templates"),
-      color: "bg-yellow-500",
-    },
-    {
-      title: "Fee Structures",
-      description: "Configure fee structures per class and year",
+    ...(isAdmin ? [{
+      title: "Settings",
+      description: "System settings and administration",
       icon: Settings,
-      action: () => navigateTo("/admin/fee-structures"),
-      color: "bg-slate-500",
-    }
+      action: () => navigateTo("/admin"),
+      color: "bg-gray-600",
+    }] : [])
   ]
-
-  const menuItems = allMenuItems
 
   return (
     <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-2">
-            Welcome back!
+            Welcome back{session?.user?.username ? `, ${session.user.username}` : ''}!
           </h2>
         </div>
 
         {/* Dashboard Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6 mb-8">
           {menuItems.map((item) => {
             const IconComponent = item.icon
             return (

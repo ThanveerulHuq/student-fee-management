@@ -60,13 +60,13 @@ export default function EnhancedPageHeader({
               />
               <div className="flex flex-col">
                 <h1 className="text-lg font-bold text-gray-900 leading-tight">
-                  {title === "Dhaarussalam Matriculation Higher Secondary School" ? "Dhaarussalam School" : title}
+                  {title}
                 </h1>
-                {title === "Dhaarussalam Matriculation Higher Secondary School" && (
+
                   <span className="text-xs text-gray-500 font-medium">
                     Student Management System
                   </span>
-                )}
+                
               </div>
             </div>
           </div>
