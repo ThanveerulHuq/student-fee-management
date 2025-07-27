@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
-import { EnrollmentWhereCondition } from "@/types/api"
 
 export async function GET(request: NextRequest) {
   try {
@@ -14,100 +13,81 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const page = parseInt(searchParams.get("page") || "1")
     const limit = parseInt(searchParams.get("limit") || "20")
-    const academicYearId = searchParams.get("academicYearId")
-    const classId = searchParams.get("classId")
-    const minOutstanding = parseFloat(searchParams.get("minOutstanding") || "0")
 
     const skip = (page - 1) * limit
 
-    const where: EnrollmentWhereCondition = {
-      isActive: true,
-    }
-
-    if (academicYearId) where.academicYearId = academicYearId
-    if (classId) where.classId = classId
-
-    // Get all active enrollments with fee details
-    const enrollments = await prisma.studentYear.findMany({
-      where,
+    // Get all enrollments using the denormalized model
+    const enrollments = await prisma.studentEnrollment.findMany({
       skip,
       take: limit,
-      include: {
-        student: true,
-        academicYear: true,
-        class: true,
-        commonFee: true,
-        paidFee: true,
-      },
-      orderBy: [
-        { academicYear: { startDate: "desc" } },
-        { class: { order: "asc" } },
-        { student: { name: "asc" } },
-      ],
+      orderBy: { createdAt: "desc" }
     })
 
-    // Calculate outstanding fees and filter
-    const enrollmentsWithOutstanding = enrollments
-      .map((enrollment) => {
-        const totalFee = 
-          enrollment.commonFee.schoolFee +
-          enrollment.commonFee.bookFee +
-          enrollment.uniformFee +
-          enrollment.islamicStudies +
-          enrollment.vanFee -
-          enrollment.scholarship
-
-        const totalPaid = enrollment.paidFee?.totalPaid || 0
-        const outstanding = Math.max(0, totalFee - totalPaid)
-
-        return {
-          ...enrollment,
-          feeBreakdown: {
-            schoolFee: {
-              total: enrollment.commonFee.schoolFee,
-              paid: enrollment.paidFee?.schoolFeePaid || 0,
-              outstanding: Math.max(0, enrollment.commonFee.schoolFee - (enrollment.paidFee?.schoolFeePaid || 0)),
-            },
-            bookFee: {
-              total: enrollment.commonFee.bookFee,
-              paid: enrollment.paidFee?.bookFeePaid || 0,
-              outstanding: Math.max(0, enrollment.commonFee.bookFee - (enrollment.paidFee?.bookFeePaid || 0)),
-            },
-            uniformFee: {
-              total: enrollment.uniformFee,
-              paid: enrollment.paidFee?.uniformFeePaid || 0,
-              outstanding: Math.max(0, enrollment.uniformFee - (enrollment.paidFee?.uniformFeePaid || 0)),
-            },
-            islamicStudies: {
-              total: enrollment.islamicStudies,
-              paid: enrollment.paidFee?.islamicStudiesPaid || 0,
-              outstanding: Math.max(0, enrollment.islamicStudies - (enrollment.paidFee?.islamicStudiesPaid || 0)),
-            },
-            vanFee: {
-              total: enrollment.vanFee,
-              paid: enrollment.paidFee?.vanFeePaid || 0,
-              outstanding: Math.max(0, enrollment.vanFee - (enrollment.paidFee?.vanFeePaid || 0)),
-            },
-            scholarship: enrollment.scholarship,
-            totalFee,
-            totalPaid,
-            outstanding,
-          },
-        }
-      })
-      .filter((enrollment) => enrollment.feeBreakdown.outstanding >= minOutstanding)
-      .sort((a, b) => b.feeBreakdown.outstanding - a.feeBreakdown.outstanding)
+    // Transform to match expected response format
+    const enrollmentsWithOutstanding = enrollments.map((enrollment) => ({
+      id: enrollment.id,
+      studentId: enrollment.studentId,
+      academicYearId: enrollment.academicYearId,
+      classId: enrollment.classId,
+      section: enrollment.section,
+      enrollmentDate: enrollment.enrollmentDate,
+      isActive: enrollment.isActive,
+      
+      // Student info (denormalized)
+      student: {
+        id: enrollment.studentId,
+        admissionNo: enrollment.student.admissionNumber,
+        name: `${enrollment.student.firstName} ${enrollment.student.lastName}`,
+        fatherName: enrollment.student.fatherName,
+        phone: enrollment.student.phone,
+        status: enrollment.student.status
+      },
+      
+      // Academic year info (denormalized)
+      academicYear: {
+        id: enrollment.academicYearId,
+        year: enrollment.academicYear.year,
+        startDate: enrollment.academicYear.startDate,
+        endDate: enrollment.academicYear.endDate,
+        isActive: enrollment.academicYear.isActive
+      },
+      
+      // Class info (denormalized)
+      class: {
+        id: enrollment.classId,
+        className: enrollment.class.className,
+        order: enrollment.class.order,
+        isActive: enrollment.class.isActive
+      },
+      
+      // Fee breakdown from embedded fees
+      feeBreakdown: {
+        fees: enrollment.fees.map(fee => ({
+          templateName: fee.templateName,
+          total: fee.amount,
+          paid: fee.amountPaid,
+          outstanding: fee.amountDue
+        })),
+        scholarships: enrollment.scholarships.map(scholarship => ({
+          templateName: scholarship.templateName,
+          amount: scholarship.amount,
+          isActive: scholarship.isActive
+        })),
+        totals: enrollment.totals,
+        feeStatus: enrollment.feeStatus
+      }
+    }))
 
     // Calculate summary statistics
-    const totalOutstanding = enrollmentsWithOutstanding.reduce(
-      (sum, enrollment) => sum + enrollment.feeBreakdown.outstanding,
+    const totalOutstanding = enrollments.reduce(
+      (sum, enrollment) => sum + enrollment.totals.netAmount.due,
       0
     )
 
-    const totalStudents = enrollmentsWithOutstanding.length
+    const totalStudents = enrollments.length
 
-    // Get count for pagination
-    const totalCount = await prisma.studentYear.count({ where })
+    // Get total count for pagination
+    const totalCount = await prisma.studentEnrollment.count()
 
     return NextResponse.json({
       enrollments: enrollmentsWithOutstanding,

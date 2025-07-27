@@ -14,47 +14,89 @@ export async function GET(
     }
 
     const params = await context.params
-    const transactionId = params.id
+    const paymentId = params.id
 
-    const transaction = await prisma.feeTxn.findUnique({
-      where: { id: transactionId },
-      include: {
-        studentYear: {
-          include: {
-            student: true,
-            academicYear: true,
-            class: true,
-            commonFee: true,
-            paidFee: true,
-          },
-        },
-      },
+    // Get payment record using the new Payment model
+    const payment = await prisma.payment.findUnique({
+      where: { id: paymentId }
     })
 
-    if (!transaction) {
+    if (!payment) {
       return NextResponse.json({ error: "Receipt not found" }, { status: 404 })
     }
 
-    // Calculate remaining balance after this payment
-    const totalFee = 
-      transaction.studentYear.commonFee.schoolFee +
-      transaction.studentYear.commonFee.bookFee +
-      transaction.studentYear.uniformFee +
-      transaction.studentYear.islamicStudies +
-      transaction.studentYear.vanFee -
-      transaction.studentYear.scholarship
+    // Get current student enrollment for balance calculation
+    const enrollment = await prisma.studentEnrollment.findUnique({
+      where: { id: payment.studentEnrollmentId }
+    })
 
-    const totalPaid = transaction.studentYear.paidFee?.totalPaid || 0
-    const remainingBalance = Math.max(0, totalFee - totalPaid)
+    if (!enrollment) {
+      return NextResponse.json({ error: "Student enrollment not found" }, { status: 404 })
+    }
 
+    // Prepare receipt data using the embedded information
     const receiptData = {
-      ...transaction,
-      calculatedData: {
-        totalAnnualFee: totalFee,
-        totalPaidSoFar: totalPaid,
-        remainingBalance,
-        scholarship: transaction.studentYear.scholarship,
+      id: payment.id,
+      receiptNo: payment.receiptNo,
+      paymentDate: payment.paymentDate,
+      totalAmount: payment.totalAmount,
+      paymentMethod: payment.paymentMethod,
+      remarks: payment.remarks,
+      createdBy: payment.createdBy,
+      status: payment.status,
+      
+      // Student information (embedded in payment)
+      student: {
+        id: enrollment.studentId,
+        admissionNo: payment.student.admissionNumber,
+        name: `${payment.student.firstName} ${payment.student.lastName}`,
+        fatherName: payment.student.fatherName,
+        phone: payment.student.phone,
+        class: payment.student.class,
+        status: payment.student.status
       },
+      
+      // Academic year info (embedded in payment)
+      academicYear: {
+        year: payment.academicYear.year,
+        startDate: payment.academicYear.startDate,
+        endDate: payment.academicYear.endDate,
+        isActive: payment.academicYear.isActive
+      },
+      
+      // Payment breakdown from embedded paymentItems
+      paymentBreakdown: payment.paymentItems.map(item => ({
+        feeType: item.feeTemplateName,
+        amount: item.amount,
+        feeBalance: item.feeBalance
+      })),
+      
+      // Current balance information from enrollment
+      calculatedData: {
+        totalAnnualFee: enrollment.totals.fees.total,
+        totalScholarshipApplied: enrollment.totals.scholarships.applied,
+        netAnnualFee: enrollment.totals.netAmount.total,
+        totalPaidSoFar: enrollment.totals.netAmount.paid,
+        remainingBalance: enrollment.totals.netAmount.due,
+        feeStatus: enrollment.feeStatus.status
+      },
+      
+      // Fee breakdown at time of payment
+      currentFeeStatus: {
+        fees: enrollment.fees.map(fee => ({
+          templateName: fee.templateName,
+          total: fee.amount,
+          paid: fee.amountPaid,
+          outstanding: fee.amountDue,
+          isCompulsory: fee.isCompulsory
+        })),
+        scholarships: enrollment.scholarships.filter(s => s.isActive).map(scholarship => ({
+          templateName: scholarship.templateName,
+          amount: scholarship.amount,
+          type: scholarship.templateType
+        })),
+        totals: enrollment.totals
+      }
     }
 
     return NextResponse.json(receiptData)

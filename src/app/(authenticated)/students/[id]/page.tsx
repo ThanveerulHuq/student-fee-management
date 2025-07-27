@@ -12,6 +12,7 @@ import StudentHeader from "../_components/details/student-header"
 import PersonalInfoCard from "../_components/details/personal-info-card"
 import FamilyContactCard from "../_components/details/family-contact-card"
 import EnrollmentHistoryCard from "../_components/details/enrollment-history-card"
+import { StudentEnrollment } from "@/types/enrollment"
 
 interface Student {
   id: string
@@ -36,29 +37,7 @@ interface Student {
   remarks?: string
   isActive: boolean
   admissionDate: string
-  enrollments: Array<{
-    id: string
-    section: string
-    uniformFee: number
-    islamicStudies: number
-    vanFee: number
-    scholarship: number
-    isActive: boolean
-    academicYear: {
-      year: string
-      isActive: boolean
-    }
-    class: {
-      className: string
-    }
-    commonFee: {
-      schoolFee: number
-      bookFee: number
-    }
-    paidFee?: {
-      totalPaid: number
-    }
-  }>
+  enrollments: Array<StudentEnrollment>
 }
 
 interface StudentDetailPageProps {

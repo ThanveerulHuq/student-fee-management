@@ -11,33 +11,10 @@ import {
   TableRow 
 } from "@/components/ui/table"
 import { GraduationCap, UserPlus, CreditCard } from "lucide-react"
-
-interface Enrollment {
-  id: string
-  section: string
-  uniformFee: number
-  islamicStudies: number
-  vanFee: number
-  scholarship: number
-  isActive: boolean
-  academicYear: {
-    year: string
-    isActive: boolean
-  }
-  class: {
-    className: string
-  }
-  commonFee: {
-    schoolFee: number
-    bookFee: number
-  }
-  paidFee?: {
-    totalPaid: number
-  }
-}
+import { StudentEnrollment } from "@/types/enrollment"
 
 interface EnrollmentHistoryCardProps {
-  enrollments: Enrollment[]
+  enrollments: StudentEnrollment[]
   onEnrollClick: () => void
   onFeeCollectionClick: (enrollmentId: string) => void
 }
@@ -47,22 +24,8 @@ export default function EnrollmentHistoryCard({
   onEnrollClick, 
   onFeeCollectionClick 
 }: EnrollmentHistoryCardProps) {
-  const calculateTotalFee = (enrollment: {
-    commonFee: { schoolFee: number; bookFee: number }
-    uniformFee: number
-    islamicStudies: number
-    vanFee: number
-    scholarship: number
-  }) => {
-    return (
-      enrollment.commonFee.schoolFee +
-      enrollment.commonFee.bookFee +
-      enrollment.uniformFee +
-      enrollment.islamicStudies +
-      enrollment.vanFee -
-      enrollment.scholarship
-    )
-  }
+
+  console.log(enrollments)
 
   return (
     <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
@@ -109,9 +72,9 @@ export default function EnrollmentHistoryCard({
             </TableHeader>
             <TableBody>
               {enrollments.map((enrollment) => {
-                const totalFee = calculateTotalFee(enrollment)
-                const paid = enrollment.paidFee?.totalPaid || 0
-                const outstanding = totalFee - paid
+                const totalFee = enrollment.totals?.netAmount?.total || 0
+                const paid = enrollment.totals?.netAmount?.paid || 0
+                const outstanding = enrollment.totals?.netAmount?.due || 0
                 
                 return (
                   <TableRow key={enrollment.id} className="hover:bg-gray-50/50 transition-colors">

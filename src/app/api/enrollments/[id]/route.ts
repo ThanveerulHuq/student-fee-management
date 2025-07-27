@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { prisma } from '@/lib/prisma'
 import { authOptions } from '@/lib/auth'
+import { StudentEnrollment } from '@/types/enrollment'
 
 // GET /api/flexible-enrollments/[id] - Get specific enrollment
 export async function GET(
@@ -63,7 +64,7 @@ export async function PUT(
       )
     }
 
-    const updateData: Record<string, unknown> = {}
+    const updateData: StudentEnrollment = {}
 
     // Update section if provided
     if (section) {

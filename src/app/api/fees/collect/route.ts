@@ -2,9 +2,26 @@ import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
-import { feePaymentSchema } from "@/lib/validations/fee"
 import { generateReceiptNumber } from "@/lib/utils/receipt"
 import type { Session } from "next-auth"
+import { z } from "zod"
+import { ObjectId } from "mongodb"
+import { FeeStatus, FeeStatusType } from "@/types/enrollment"
+import { PaymentItem } from "@/types/payment"
+
+// Updated schema for flexible fee payment
+const feePaymentSchema = z.object({
+  studentEnrollmentId: z.string(),
+  paymentItems: z.array(z.object({
+    feeId: z.string(),
+    amount: z.number().min(0.01)
+  })),
+  totalAmount: z.number().min(0.01),
+  paymentDate: z.date().optional(),
+  paymentMethod: z.enum(["CASH", "ONLINE", "CHEQUE"]).default("CASH"),
+  remarks: z.string().optional(),
+  createdBy: z.string()
+})
 
 export async function POST(request: NextRequest) {
   try {
@@ -20,16 +37,9 @@ export async function POST(request: NextRequest) {
       paymentDate: body.paymentDate ? new Date(body.paymentDate) : new Date(),
     })
 
-    // Get the enrollment details
-    const enrollment = await prisma.studentYear.findUnique({
-      where: { id: validatedData.studentYearId },
-      include: {
-        student: true,
-        academicYear: true,
-        class: true,
-        commonFee: true,
-        paidFee: true,
-      },
+    // Get the student enrollment details
+    const enrollment = await prisma.studentEnrollment.findUnique({
+      where: { id: validatedData.studentEnrollmentId }
     })
 
     if (!enrollment) {
@@ -39,56 +49,42 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Calculate maximum payable amounts for each fee type
-    const maxSchoolFee = Math.max(0, enrollment.commonFee.tutionFee - (enrollment.paidFee?.schoolFeePaid || 0))
-    const maxBookFee = Math.max(0, enrollment.commonFee.bookFee - (enrollment.paidFee?.bookFeePaid || 0))
-    const maxUniformFee = Math.max(0, enrollment.uniformFee - (enrollment.paidFee?.uniformFeePaid || 0))
-    const maxIslamicStudies = Math.max(0, enrollment.islamicStudies - (enrollment.paidFee?.islamicStudiesPaid || 0))
-    const maxVanFee = Math.max(0, enrollment.vanFee - (enrollment.paidFee?.vanFeePaid || 0))
+    // Validate payment items and calculate totals
+    let totalCalculated = 0
+    const paymentItems: PaymentItem[] = []
 
-    // Validate payment amounts don't exceed outstanding balances
-    if (validatedData.schoolFee > maxSchoolFee) {
-      return NextResponse.json(
-        { error: `School fee payment cannot exceed outstanding balance of ₹${maxSchoolFee}` },
-        { status: 400 }
-      )
-    }
-    if (validatedData.bookFee > maxBookFee) {
-      return NextResponse.json(
-        { error: `Book fee payment cannot exceed outstanding balance of ₹${maxBookFee}` },
-        { status: 400 }
-      )
-    }
-    if (validatedData.uniformFee > maxUniformFee) {
-      return NextResponse.json(
-        { error: `Uniform fee payment cannot exceed outstanding balance of ₹${maxUniformFee}` },
-        { status: 400 }
-      )
-    }
-    if (validatedData.islamicStudies > maxIslamicStudies) {
-      return NextResponse.json(
-        { error: `Islamic studies fee payment cannot exceed outstanding balance of ₹${maxIslamicStudies}` },
-        { status: 400 }
-      )
-    }
-    if (validatedData.vanFee > maxVanFee) {
-      return NextResponse.json(
-        { error: `Van fee payment cannot exceed outstanding balance of ₹${maxVanFee}` },
-        { status: 400 }
-      )
+    for (const item of validatedData.paymentItems) {
+      const fee = enrollment.fees.find(f => f.id === item.feeId)
+      if (!fee) {
+        return NextResponse.json(
+          { error: `Fee with id ${item.feeId} not found` },
+          { status: 400 }
+        )
+      }
+
+      const maxPayable = Math.max(0, fee.amountDue)
+      if (item.amount > maxPayable) {
+        return NextResponse.json(
+          { error: `Payment for ${fee.templateName} cannot exceed outstanding balance of ₹${maxPayable}` },
+          { status: 400 }
+        )
+      }
+
+      totalCalculated += item.amount
+      paymentItems.push({
+        id: new ObjectId().toString(), // Simple ID generation
+        feeId: item.feeId,
+        feeTemplateId: fee.templateId,
+        feeTemplateName: fee.templateName,
+        amount: item.amount,
+        feeBalance: fee.amountDue - item.amount
+      })
     }
 
-    // Validate total amount matches sum of individual fees
-    const calculatedTotal = 
-      validatedData.schoolFee +
-      validatedData.bookFee +
-      validatedData.uniformFee +
-      validatedData.islamicStudies +
-      validatedData.vanFee
-
-    if (Math.abs(validatedData.totalAmountPaid - calculatedTotal) > 0.01) {
+    // Validate total amount
+    if (Math.abs(validatedData.totalAmount - totalCalculated) > 0.01) {
       return NextResponse.json(
-        { error: "Total amount paid must match sum of individual fee components" },
+        { error: "Total amount must match sum of individual fee payments" },
         { status: 400 }
       )
     }
@@ -96,70 +92,94 @@ export async function POST(request: NextRequest) {
     // Generate unique receipt number
     const receiptNo = generateReceiptNumber()
 
-    // Create the fee transaction using a database transaction
+    // Update in a transaction
     const result = await prisma.$transaction(async (tx) => {
-      // Create fee transaction
-      const feeTransaction = await tx.feeTxn.create({
+      // Create payment record
+      const payment = await tx.payment.create({
         data: {
-          studentYearId: validatedData.studentYearId,
-          schoolFee: validatedData.schoolFee,
-          bookFee: validatedData.bookFee,
-          uniformFee: validatedData.uniformFee,
-          islamicStudies: validatedData.islamicStudies,
-          vanFee: validatedData.vanFee,
-          totalAmountPaid: validatedData.totalAmountPaid,
-          paymentDate: validatedData.paymentDate,
           receiptNo,
+          studentEnrollmentId: validatedData.studentEnrollmentId,
+          totalAmount: validatedData.totalAmount,
+          paymentDate: validatedData.paymentDate || new Date(),
           paymentMethod: validatedData.paymentMethod,
           remarks: validatedData.remarks,
           createdBy: validatedData.createdBy,
-        },
+          student: enrollment.student,
+          academicYear: enrollment.academicYear,
+          paymentItems
+        }
       })
 
-      // Update or create paid fee record
-      const updatedPaidFee = await tx.paidFee.upsert({
-        where: { studentYearId: validatedData.studentYearId },
-        update: {
-          schoolFeePaid: { increment: validatedData.schoolFee },
-          bookFeePaid: { increment: validatedData.bookFee },
-          uniformFeePaid: { increment: validatedData.uniformFee },
-          islamicStudiesPaid: { increment: validatedData.islamicStudies },
-          vanFeePaid: { increment: validatedData.vanFee },
-          totalPaid: { increment: validatedData.totalAmountPaid },
-          lastPaymentDate: validatedData.paymentDate,
-        },
-        create: {
-          studentYearId: validatedData.studentYearId,
-          schoolFeePaid: validatedData.schoolFee,
-          bookFeePaid: validatedData.bookFee,
-          uniformFeePaid: validatedData.uniformFee,
-          islamicStudiesPaid: validatedData.islamicStudies,
-          vanFeePaid: validatedData.vanFee,
-          totalPaid: validatedData.totalAmountPaid,
-          lastPaymentDate: validatedData.paymentDate,
-        },
+      // Update student enrollment fees
+      const updatedFees = enrollment.fees.map(fee => {
+        const paymentItem = validatedData.paymentItems.find(p => p.feeId === fee.id)
+        if (paymentItem) {
+          const newAmountPaid = fee.amountPaid + paymentItem.amount
+          return {
+            ...fee,
+            amountPaid: newAmountPaid,
+            amountDue: fee.amount - newAmountPaid,
+            recentPayments: [
+              {
+                paymentId: payment.id,
+                amount: paymentItem.amount,
+                paymentDate: validatedData.paymentDate || new Date(),
+                receiptNo,
+                paymentMethod: validatedData.paymentMethod
+              },
+              ...fee.recentPayments.slice(0, 4) // Keep last 5 payments
+            ]
+          }
+        }
+        return fee
       })
 
-      return { feeTransaction, updatedPaidFee }
-    })
+      // Recalculate totals
+      const feeTotals = {
+        compulsory: updatedFees.filter(f => f.isCompulsory).reduce((sum, f) => sum + f.amount, 0),
+        optional: updatedFees.filter(f => !f.isCompulsory).reduce((sum, f) => sum + f.amount, 0),
+        total: updatedFees.reduce((sum, f) => sum + f.amount, 0),
+        paid: updatedFees.reduce((sum, f) => sum + f.amountPaid, 0),
+        due: updatedFees.reduce((sum, f) => sum + f.amountDue, 0)
+      }
 
-    // Return the transaction with enrollment details
-    const transactionWithDetails = await prisma.feeTxn.findUnique({
-      where: { id: result.feeTransaction.id },
-      include: {
-        studentYear: {
-          include: {
-            student: true,
-            academicYear: true,
-            class: true,
-            commonFee: true,
-            paidFee: true,
+      const scholarshipTotals = {
+        applied: enrollment.scholarships.filter(s => s.isActive).reduce((sum, s) => sum + s.amount, 0),
+        autoApplied: enrollment.scholarships.filter(s => s.isActive && s.isAutoApplied).reduce((sum, s) => sum + s.amount, 0),
+        manual: enrollment.scholarships.filter(s => s.isActive && !s.isAutoApplied).reduce((sum, s) => sum + s.amount, 0)
+      }
+
+      const netTotals = {
+        total: feeTotals.total - scholarshipTotals.applied,
+        paid: feeTotals.paid,
+        due: feeTotals.total - scholarshipTotals.applied - feeTotals.paid
+      }
+
+      const feeStatus: FeeStatus = {
+        status: netTotals.due <= 0 ? FeeStatusType.PAID : netTotals.paid > 0 ? FeeStatusType.PARTIAL : FeeStatusType.OVERDUE,
+        lastPaymentDate: validatedData.paymentDate || new Date(),
+        nextDueDate: enrollment.feeStatus.nextDueDate ?? undefined,
+        overdueAmount: Math.max(0, netTotals.due)
+      }
+
+      // Update student enrollment
+      await tx.studentEnrollment.update({
+        where: { id: validatedData.studentEnrollmentId },
+        data: {
+          fees: updatedFees,
+          totals: {
+            fees: feeTotals,
+            scholarships: scholarshipTotals,
+            netAmount: netTotals
           },
-        },
-      },
+          feeStatus
+        }
+      })
+
+      return payment
     })
 
-    return NextResponse.json(transactionWithDetails, { status: 201 })
+    return NextResponse.json(result, { status: 201 })
   } catch (error) {
     if (error instanceof Error) {
       return NextResponse.json({ error: error.message }, { status: 400 })

@@ -17,45 +17,75 @@ import { formatCurrency, formatDateTime, formatDate } from "@/lib/utils/receipt"
 import SecondaryHeader from "@/components/ui/secondary-header"
 import LoaderWrapper from "@/components/ui/loader-wrapper"
 
-interface ReceiptData {
+interface PaymentReceipt {
   id: string
   receiptNo: string
-  schoolFee: number
-  bookFee: number
-  uniformFee: number
-  islamicStudies: number
-  vanFee: number
-  totalAmountPaid: number
   paymentDate: string
+  totalAmount: number
   paymentMethod: string
   remarks?: string
   createdBy: string
-  createdAt: string
-  studentYear: {
-    section: string
-    scholarship: number
-    student: {
-      name: string
-      admissionNo: string
-      fatherName: string
-      mobileNo1: string
-    }
-    academicYear: {
-      year: string
-    }
-    class: {
-      className: string
-    }
-    commonFee: {
-      schoolFee: number
-      bookFee: number
-    }
+  status: string
+  
+  student: {
+    admissionNo: string
+    name: string
+    fatherName: string
+    phone: string
+    class: string
+    status: string
   }
+  
+  academicYear: {
+    year: string
+    startDate: string
+    endDate: string
+    isActive: boolean
+  }
+  
+  paymentBreakdown: Array<{
+    feeType: string
+    amount: number
+    feeBalance: number
+  }>
+  
   calculatedData: {
     totalAnnualFee: number
+    totalScholarshipApplied: number
+    netAnnualFee: number
     totalPaidSoFar: number
     remainingBalance: number
-    scholarship: number
+    feeStatus: string
+  }
+  
+  currentFeeStatus: {
+    fees: Array<{
+      templateName: string
+      total: number
+      paid: number
+      outstanding: number
+      isCompulsory: boolean
+    }>
+    scholarships: Array<{
+      templateName: string
+      amount: number
+      type: string
+    }>
+    totals: {
+      fees: {
+        total: number
+        paid: number
+        due: number
+      }
+      scholarships: {
+        applied: number
+      }
+      netAmount: {
+        total: number
+        paid: number
+        due: number
+      }
+    }
   }
 }
 
@@ -70,7 +100,7 @@ export default function ReceiptPage({ params }: ReceiptPageProps) {
   const router = useRouter()
   const [receiptId, setReceiptId] = useState<string>("")
 
-  const [receipt, setReceipt] = useState<ReceiptData | null>(null)
+  const [receipt, setReceipt] = useState<PaymentReceipt | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -188,19 +218,19 @@ export default function ReceiptPage({ params }: ReceiptPageProps) {
                 <div className="space-y-2 text-sm">
                   <div>
                     <span className="font-medium text-gray-600">Name:</span>
-                    <span className="ml-2">{receipt.studentYear.student.name}</span>
+                    <span className="ml-2">{receipt.student.name}</span>
                   </div>
                   <div>
                     <span className="font-medium text-gray-600">Admission No:</span>
-                    <span className="ml-2">{receipt.studentYear.student.admissionNo}</span>
+                    <span className="ml-2">{receipt.student.admissionNo}</span>
                   </div>
                   <div>
                     <span className="font-medium text-gray-600">Father&apos;s Name:</span>
-                    <span className="ml-2">{receipt.studentYear.student.fatherName}</span>
+                    <span className="ml-2">{receipt.student.fatherName}</span>
                   </div>
                   <div>
                     <span className="font-medium text-gray-600">Mobile:</span>
-                    <span className="ml-2">{receipt.studentYear.student.mobileNo1}</span>
+                    <span className="ml-2">{receipt.student.phone}</span>
                   </div>
                 </div>
               </div>
@@ -210,20 +240,22 @@ export default function ReceiptPage({ params }: ReceiptPageProps) {
                 <div className="space-y-2 text-sm">
                   <div>
                     <span className="font-medium text-gray-600">Academic Year:</span>
-                    <span className="ml-2">{receipt.studentYear.academicYear.year}</span>
+                    <span className="ml-2">{receipt.academicYear.year}</span>
                   </div>
                   <div>
                     <span className="font-medium text-gray-600">Class:</span>
-                    <span className="ml-2">{receipt.studentYear.class.className}</span>
-                  </div>
-                  <div>
-                    <span className="font-medium text-gray-600">Section:</span>
-                    <span className="ml-2">{receipt.studentYear.section}</span>
+                    <span className="ml-2">{receipt.student.class}</span>
                   </div>
                   <div>
                     <span className="font-medium text-gray-600">Payment Method:</span>
                     <Badge variant="outline" className="ml-2">
                       {receipt.paymentMethod}
+                    </Badge>
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-600">Status:</span>
+                    <Badge variant="outline" className="ml-2 text-green-600">
+                      {receipt.status}
                     </Badge>
                   </div>
                 </div>
@@ -239,54 +271,27 @@ export default function ReceiptPage({ params }: ReceiptPageProps) {
                     <tr className="bg-gray-50">
                       <th className="border border-gray-300 px-4 py-2 text-left">Fee Type</th>
                       <th className="border border-gray-300 px-4 py-2 text-right">Amount Paid</th>
+                      <th className="border border-gray-300 px-4 py-2 text-right">Balance After Payment</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {receipt.schoolFee > 0 && (
-                      <tr>
-                        <td className="border border-gray-300 px-4 py-2">School Fee</td>
+                    {receipt.paymentBreakdown.map((item, index) => (
+                      <tr key={index}>
+                        <td className="border border-gray-300 px-4 py-2">{item.feeType}</td>
                         <td className="border border-gray-300 px-4 py-2 text-right">
-                          {formatCurrency(receipt.schoolFee)}
+                          {formatCurrency(item.amount)}
+                        </td>
+                        <td className="border border-gray-300 px-4 py-2 text-right">
+                          {formatCurrency(item.feeBalance)}
                         </td>
                       </tr>
-                    )}
-                    {receipt.bookFee > 0 && (
-                      <tr>
-                        <td className="border border-gray-300 px-4 py-2">Book Fee</td>
-                        <td className="border border-gray-300 px-4 py-2 text-right">
-                          {formatCurrency(receipt.bookFee)}
-                        </td>
-                      </tr>
-                    )}
-                    {receipt.uniformFee > 0 && (
-                      <tr>
-                        <td className="border border-gray-300 px-4 py-2">Uniform Fee</td>
-                        <td className="border border-gray-300 px-4 py-2 text-right">
-                          {formatCurrency(receipt.uniformFee)}
-                        </td>
-                      </tr>
-                    )}
-                    {receipt.islamicStudies > 0 && (
-                      <tr>
-                        <td className="border border-gray-300 px-4 py-2">Islamic Studies</td>
-                        <td className="border border-gray-300 px-4 py-2 text-right">
-                          {formatCurrency(receipt.islamicStudies)}
-                        </td>
-                      </tr>
-                    )}
-                    {receipt.vanFee > 0 && (
-                      <tr>
-                        <td className="border border-gray-300 px-4 py-2">Van Fee</td>
-                        <td className="border border-gray-300 px-4 py-2 text-right">
-                          {formatCurrency(receipt.vanFee)}
-                        </td>
-                      </tr>
-                    )}
+                    ))}
                     <tr className="bg-blue-50 font-semibold">
                       <td className="border border-gray-300 px-4 py-2">Total Payment</td>
                       <td className="border border-gray-300 px-4 py-2 text-right">
-                        {formatCurrency(receipt.totalAmountPaid)}
+                        {formatCurrency(receipt.totalAmount)}
                       </td>
+                      <td className="border border-gray-300 px-4 py-2 text-right">-</td>
                     </tr>
                   </tbody>
                 </table>
@@ -302,12 +307,16 @@ export default function ReceiptPage({ params }: ReceiptPageProps) {
                     <span className="text-gray-600">Total Annual Fee:</span>
                     <span className="font-medium">{formatCurrency(receipt.calculatedData.totalAnnualFee)}</span>
                   </div>
-                  {receipt.calculatedData.scholarship > 0 && (
+                  {receipt.calculatedData.totalScholarshipApplied > 0 && (
                     <div className="flex justify-between text-green-600">
                       <span>Scholarship Applied:</span>
-                      <span className="font-medium">-{formatCurrency(receipt.calculatedData.scholarship)}</span>
+                      <span className="font-medium">-{formatCurrency(receipt.calculatedData.totalScholarshipApplied)}</span>
                     </div>
                   )}
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Net Annual Fee:</span>
+                    <span className="font-medium">{formatCurrency(receipt.calculatedData.netAnnualFee)}</span>
+                  </div>
                   <div className="flex justify-between">
                     <span className="text-gray-600">Total Paid So Far:</span>
                     <span className="font-medium text-green-600">{formatCurrency(receipt.calculatedData.totalPaidSoFar)}</span>
@@ -333,6 +342,10 @@ export default function ReceiptPage({ params }: ReceiptPageProps) {
                     <span className="ml-2">{receipt.paymentMethod}</span>
                   </div>
                   <div>
+                    <span className="font-medium text-gray-600">Fee Status:</span>
+                    <span className="ml-2">{receipt.calculatedData.feeStatus}</span>
+                  </div>
+                  <div>
                     <span className="font-medium text-gray-600">Collected By:</span>
                     <span className="ml-2">{receipt.createdBy}</span>
                   </div>
@@ -345,6 +358,41 @@ export default function ReceiptPage({ params }: ReceiptPageProps) {
                 </div>
               </div>
             </div>
+
+            {/* Scholarships Applied */}
+            {receipt.currentFeeStatus.scholarships.length > 0 && (
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold mb-3 text-gray-800">Applied Scholarships</h3>
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse border border-gray-300 text-sm">
+                    <thead>
+                      <tr className="bg-gray-50">
+                        <th className="border border-gray-300 px-4 py-2 text-left">Scholarship Type</th>
+                        <th className="border border-gray-300 px-4 py-2 text-left">Category</th>
+                        <th className="border border-gray-300 px-4 py-2 text-right">Amount</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {receipt.currentFeeStatus.scholarships.map((scholarship, index) => (
+                        <tr key={index}>
+                          <td className="border border-gray-300 px-4 py-2">{scholarship.templateName}</td>
+                          <td className="border border-gray-300 px-4 py-2">{scholarship.type}</td>
+                          <td className="border border-gray-300 px-4 py-2 text-right text-green-600">
+                            -{formatCurrency(scholarship.amount)}
+                          </td>
+                        </tr>
+                      ))}
+                      <tr className="bg-green-50 font-semibold">
+                        <td className="border border-gray-300 px-4 py-2" colSpan={2}>Total Scholarships</td>
+                        <td className="border border-gray-300 px-4 py-2 text-right text-green-600">
+                          -{formatCurrency(receipt.calculatedData.totalScholarshipApplied)}
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
 
             {/* Footer */}
             <div className="border-t pt-4 text-center text-xs text-gray-500">
