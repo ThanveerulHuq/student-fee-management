@@ -10,6 +10,7 @@ import {
 } from "lucide-react"
 import { formatCurrency, formatDateTime, formatDate } from "@/lib/utils/receipt"
 import LoaderWrapper from "@/components/ui/loader-wrapper"
+import WhatsAppShare from "@/components/ui/whatsapp-share"
 
 interface PaymentReceipt {
   id: string
@@ -373,6 +374,15 @@ export default function ReceiptPage({ params }: ReceiptPageProps) {
               <h1 className="text-xl font-semibold text-gray-900">Fee Receipt</h1>
             </div>
             <div className="flex items-center space-x-2">
+              <WhatsAppShare
+                receiptId={receipt.id}
+                receiptNo={receipt.receiptNo}
+                studentName={receipt.student.name}
+                totalAmount={receipt.totalAmount}
+                paymentDate={receipt.paymentDate}
+                phoneNumber={receipt.student.phone}
+                size="default"
+              />
               <Button variant="outline" onClick={handlePrint}>
                 <Printer className="h-4 w-4 mr-2" />
                 Print

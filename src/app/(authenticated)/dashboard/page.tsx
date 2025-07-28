@@ -1,5 +1,6 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { 
   Users, 
@@ -10,13 +11,44 @@ import {
   Settings
 } from "lucide-react"
 import { useAcademicYearNavigation } from "@/contexts/academic-year-context"
+import { useAcademicYear } from "@/contexts/academic-year-context"
 import { useSession } from "next-auth/react"
+
+interface DashboardStats {
+  totalStudents: number
+  monthlyCollections: number
+  pendingFees: number
+}
 
 export default function DashboardPage() {
   const { goToStudents, goToFees, goToReports, navigateTo } = useAcademicYearNavigation();
+  const { academicYear } = useAcademicYear();
   const { data: session } = useSession();
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [loading, setLoading] = useState(true);
 
   const isAdmin = session?.user?.role === "ADMIN";
+
+  useEffect(() => {
+    if (!academicYear?.id) return;
+
+    const fetchStats = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch(`/api/dashboard/stats?academicYear=${academicYear.id}`);
+        if (response.ok) {
+          const data = await response.json();
+          setStats(data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch dashboard stats:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStats();
+  }, [academicYear?.id]);
 
   const menuItems = [
     {
@@ -72,7 +104,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Dashboard Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           {menuItems.map((item) => {
             const IconComponent = item.icon
             return (
@@ -96,7 +128,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Quick Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <Card>
             <CardHeader>
               <CardTitle className="text-sm font-medium text-gray-600">
@@ -104,37 +136,40 @@ export default function DashboardPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-gray-900">--</div>
+              <div className="text-2xl font-bold text-gray-900">
+                {loading ? "--" : (stats?.totalStudents || 0)}
+              </div>
               <p className="text-sm text-gray-600">Active enrollments</p>
             </CardContent>
           </Card>
           
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm font-medium text-gray-600">
+                Monthly Collections
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-gray-900">
+                {loading ? "₹--" : `₹${(stats?.monthlyCollections || 0).toLocaleString()}`}
+              </div>
+              <p className="text-sm text-gray-600">This month</p>
+            </CardContent>
+          </Card>
           
-            <>
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-sm font-medium text-gray-600">
-                    Monthly Collections
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-gray-900">₹--</div>
-                  <p className="text-sm text-gray-600">This month</p>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-sm font-medium text-gray-600">
-                    Pending Fees
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-gray-900">₹--</div>
-                  <p className="text-sm text-gray-600">Outstanding amount</p>
-                </CardContent>
-              </Card>
-            </>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm font-medium text-gray-600">
+                Pending Fees
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-gray-900">
+                {loading ? "₹--" : `₹${(stats?.pendingFees || 0).toLocaleString()}`}
+              </div>
+              <p className="text-sm text-gray-600">Outstanding amount</p>
+            </CardContent>
+          </Card>
           
         </div>
     </main>

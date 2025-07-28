@@ -28,10 +28,10 @@ import {
   Receipt,
   TrendingUp,
   BarChart3,
-  Share2,
   Printer,
   ExternalLink
 } from "lucide-react"
+import WhatsAppShare from "@/components/ui/whatsapp-share"
 
 interface PaymentItem {
   feeTemplateName: string
@@ -237,44 +237,6 @@ export default function FeePaymentsReportPage({}: FeePaymentsPageProps) {
     setFilters(prev => ({ ...prev, [key]: value }))
   }
 
-  const handleWhatsAppShare = (payment: Payment) => {
-    const receiptUrl = `${window.location.origin}/fees/receipt/${payment.id}`
-    const message = encodeURIComponent(
-      `Receipt for ${payment.studentName}\nReceipt No: ${payment.receiptNo}\nAmount: ₹${payment.totalAmount.toLocaleString()}\nDate: ${format(new Date(payment.paymentDate), "dd MMM yyyy")}\n\nView receipt: ${receiptUrl}`
-    )
-    
-    // Check if phone number is available
-    if (!payment.studentPhone || payment.studentPhone.trim() === '') {
-      // Fallback to general WhatsApp share if no phone number
-      const whatsappUrl = `https://wa.me/?text=${message}`
-      window.open(whatsappUrl, '_blank')
-      return
-    }
-    
-    // Format phone number for WhatsApp (remove spaces, dashes, and special characters)
-    let phoneNumber = payment.studentPhone.replace(/[^\d+]/g, '')
-    
-    // If number doesn't start with +, assume it's Indian number and add +91
-    if (!phoneNumber.startsWith('+')) {
-      // Remove leading 0 if present and add +91 for Indian numbers
-      phoneNumber = phoneNumber.startsWith('0') ? phoneNumber.substring(1) : phoneNumber
-      phoneNumber = `91${phoneNumber}`
-    } else {
-      // Remove + from the beginning
-      phoneNumber = phoneNumber.substring(1)
-    }
-    
-    // Validate phone number length (should be at least 10 digits for most countries)
-    if (phoneNumber.length < 10) {
-      // Fallback to general WhatsApp share if invalid phone number
-      const whatsappUrl = `https://wa.me/?text=${message}`
-      window.open(whatsappUrl, '_blank')
-      return
-    }
-    
-    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${message}`
-    window.open(whatsappUrl, '_blank')
-  }
 
   const handlePrintReceipt = (payment: Payment) => {
     const receiptUrl = `/fees/receipt/${payment.id}`
@@ -575,16 +537,14 @@ export default function FeePaymentsReportPage({}: FeePaymentsPageProps) {
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex space-x-2">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleWhatsAppShare(payment)}
-                                className="flex items-center"
-                                title={`Share via WhatsApp${payment.studentPhone ? ` to ${payment.studentPhone}` : ''}`}
-                              >
-                                <Share2 className="h-3 w-3 mr-1" />
-                                Share
-                              </Button>
+                              <WhatsAppShare
+                                receiptId={payment.id}
+                                receiptNo={payment.receiptNo}
+                                studentName={payment.studentName}
+                                totalAmount={payment.totalAmount}
+                                paymentDate={payment.paymentDate}
+                                phoneNumber={payment.studentPhone}
+                              />
                               <Button
                                 variant="outline"
                                 size="sm"

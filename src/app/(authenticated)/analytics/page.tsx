@@ -189,7 +189,7 @@ export default function AnalyticsComingSoonPage() {
           <Card className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 p-1 rounded-2xl shadow-2xl max-w-2xl mx-auto">
             <div className="bg-white rounded-xl p-8">
               <motion.div
-                animate={{ bounce: [0, -10, 0] }}
+                animate={{ y: [0, -10, 0] }}
                 transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
                 className="flex items-center justify-center gap-3 mb-4"
               >
