@@ -18,14 +18,6 @@ export async function GET(request: NextRequest) {
     const classes = await prisma.class.findMany({
       where,
       orderBy: { order: "asc" },
-      include: {
-        _count: {
-          select: {
-            enrollments: true,
-            feeStructures: true,
-          },
-        },
-      },
     })
 
     return NextResponse.json(classes)
