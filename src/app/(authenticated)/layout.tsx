@@ -3,6 +3,7 @@
 import { AcademicYearProvider } from '@/contexts/academic-year-context'
 import AcademicYearGuard from '@/components/ui/academic-year-guard'
 import EnhancedPageHeader from '@/components/ui/enhanced-page-header'
+import {getSchoolConfigFromEnv} from '@/lib/schools/config'
 
 export default function AuthenticatedLayout({
   children,
@@ -14,7 +15,7 @@ export default function AuthenticatedLayout({
       <AcademicYearGuard>
         <div className="min-h-screen bg-gray-50">
           <EnhancedPageHeader 
-            title="Dhaarussalam Matriculation Higher Secondary School"
+            title={getSchoolConfigFromEnv().name}
           />
           {children}
         </div>

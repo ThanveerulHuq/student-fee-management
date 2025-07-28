@@ -239,7 +239,7 @@ export default function FeePaymentsReportPage({}: FeePaymentsPageProps) {
 
 
   const handlePrintReceipt = (payment: Payment) => {
-    const receiptUrl = `/fees/receipt/${payment.id}`
+    const receiptUrl = `/receipt/${payment.id}`
     window.open(receiptUrl, '_blank')
   }
 
