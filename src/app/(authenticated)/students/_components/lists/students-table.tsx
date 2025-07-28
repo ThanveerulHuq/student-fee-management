@@ -23,10 +23,6 @@ interface Student {
   mobileNo1: string
   isActive: boolean
   createdAt: string
-  enrollments: Array<{
-    class: { className: string }
-    academicYear: { year: string }
-  }>
 }
 
 interface AcademicYear {
@@ -53,7 +49,7 @@ export default function StudentsTable({
       <div className="p-8">
         <div className="space-y-4">
           <div className="flex justify-between items-center py-4 border-b border-gray-100">
-            {Array.from({ length: 7 }).map((_, i) => (
+            {Array.from({ length: 6 }).map((_, i) => (
               <Skeleton key={i} className="h-4 w-20" />
             ))}
           </div>
@@ -98,9 +94,6 @@ export default function StudentsTable({
                 Details
               </TableHead>
               <TableHead className="font-bold text-gray-800 py-5 px-8 text-sm tracking-wide uppercase">
-                Enrollment
-              </TableHead>
-              <TableHead className="font-bold text-gray-800 py-5 px-8 text-sm tracking-wide uppercase">
                 Status
               </TableHead>
             </TableRow>
@@ -108,7 +101,7 @@ export default function StudentsTable({
           <TableBody>
             {students.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-20 px-8">
+                <TableCell colSpan={6} className="text-center py-20 px-8">
                   <div className="flex flex-col items-center space-y-4">
                     <div className="flex items-center justify-center w-20 h-20 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full">
                       <Users className="h-10 w-10 text-gray-400" />
@@ -124,10 +117,6 @@ export default function StudentsTable({
               </TableRow>
             ) : (
               students.map((student) => {
-                const currentEnrollment = student.enrollments.find(
-                  e => e.academicYear.year === academicYear?.year
-                )
-                
                 return (
                   <TableRow 
                     key={student.id} 
@@ -167,22 +156,6 @@ export default function StudentsTable({
                           {student.gender}
                         </Badge>
                         <span className="text-sm text-gray-600 font-medium">Age {student.age}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="py-6 px-8">
-                      <div className="text-sm">
-                        {currentEnrollment ? (
-                          <div className="space-y-1">
-                            <div className="font-semibold text-gray-900">
-                              {currentEnrollment.class.className}
-                            </div>
-                            <div className="text-gray-500 text-xs">
-                              {currentEnrollment.academicYear.year}
-                            </div>
-                          </div>
-                        ) : (
-                          <span className="text-gray-400 italic text-sm">Not enrolled</span>
-                        )}
                       </div>
                     </TableCell>
                     <TableCell className="py-6 px-8">
