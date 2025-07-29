@@ -23,6 +23,7 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import LoaderWrapper from '@/components/ui/loader-wrapper'
+import { trackFeePayment } from '@/lib/analytics'
 
 interface StudentEnrollment {
   id: string
@@ -172,6 +173,10 @@ export default function FeePaymentPage({ params }: { params: Promise<{ id: strin
 
       if (response.ok) {
         const data = await response.json()
+        
+        // Track fee payment event
+        trackFeePayment()
+        
         toast.success('Payment recorded successfully')
         
         // Navigate to receipt page

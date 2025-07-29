@@ -13,6 +13,7 @@ import {
 import { formatCurrency, formatDateTime, formatDate } from "@/lib/utils/receipt"
 import SecondaryHeader from "@/components/ui/secondary-header"
 import LoaderWrapper from "@/components/ui/loader-wrapper"
+import { trackReceiptViewed, trackReceiptDownloaded } from "@/lib/analytics"
 
 interface PaymentReceipt {
   id: string
@@ -123,6 +124,9 @@ export default function ReceiptPage({ params }: ReceiptPageProps) {
       if (response.ok) {
         const data = await response.json()
         setReceipt(data)
+        
+        // Track receipt viewed event
+        trackReceiptViewed()
       } else {
         console.error("Failed to fetch receipt")
       }
@@ -384,7 +388,13 @@ export default function ReceiptPage({ params }: ReceiptPageProps) {
               <Printer className="h-4 w-4 mr-2" />
               Print
             </Button>
-            <Button variant="outline">
+            <Button 
+              variant="outline"
+              onClick={() => {
+                trackReceiptDownloaded()
+                // Add PDF download functionality here
+              }}
+            >
               <Download className="h-4 w-4 mr-2" />
               Download PDF
             </Button>

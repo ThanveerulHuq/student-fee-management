@@ -6,6 +6,7 @@ import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ArrowLeft, LogOut, UserCircle, CalendarDays } from "lucide-react"
+import { trackLogout } from "@/lib/analytics"
 
 interface AcademicYear {
   id: string
@@ -102,7 +103,10 @@ export default function PageHeader({
             <Button
               variant="outline"
               size="sm"
-              onClick={() => signOut({ callbackUrl: "/auth/login" })}
+              onClick={() => {
+                trackLogout()
+                signOut({ callbackUrl: "/auth/login" })
+              }}
             >
               <LogOut className="h-4 w-4 mr-2" />
               Logout

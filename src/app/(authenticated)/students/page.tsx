@@ -6,6 +6,7 @@ import StudentsSearch from "./_components/lists/students-search"
 import StudentsTable from "./_components/lists/students-table"
 import StudentsPagination from "./_components/lists/students-pagination"
 import { StudentsListSkeleton } from "./_components/common/loading-skeletons"
+import { trackSearch, trackPageView } from "@/lib/analytics"
 
 interface Student {
   id: string
@@ -49,6 +50,11 @@ export default function StudentsPage() {
     total: 0,
     pages: 0,
   })
+
+  // Track page view
+  useEffect(() => {
+    trackPageView('Students', 'students')
+  }, [])
 
   // Debounce search input with 3-character minimum
   useEffect(() => {
@@ -95,6 +101,11 @@ export default function StudentsPage() {
         const data: StudentsResponse = await response.json()
         setStudents(data.students)
         setPagination(data.pagination)
+        
+        // Track search if there's a search term
+        if (debouncedSearch) {
+          trackSearch('students')
+        }
       }
     } catch (error) {
       console.error("Error fetching students:", error)

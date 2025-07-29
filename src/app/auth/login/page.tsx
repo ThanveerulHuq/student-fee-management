@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert } from "@/components/ui/alert"
+import { trackLogin, trackLoginFailed } from "@/lib/analytics"
 
 export default function LoginPage() {
   const [username, setUsername] = useState("")
@@ -30,7 +31,9 @@ export default function LoginPage() {
 
       if (result?.error) {
         setErrorMessage("Invalid username or password")
+        trackLoginFailed("invalid_credentials")
       } else {
+        trackLogin("credentials")
         router.push("/select-academic-year")
       }
     } catch {

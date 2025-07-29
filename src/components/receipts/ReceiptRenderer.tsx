@@ -11,8 +11,6 @@ interface ReceiptRendererProps {
 export default function ReceiptRenderer({ receipt, schoolConfig }: ReceiptRendererProps) {
   const renderTemplate = () => {
     const templateProps = { receipt, schoolConfig }
-
-    console.log(templateProps)
     
     switch (schoolConfig.template) {
       case 'formal':

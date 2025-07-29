@@ -13,6 +13,7 @@ import {
 import { useAcademicYearNavigation } from "@/contexts/academic-year-context"
 import { useAcademicYear } from "@/contexts/academic-year-context"
 import { useSession } from "next-auth/react"
+import { trackDashboardVisit, trackPageView } from "@/lib/analytics"
 
 interface DashboardStats {
   totalStudents: number
@@ -28,6 +29,12 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
 
   const isAdmin = session?.user?.role === "ADMIN";
+
+  // Track dashboard visit
+  useEffect(() => {
+    trackDashboardVisit()
+    trackPageView('Dashboard', 'dashboard')
+  }, [])
 
   useEffect(() => {
     if (!academicYear?.id) return;

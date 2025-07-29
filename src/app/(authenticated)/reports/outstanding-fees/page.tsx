@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useAcademicYear } from "@/contexts/academic-year-context"
 import SecondaryHeader from "@/components/ui/secondary-header"
+import { trackReportGenerated, trackOutstandingFeesViewed, trackPageView } from "@/lib/analytics"
 
 interface OutstandingFeesPageProps {
   params: Promise<Record<string, never>>
@@ -105,6 +106,7 @@ export default function OutstandingFeesReportPage({}: OutstandingFeesPageProps) 
 
   useEffect(() => {
     loadClasses()
+    trackPageView('Outstanding Fees Report', 'reports')
   }, [])
 
   const generateReport = useCallback(async () => {
@@ -170,6 +172,10 @@ export default function OutstandingFeesReportPage({}: OutstandingFeesPageProps) 
       }
 
       setReportData(processedData)
+      
+      // Track report generation and outstanding fees viewed
+      trackReportGenerated('outstanding_fees')
+      trackOutstandingFeesViewed()
     } catch (error) {
       setError("Failed to generate report. Please try again.")
       console.error("Error generating report:", error)

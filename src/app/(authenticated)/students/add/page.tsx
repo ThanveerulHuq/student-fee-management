@@ -3,6 +3,7 @@
 import { useAcademicYearNavigation } from "@/contexts/academic-year-context"
 import StudentForm from "@/app/(authenticated)/students/_components/student-form"
 import { type StudentFormData } from "@/lib/validations/student"
+import { trackStudentCreated } from "@/lib/analytics"
 
 interface AddStudentPageProps {
   params: Promise<Record<string, never>>
@@ -24,6 +25,8 @@ export default function AddStudentPage({}: AddStudentPageProps) {
     })
 
     if (response.ok) {
+      const createdStudent = await response.json()
+      trackStudentCreated()
       navigateTo('/students')
     } else {
       const errorData = await response.json()
