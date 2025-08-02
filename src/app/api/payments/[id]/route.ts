@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth'
 import { prisma } from '@/lib/prisma'
 import { authOptions } from '@/lib/auth'
 
-// GET /api/flexible-payments/[id] - Get specific payment
+// GET /api/payments/[id] - Get specific payment
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -36,7 +36,7 @@ export async function GET(
   }
 }
 
-// DELETE /api/flexible-payments/[id] - Cancel payment (if applicable)
+// DELETE /api/payments/[id] - Cancel payment (if applicable)
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }

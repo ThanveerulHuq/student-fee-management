@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma'
 import { authOptions } from '@/lib/auth'
 import { ObjectId } from 'mongodb'
 
-// GET /api/flexible-enrollments - List enrollments with flexible fee structure
+// GET /api/enrollments - List enrollments with fee structure
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
       }
     })
   } catch (error) {
-    console.error('Error fetching flexible enrollments:', error)
+    console.error('Error fetching enrollments:', error)
     return NextResponse.json(
       { error: 'Failed to fetch enrollments' },
       { status: 500 }
@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST /api/flexible-enrollments - Create new enrollment with flexible fee structure
+// POST /api/enrollments - Create new enrollment with fee structure
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
@@ -277,7 +277,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(enrollment, { status: 201 })
   } catch (error) {
-    console.error('Error creating flexible enrollment:', error)
+    console.error('Error creating enrollment:', error)
     return NextResponse.json(
       { error: 'Failed to create enrollment' },
       { status: 500 }

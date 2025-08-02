@@ -211,7 +211,10 @@ export async function DELETE(
       where: { id: resolvedParams.id },
       data: { 
         isActive: false,
-        'student.status': 'INACTIVE'
+        student: {
+          ...existingEnrollment.student,
+          status: 'INACTIVE'
+        }
       }
     })
 

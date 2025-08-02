@@ -138,6 +138,7 @@ type ScholarshipItem {
   templateType    ScholarshipType
   amount          Float
   isAutoApplied   Boolean
+  isEditableDuringEnrollment   Boolean
   order           Int
 }
 
@@ -182,10 +183,9 @@ model FeeStructure {
 // Composite types for student enrollments
 type StudentInfo {
   admissionNumber String
-  firstName       String
-  lastName        String
+  name            String
   fatherName      String
-  phone           String
+  mobileNo        String
   class           String
   status          StudentStatus
 }
@@ -368,7 +368,7 @@ enum DocumentType {
   CERTIFICATE
 }
 
-// New enums for flexible fee structure
+// enum for fee structure
 enum FeeCategory {
   REGULAR
   OPTIONAL

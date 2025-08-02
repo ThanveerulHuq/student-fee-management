@@ -180,7 +180,7 @@ export default function FeePaymentPage({ params }: { params: Promise<{ id: strin
         toast.success('Payment recorded successfully')
         
         // Navigate to receipt page
-        router.push(`/receipt/${data.id}`)
+        router.push(`/receipts/${data.id}`)
       } else {
         const error = await response.json()
         toast.error(error.error || 'Failed to record payment')

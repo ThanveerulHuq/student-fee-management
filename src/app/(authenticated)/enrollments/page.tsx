@@ -21,6 +21,7 @@ import {
 import { toast } from 'sonner'
 import { useAcademicYear, useAcademicYearNavigation } from '@/contexts/academic-year-context'
 import LoaderWrapper from '@/components/ui/loader-wrapper'
+import { DeleteEnrollmentDialog } from './_components/delete-enrollment-dialog'
 
 
 interface StudentEnrollment {
@@ -86,7 +87,7 @@ const statusColors = {
   WAIVED: 'bg-gray-100 text-gray-800 border-gray-200'
 }
 
-export default function FlexibleEnrollmentsPage() {
+export default function EnrollmentsPage() {
   const { academicYear } = useAcademicYear()
   const { navigateTo } = useAcademicYearNavigation()
   const [enrollments, setEnrollments] = useState<StudentEnrollment[]>([])
@@ -94,6 +95,9 @@ export default function FlexibleEnrollmentsPage() {
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set())
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [enrollmentToDelete, setEnrollmentToDelete] = useState<StudentEnrollment | null>(null)
+  const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
     fetchEnrollments()
@@ -145,18 +149,24 @@ export default function FlexibleEnrollmentsPage() {
     toast.info('Edit enrollment functionality will be available soon')
   }
 
-  const handleDelete = async (enrollment: StudentEnrollment) => {
-    if (!confirm(`Are you sure you want to delete enrollment for "${enrollment.student.firstName} ${enrollment.student.lastName}"?`)) {
-      return
-    }
+  const handleDelete = (enrollment: StudentEnrollment) => {
+    setEnrollmentToDelete(enrollment)
+    setDeleteDialogOpen(true)
+  }
 
+  const handleConfirmDelete = async () => {
+    if (!enrollmentToDelete) return
+
+    setDeleting(true)
     try {
-      const response = await fetch(`/api/enrollments/${enrollment.id}`, {
+      const response = await fetch(`/api/enrollments/${enrollmentToDelete.id}`, {
         method: 'DELETE'
       })
 
       if (response.ok) {
         toast.success('Enrollment deleted successfully')
+        setDeleteDialogOpen(false)
+        setEnrollmentToDelete(null)
         fetchEnrollments()
       } else {
         const errorData = await response.json()
@@ -165,6 +175,8 @@ export default function FlexibleEnrollmentsPage() {
     } catch (err) {
       console.error(err)
       toast.error('Error deleting enrollment')
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -265,7 +277,7 @@ export default function FlexibleEnrollmentsPage() {
                   <p className="text-gray-600 mb-6 max-w-md mx-auto">
                     {searchTerm 
                       ? 'Try adjusting your search terms to find students'
-                      : 'Start enrolling students using the flexible fee structure system'
+                      : 'Start enrolling students'
                     }
                   </p>
                   {!searchTerm && (
@@ -359,7 +371,8 @@ export default function FlexibleEnrollmentsPage() {
                                 variant="ghost"
                                 size="sm"
                                 className="h-8 w-8 p-0"
-                                onClick={() => handleEdit(enrollment)}
+                                onClick={() => navigateTo(`/enrollments/${enrollment.id}`)}
+                                title="View Details"
                               >
                                 <Eye className="w-4 h-4" />
                               </Button>
@@ -495,6 +508,15 @@ export default function FlexibleEnrollmentsPage() {
           )}
         </div>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <DeleteEnrollmentDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        enrollment={enrollmentToDelete}
+        onConfirm={handleConfirmDelete}
+        loading={deleting}
+      />
     </div>
   )
 }

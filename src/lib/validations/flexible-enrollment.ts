@@ -1,7 +1,7 @@
 import { z } from 'zod'
 
-// Flexible Enrollment Schema
-export const flexibleEnrollmentSchema = z.object({
+// Enrollment Schema
+export const enrollmentSchema = z.object({
   studentId: z.string().min(1, 'Student ID is required'),
   academicYearId: z.string().min(1, 'Academic year ID is required'),
   classId: z.string().min(1, 'Class ID is required'),
@@ -13,7 +13,7 @@ export const flexibleEnrollmentSchema = z.object({
 })
 
 // Enrollment Update Schema
-export const flexibleEnrollmentUpdateSchema = z.object({
+export const enrollmentUpdateSchema = z.object({
   section: z.string().optional(),
   customFees: z.record(z.string(), z.number().min(0)).optional(),
   scholarshipUpdates: z.array(z.object({
@@ -48,8 +48,8 @@ export const studentScholarshipSchema = z.object({
 })
 
 // Type exports
-export type FlexibleEnrollmentInput = z.infer<typeof flexibleEnrollmentSchema>
-export type FlexibleEnrollmentUpdateInput = z.infer<typeof flexibleEnrollmentUpdateSchema>
+export type EnrollmentInput = z.infer<typeof enrollmentSchema>
+export type EnrollmentUpdateInput = z.infer<typeof enrollmentUpdateSchema>
 export type FeeStructureQueryInput = z.infer<typeof feeStructureQuerySchema>
 export type StudentFeeUpdateInput = z.infer<typeof studentFeeUpdateSchema>
 export type StudentScholarshipInput = z.infer<typeof studentScholarshipSchema>

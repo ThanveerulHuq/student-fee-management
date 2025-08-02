@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { prisma } from '@/lib/prisma'
 import { authOptions } from '@/lib/auth'
 import { ObjectId } from 'mongodb'
+import { FeeItem, ScholarshipItem } from '@/types/fee'
 
 // GET /api/admin/fee-structures/[id] - Get specific fee structure
 export async function GET(
@@ -80,7 +81,7 @@ export async function PUT(
     // Process fee items if provided
     if (feeItems) {
       const processedFeeItems = await Promise.all(
-        feeItems.map(async (item: { id?: string; templateId: string; amount: number; isCompulsory?: boolean; isEditableDuringEnrollment?: boolean; order?: number }, _) => {
+        feeItems.map(async (item: FeeItem) => {
           const template = await prisma.feeTemplate.findUnique({
             where: { id: item.templateId }
           })
@@ -123,7 +124,7 @@ export async function PUT(
     // Process scholarship items if provided
     if (scholarshipItems) {
       const processedScholarshipItems = await Promise.all(
-        scholarshipItems.map(async (item: { id?: string; templateId: string; amount: number; isAutoApplied?: boolean; order?: number }, _) => {
+        scholarshipItems.map(async (item: ScholarshipItem) => {
           const template = await prisma.scholarshipTemplate.findUnique({
             where: { id: item.templateId }
           })
@@ -138,6 +139,7 @@ export async function PUT(
             templateName: template.name,
             templateType: template.type,
             amount: item.amount,
+            isEditableDuringEnrollment: item.isEditableDuringEnrollment,
             isAutoApplied: item.isAutoApplied ?? false,
             order: item.order ?? template.order
           }

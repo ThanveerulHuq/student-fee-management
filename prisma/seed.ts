@@ -60,22 +60,6 @@ async function main() {
     })
     console.log(`Class created: ${classRecord.className}`)
 
-    // Create common fee structure for each class
-    await prisma.commonFee.upsert({
-      where: {
-        academicYearId_classId: {
-          academicYearId: academicYear.id,
-          classId: classRecord.id,
-        },
-      },
-      update: {},
-      create: {
-        academicYearId: academicYear.id,
-        classId: classRecord.id,
-        tutionFee: 1000 + (classData.order * 100), // Increasing fee by class
-        bookFee: 500 + (classData.order * 50),
-      },
-    })
   }
 
   console.log('Seed data completed successfully!')

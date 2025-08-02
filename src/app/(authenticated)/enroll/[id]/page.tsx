@@ -7,12 +7,12 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Checkbox } from "@/components/ui/checkbox"
 
 import { Separator } from "@/components/ui/separator"
-import { Save, Award, AlertTriangle, Info, ArrowLeft } from "lucide-react"
+import { Save, Award, AlertTriangle, Info, ArrowLeft, RotateCcw } from "lucide-react"
 import LoaderWrapper from "@/components/ui/loader-wrapper"
-import ImprovedFeeItemsSection from "@/components/fees/improved-fee-items-section"
+import FeeItemsSection from "../_components/fee-items-section"
+import ScholarshipItemsSection from "../_components/scholarship-items-section"
 
 interface Student {
   id: string
@@ -49,6 +49,7 @@ interface ScholarshipItem {
   templateType: string
   amount: number
   isAutoApplied: boolean
+  isEditableDuringEnrollment: boolean
   order: number
 }
 
@@ -89,6 +90,7 @@ export default function EnrollStudentPage() {
     classId: "",
     section: "",
     customFees: {} as Record<string, number>,
+    customScholarships: {} as Record<string, number>,
     selectedScholarships: [] as string[],
   })
 
@@ -145,6 +147,7 @@ export default function EnrollStudentPage() {
           setFormData(prev => ({
             ...prev,
             customFees: {},
+            customScholarships: {},
             selectedScholarships: []
           }))
         } else {
@@ -177,6 +180,21 @@ export default function EnrollStudentPage() {
     }))
   }
 
+  const handleCustomScholarshipsChange = (customScholarships: Record<string, number>) => {
+    setFormData(prev => ({
+      ...prev,
+      customScholarships
+    }))
+  }
+
+  const handleResetAllToDefault = () => {
+    setFormData(prev => ({
+      ...prev,
+      customFees: {},
+      customScholarships: {}
+    }))
+  }
+
   const handleScholarshipToggle = (scholarshipId: string, checked: boolean) => {
     setFormData(prev => ({
       ...prev,
@@ -199,11 +217,23 @@ export default function EnrollStudentPage() {
 
     const autoScholarships = feeStructure.scholarshipItems
       .filter(item => item.isAutoApplied)
-      .reduce((sum, item) => sum + item.amount, 0)
+      .reduce((sum, item) => {
+        const customAmount = formData.customScholarships[item.templateId]
+        const finalAmount = (customAmount !== undefined && item.isEditableDuringEnrollment) 
+          ? customAmount 
+          : item.amount
+        return sum + finalAmount
+      }, 0)
 
     const manualScholarships = feeStructure.scholarshipItems
       .filter(item => formData.selectedScholarships.includes(item.id))
-      .reduce((sum, item) => sum + item.amount, 0)
+      .reduce((sum, item) => {
+        const customAmount = formData.customScholarships[item.templateId]
+        const finalAmount = (customAmount !== undefined && item.isEditableDuringEnrollment) 
+          ? customAmount 
+          : item.amount
+        return sum + finalAmount
+      }, 0)
 
     const totalScholarships = autoScholarships + manualScholarships
 
@@ -229,6 +259,7 @@ export default function EnrollStudentPage() {
         classId: formData.classId,
         section: formData.section,
         customFees: formData.customFees,
+        customScholarships: formData.customScholarships,
         selectedScholarships: formData.selectedScholarships,
         enrollmentDate: new Date(),
         isActive: true,
@@ -242,8 +273,11 @@ export default function EnrollStudentPage() {
         body: JSON.stringify(submitData),
       })
 
+      console.log(response)
+
       if (response.ok) {
-        navigateTo(`/students/${student.id}`)
+        const result = await response.json()
+        navigateTo(`/enrollments/${result.id}`)
       } else {
         const errorData = await response.json()
         setError(errorData.error || "Failed to enroll student")
@@ -299,7 +333,7 @@ export default function EnrollStudentPage() {
             </div>
             
             {/* Student Details in Same Line */}
-            <div className="hidden md:flex items-center space-x-8">
+            <div className="hidden md:flex items-center space-x-50">
               <div>
                 <Label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Admission No</Label>
                 <p className="text-sm font-medium text-gray-700 mt-0.5">{student.admissionNo}</p>
@@ -410,7 +444,7 @@ export default function EnrollStudentPage() {
                 {!fetchingFeeStructure && feeStructure && (
                   <div className="border-t pt-4 space-y-4">
                     {/* Improved Fee Items Section */}
-                    <ImprovedFeeItemsSection
+                    <FeeItemsSection
                       feeItems={feeStructure.feeItems}
                       customFees={formData.customFees}
                       onCustomFeesChange={handleCustomFeesChange}
@@ -425,31 +459,29 @@ export default function EnrollStudentPage() {
                           <Award className="h-4 w-4 mr-2" />
                           Available Scholarships
                         </h4>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                          {feeStructure.scholarshipItems.map((item) => (
-                            <div key={item.id} className="bg-green-50/50 border border-green-100 rounded-lg p-4 border-l-4 border-l-green-500">
-                              <div className="flex items-center justify-between">
-                                <div className="flex-1">
-                                  <div className="flex items-center space-x-2 mb-1">
-                                    <h5 className="font-medium text-sm">{item.templateName}</h5>
-                                  </div>
-                                  <p className="text-sm text-gray-600">Amount: ₹{item.amount.toLocaleString()}</p>
-                                </div>
-                                <div className="flex items-center">
-                                  {!item.isAutoApplied && (
-                                    <Checkbox
-                                      checked={formData.selectedScholarships.includes(item.id)}
-                                      onCheckedChange={(checked) => 
-                                        handleScholarshipToggle(item.id, checked as boolean)
-                                      }
-                                      disabled={loading}
-                                    />
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
+                        <ScholarshipItemsSection
+                          scholarshipItems={feeStructure.scholarshipItems}
+                          customScholarships={formData.customScholarships}
+                          onCustomScholarshipsChange={handleCustomScholarshipsChange}
+                          disabled={loading}
+                          autoSave={true}
+                        />
+                      </div>
+                    )}
+
+                    {/* Reset All Button */}
+                    {(Object.keys(formData.customFees).length > 0 || Object.keys(formData.customScholarships).length > 0) && (
+                      <div className="flex justify-end pt-4">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={handleResetAllToDefault}
+                          disabled={loading}
+                        >
+                          <RotateCcw className="h-4 w-4 mr-2" />
+                          Reset All to Default
+                        </Button>
                       </div>
                     )}
 

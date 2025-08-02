@@ -11,34 +11,35 @@ import {
   X, 
   IndianRupee, 
   Lock,
-  Unlock
+  Minus,
+  RotateCcw
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
-interface FeeItem {
+interface ScholarshipItem {
   id: string
   templateId: string
   templateName: string
-  templateCategory: string
+  templateType: string
   amount: number
-  isCompulsory: boolean
+  isAutoApplied: boolean
   isEditableDuringEnrollment: boolean
   order: number
 }
 
-interface ImprovedFeeItemCardProps {
-  item: FeeItem
+interface ScholarshipItemCardProps {
+  item: ScholarshipItem
   customAmount?: number
   onAmountChange: (templateId: string, amount: number) => void
   disabled?: boolean
 }
 
-export default function ImprovedFeeItemCard({
+export default function ScholarshipItemCard({
   item,
   customAmount,
   onAmountChange,
   disabled = false
-}: ImprovedFeeItemCardProps) {
+}: ScholarshipItemCardProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [editValue, setEditValue] = useState("")
   const [hasChanges, setHasChanges] = useState(false)
@@ -74,12 +75,8 @@ export default function ImprovedFeeItemCard({
       return false
     }
     
-    if (numValue < 0) {
-      setError("Amount cannot be negative")
-      return false
-    }
-    
-    if (numValue > 1000000) {
+    // Scholarships can be negative (discounts)
+    if (Math.abs(numValue) > 1000000) {
       setError("Amount cannot exceed ₹10,00,000")
       return false
     }
@@ -110,9 +107,11 @@ export default function ImprovedFeeItemCard({
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
       e.preventDefault()
+      e.stopPropagation()
       handleSave()
     } else if (e.key === "Escape") {
       e.preventDefault()
+      e.stopPropagation()
       handleCancel()
     }
   }
@@ -123,23 +122,16 @@ export default function ImprovedFeeItemCard({
     if (error) setError("")
   }
 
-  const handleBlur = () => {
-    // Auto-save on blur if no errors
-    if (editValue !== finalAmount.toString() && !error) {
-      handleSave()
-    }
-  }
 
   return (
     <Card className={cn(
-      "group transition-all duration-200 hover:shadow-md",
-      isEditing && "ring-2 ring-blue-500 ring-opacity-50",
-      hasChanges && "border-l-4 border-l-amber-500",
+      "group transition-all duration-200 hover:shadow-md border-l-4 border-l-green-500 rounded-md bg-green-50",
+      hasChanges && "border-l-4 border-l-amber-500 bg-amber-50",
       error && "ring-2 ring-red-500 ring-opacity-50"
     )}>
       <CardContent>
         <div className="flex items-center justify-between">
-          {/* Left section - Fee info */}
+          {/* Left section - Scholarship info */}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
               <h5 className="font-medium text-gray-900 truncate text-sm">
@@ -177,15 +169,15 @@ export default function ImprovedFeeItemCard({
                     <IndianRupee className="absolute left-2 top-1/2 -translate-y-1/2 h-3 w-3 text-gray-400" />
                     <Input
                       ref={inputRef}
+                      id={`scholarship-amount-${item.templateId}`}
+                      name={`scholarship-amount-${item.templateId}`}
                       type="number"
-                      min="0"
                       step="1"
                       value={editValue}
                       onChange={(e) => handleInputChange(e.target.value)}
                       onKeyDown={handleKeyPress}
-                      onBlur={handleBlur}
                       className={cn(
-                        "w-20 h-7 pl-6 text-right text-sm",
+                        "w-24 h-7 pl-6 text-right text-sm",
                         error && "border-red-500 focus:ring-red-500"
                       )}
                       placeholder="0"
@@ -195,12 +187,16 @@ export default function ImprovedFeeItemCard({
                 </div>
               ) : (
                 <div className="flex items-center">
-                  <IndianRupee className="h-3 w-3 text-gray-600" />
+                  {finalAmount < 0 ? (
+                    <Minus className="h-3 w-3 text-green-600" />
+                  ) : (
+                    <IndianRupee className="h-3 w-3 text-gray-600" />
+                  )}
                   <span className={cn(
                     "text-sm font-semibold ml-1",
-                    hasChanges ? "text-amber-700" : "text-gray-900"
+                    hasChanges ? "text-amber-700" : "text-green-700"
                   )}>
-                    {finalAmount.toLocaleString()}
+                    {Math.abs(finalAmount).toLocaleString()}
                   </span>
                 </div>
               )}
@@ -211,6 +207,7 @@ export default function ImprovedFeeItemCard({
               {isEditing ? (
                 <>
                   <Button
+                    type="button"
                     size="sm"
                     variant="ghost"
                     onClick={handleSave}
@@ -220,6 +217,7 @@ export default function ImprovedFeeItemCard({
                     <Check className="h-3 w-3" />
                   </Button>
                   <Button
+                    type="button"
                     size="sm"
                     variant="ghost"
                     onClick={handleCancel}
@@ -233,10 +231,11 @@ export default function ImprovedFeeItemCard({
                 <>
                   {item.isEditableDuringEnrollment ? (
                     <Button
+                      type="button"
                       size="sm"
                       variant="ghost"
                       onClick={handleEdit}
-                      className="h-6 w-6 p-0 hover:bg-blue-100 hover:text-blue-700"
+                      className="h-6 w-6 p-0 hover:bg-green-100 hover:text-green-700"
                       disabled={disabled}
                     >
                       <Edit3 className="h-3 w-3" />
@@ -249,6 +248,7 @@ export default function ImprovedFeeItemCard({
                   
                   {hasChanges && (
                     <Button
+                      type="button"
                       size="sm"
                       variant="ghost"
                       onClick={handleReset}
@@ -256,7 +256,7 @@ export default function ImprovedFeeItemCard({
                       disabled={disabled}
                       title="Reset to default"
                     >
-                      <Unlock className="h-3 w-3" />
+                      <RotateCcw className="h-3 w-3" />
                     </Button>
                   )}
                 </>

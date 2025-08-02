@@ -83,6 +83,7 @@ interface ScholarshipItem {
   templateType?: string
   amount: number
   isAutoApplied: boolean
+  isEditableDuringEnrollment: boolean
   order: number
 }
 
@@ -270,6 +271,7 @@ export default function FeeStructuresPage() {
           templateId: '',
           amount: 0,
           isAutoApplied: false,
+          isEditableDuringEnrollment: false,
           order: formData.scholarshipItems.length + 1
         }
       ]
@@ -753,15 +755,28 @@ export default function FeeStructuresPage() {
                             </div>
 
                             <div className="flex items-center justify-between">
-                              <div className="flex items-center space-x-2">
-                                <Switch
-                                  checked={item.isAutoApplied}
-                                  onCheckedChange={(checked) => updateScholarshipItem(index, { isAutoApplied: checked })}
-                                  id={`auto-apply-${index}`}
-                                />
-                                <Label htmlFor={`auto-apply-${index}`} className="text-sm text-gray-700">
-                                  Auto-apply to all eligible students
-                                </Label>
+                              <div className="flex items-center space-x-6">
+                                <div className="flex items-center space-x-2">
+                                  <Switch
+                                    checked={item.isAutoApplied}
+                                    onCheckedChange={(checked) => updateScholarshipItem(index, { isAutoApplied: checked })}
+                                    id={`auto-apply-${index}`}
+                                  />
+                                  <Label htmlFor={`auto-apply-${index}`} className="text-sm text-gray-700">
+                                    Auto-apply to all eligible students
+                                  </Label>
+                                </div>
+                                
+                                <div className="flex items-center space-x-2">
+                                  <Switch
+                                    checked={item.isEditableDuringEnrollment}
+                                    onCheckedChange={(checked) => updateScholarshipItem(index, { isEditableDuringEnrollment: checked })}
+                                    id={`editable-scholarship-${index}`}
+                                  />
+                                  <Label htmlFor={`editable-scholarship-${index}`} className="text-sm text-gray-700">
+                                    Editable during enrollment
+                                  </Label>
+                                </div>
                               </div>
 
                               <Button

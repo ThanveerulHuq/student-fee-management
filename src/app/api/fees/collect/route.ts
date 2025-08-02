@@ -9,7 +9,6 @@ import { ObjectId } from "mongodb"
 import { FeeStatus, FeeStatusType } from "@/types/enrollment"
 import { PaymentItem } from "@/types/payment"
 
-// Updated schema for flexible fee payment
 const feePaymentSchema = z.object({
   studentEnrollmentId: z.string(),
   paymentItems: z.array(z.object({

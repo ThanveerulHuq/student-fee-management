@@ -28,7 +28,7 @@ export default function WhatsAppShare({
   variant = "outline"
 }: WhatsAppShareProps) {
   const handleWhatsAppShare = () => {
-    const receiptUrl = `${window.location.origin}/receipt/${receiptId}`
+    const receiptUrl = `${window.location.origin}/receipts/${receiptId}`
     const message = encodeURIComponent(
       `Receipt for ${studentName}\nReceipt No: ${receiptNo}\nAmount: ₹${totalAmount.toLocaleString()}\nDate: ${format(new Date(paymentDate), "dd MMM yyyy")}\n\nView receipt: ${receiptUrl}`
     )
