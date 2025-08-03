@@ -22,7 +22,7 @@ interface DashboardStats {
 }
 
 export default function DashboardPage() {
-  const { goToStudents, goToFees, goToReports, navigateTo } = useAcademicYearNavigation();
+  const { goToStudents, goToFeeCollection, goToReports, navigateTo } = useAcademicYearNavigation();
   const { academicYear } = useAcademicYear();
   const { data: session } = useSession();
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -73,10 +73,10 @@ export default function DashboardPage() {
       color: "bg-indigo-500",
     },
     {
-      title: "Fee Management",
-      description: "Collect fees and manage payment records",
+      title: "Fee Collection",
+      description: "Collect fees and print receipts",
       icon: CreditCard,
-      action: goToFees,
+      action: goToFeeCollection,
       color: "bg-green-500",
     },
     {

@@ -1,14 +1,14 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import { 
   Search, 
   User, 
   Calendar,
-  IndianRupee,
+  AlertTriangle,
   Hash,
   Phone,
   BookOpen,
@@ -16,6 +16,7 @@ import {
 } from 'lucide-react'
 import { useAcademicYear, useAcademicYearNavigation } from '@/contexts/academic-year-context'
 import LoaderWrapper from '@/components/ui/loader-wrapper'
+import LoaderOne from '@/components/ui/loader-one'
 
 interface StudentEnrollment {
   id: string
@@ -23,8 +24,7 @@ interface StudentEnrollment {
   section: string
   student: {
     admissionNumber: string
-    firstName: string
-    lastName: string
+    name: string
     fatherName: string
     phone: string
     status: string
@@ -43,8 +43,10 @@ export default function CollectFeePage() {
   const { academicYear } = useAcademicYear()
   const { navigateTo } = useAcademicYearNavigation()
   const [enrollments, setEnrollments] = useState<StudentEnrollment[]>([])
+  const [filteredEnrollments, setFilteredEnrollments] = useState<StudentEnrollment[]>([])
   const [searchTerm, setSearchTerm] = useState('')
   const [loading, setLoading] = useState(true)
+  const [isSearching, setIsSearching] = useState(false)
 
   const fetchEnrollments = useCallback(async () => {
     if (!academicYear) return
@@ -67,117 +69,136 @@ export default function CollectFeePage() {
     fetchEnrollments()
   }, [fetchEnrollments])
 
-  const filteredEnrollments = enrollments.filter(enrollment => {
-    if (!searchTerm) return true
-    const searchLower = searchTerm.toLowerCase()
-    return (
-      enrollment.student.firstName.toLowerCase().includes(searchLower) ||
-      enrollment.student.lastName.toLowerCase().includes(searchLower) ||
-      enrollment.student.admissionNumber.toLowerCase().includes(searchLower) ||
-      enrollment.student.fatherName.toLowerCase().includes(searchLower)
-    )
-  })
+  // Filter enrollments based on search term
+  useEffect(() => {
+    if (searchTerm.trim()) {
+      setIsSearching(true)
+      const timer = setTimeout(() => {
+        const filtered = enrollments.filter(enrollment => {
+          const searchLower = searchTerm.toLowerCase()
+          return (
+            enrollment.student.name.toLowerCase().includes(searchLower) ||
+            enrollment.student.admissionNumber.toLowerCase().includes(searchLower) ||
+            enrollment.student.fatherName.toLowerCase().includes(searchLower)
+          )
+        })
+        setFilteredEnrollments(filtered)
+        setIsSearching(false)
+      }, 300)
+      
+      return () => clearTimeout(timer)
+    } else {
+      setFilteredEnrollments([])
+      setIsSearching(false)
+    }
+  }, [searchTerm, enrollments])
 
   if (loading) {
     return <LoaderWrapper fullScreen label="Loading students..." />
   }
 
+  if (!academicYear) {
+    return (
+      <div className="container mx-auto py-6">
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>
+            Please select an academic year from the header to proceed with fee collection.
+          </AlertDescription>
+        </Alert>
+      </div>
+    )
+  }
+
   return (
-    <div className="container mx-auto py-6">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-3xl font-bold flex items-center">
-            <CreditCard className="w-8 h-8 mr-3 text-green-600" />
-            Collect Fees
-          </h1>
-          <p className="text-muted-foreground">Select a student to collect fees</p>
-          {academicYear && (
-            <div className="flex items-center mt-2">
-              <Calendar className="w-4 h-4 mr-2 text-green-600" />
-              <span className="text-sm font-medium">Academic Year: {academicYear.year}</span>
+    <main className="max-w-4xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <CreditCard className="h-5 w-5 text-green-600" />
+            <span>Collect Fees</span>
+          </CardTitle>
+          <p className="text-sm text-gray-600">
+            Academic Year: <strong>{academicYear.year}</strong>
+          </p>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-6">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Input
+                placeholder="Search by student name, admission number, or father name..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+                autoFocus
+              />
+              {isSearching && (
+                <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                  <LoaderOne />
+                </div>
+              )}
             </div>
-          )}
-        </div>
-      </div>
 
-      {/* Search Bar */}
-      <div className="mb-6">
-        <div className="relative max-w-md">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-          <Input
-            placeholder="Search by student name, admission number, or father name..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-      </div>
+            <div className="max-h-96 overflow-y-auto">
+              {searchTerm.trim() === '' ? (
+                <div className="text-center py-8 text-gray-500">
+                  <Search className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                  <p>Start typing to search for students to collect fees...</p>
+                </div>
+              ) : filteredEnrollments.length === 0 && !isSearching ? (
+                <div className="text-center py-8 text-gray-500">
+                  <User className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                  <p>No students found matching your search.</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {filteredEnrollments.map((enrollment) => (
+                    <Card 
+                      key={enrollment.id} 
+                      className="cursor-pointer hover:bg-green-50 hover:border-green-300 transition-all duration-200 border-2 hover:shadow-md"
+                      onClick={() => navigateTo(`/fees/collect/${enrollment.id}`)}
+                    >
+                      <CardContent className="p-1">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                              <User className="w-5 h-5 text-green-600" />
+                            </div>
+                            <div>
+                              <h4 className="font-semibold text-gray-900">
+                                {enrollment.student.name}
+                              </h4>
+                              <div className="flex items-center space-x-3 text-sm text-gray-600">
+                                <span>Father: {enrollment.student.fatherName}</span>
+                                <span className="flex items-center">
+                                  <BookOpen className="w-3 h-3 mr-1" />
+                                  {enrollment.class.className} - {enrollment.section}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="text-green-600">
+                            <CreditCard className="w-5 h-5" />
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </div>
 
-      {/* Students List */}
-      <div className="grid gap-4">
-        {filteredEnrollments.length === 0 ? (
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-center py-8">
-                <CreditCard className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
-                <p className="text-muted-foreground mb-2">
-                  {searchTerm ? 'No students found matching your search.' : 'No students found.'}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  {searchTerm ? 'Try adjusting your search terms.' : 'No students enrolled in current academic year.'}
+            {searchTerm.trim() !== '' && (
+              <div className="border-t pt-4 text-center">
+                <p className="text-sm text-gray-600">
+                  Can&apos;t find the student? Make sure they are enrolled in the current academic year.
                 </p>
               </div>
-            </CardContent>
-          </Card>
-        ) : (
-          filteredEnrollments.map((enrollment) => (
-            <Card key={enrollment.id} className="hover:shadow-md transition-shadow cursor-pointer"
-                  onClick={() => navigateTo(`/fees/collect/${enrollment.id}`)}>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4">
-                    <User className="w-8 h-8 text-green-600" />
-                    <div>
-                      <CardTitle className="text-xl">
-                        {enrollment.student.firstName} {enrollment.student.lastName}
-                      </CardTitle>
-                      <div className="flex items-center space-x-4 text-sm text-muted-foreground mt-1">
-                        <span className="flex items-center">
-                          <Hash className="w-4 h-4 mr-1" />
-                          {enrollment.student.admissionNumber}
-                        </span>
-                        <span className="flex items-center">
-                          <User className="w-4 h-4 mr-1" />
-                          {enrollment.student.fatherName}
-                        </span>
-                        <span className="flex items-center">
-                          <Phone className="w-4 h-4 mr-1" />
-                          {enrollment.student.phone}
-                        </span>
-                        <span className="flex items-center">
-                          <BookOpen className="w-4 h-4 mr-1" />
-                          {enrollment.class.className} - {enrollment.section}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <Button 
-                      className="bg-green-600 hover:bg-green-700"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        navigateTo(`/fees/collect/${enrollment.id}`)
-                      }}
-                    >
-                      Collect Fees
-                    </Button>
-                  </div>
-                </div>
-              </CardHeader>
-            </Card>
-          ))
-        )}
-      </div>
-    </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    </main>
   )
 }
