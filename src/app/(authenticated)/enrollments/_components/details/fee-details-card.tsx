@@ -2,66 +2,7 @@
 
 import { Badge } from "@/components/ui/badge"
 import { IndianRupee, CheckCircle } from "lucide-react"
-
-interface StudentEnrollment {
-  fees: Array<{
-    id: string
-    feeItemId: string
-    templateId: string
-    templateName: string
-    templateCategory: string
-    amount: number
-    originalAmount: number
-    amountPaid: number
-    amountDue: number
-    isCompulsory: boolean
-    isWaived: boolean
-    waivedReason?: string
-    waivedBy?: string
-    waivedDate?: string
-    order: number
-    recentPayments: Array<{
-      paymentId: string
-      amount: number
-      paymentDate: string
-      receiptNo: string
-      paymentMethod: string
-    }>
-  }>
-  scholarships: Array<{
-    id: string
-    scholarshipItemId: string
-    templateId: string
-    templateName: string
-    templateType: string
-    amount: number
-    originalAmount: number
-    isAutoApplied: boolean
-    appliedDate: string
-    appliedBy: string
-    isActive: boolean
-    remarks?: string
-  }>
-  totals: {
-    fees: {
-      compulsory: number
-      optional: number
-      total: number
-      paid: number
-      due: number
-    }
-    scholarships: {
-      applied: number
-      autoApplied: number
-      manual: number
-    }
-    netAmount: {
-      total: number
-      paid: number
-      due: number
-    }
-  }
-}
+import { StudentEnrollment } from '@/types/enrollment'
 
 interface FeeDetailsCardProps {
   enrollment: StudentEnrollment
@@ -70,8 +11,8 @@ interface FeeDetailsCardProps {
 
 
 export default function FeeDetailsCard({ enrollment }: FeeDetailsCardProps) {
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-IN")
+  const formatDate = (date: Date) => {
+    return new Date(date).toLocaleDateString("en-IN")
   }
 
   const sortedFees = [...enrollment.fees].sort((a, b) => a.order - b.order)

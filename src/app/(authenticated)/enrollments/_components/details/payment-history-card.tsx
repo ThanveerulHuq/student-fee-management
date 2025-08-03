@@ -3,29 +3,15 @@
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Receipt, ExternalLink, CreditCard } from "lucide-react"
+import { StudentEnrollment } from '@/types/enrollment'
 
 interface PaymentRecord {
   paymentId: string
   amount: number
-  paymentDate: string
+  paymentDate: Date
   receiptNo: string
   paymentMethod: string
   feeTemplateName?: string
-}
-
-interface StudentEnrollment {
-  id: string
-  fees: Array<{
-    id: string
-    templateName: string
-    recentPayments: Array<{
-      paymentId: string
-      amount: number
-      paymentDate: string
-      receiptNo: string
-      paymentMethod: string
-    }>
-  }>
 }
 
 interface PaymentHistoryCardProps {
@@ -52,8 +38,8 @@ export default function PaymentHistoryCard({ enrollment }: PaymentHistoryCardPro
     new Date(b.paymentDate).getTime() - new Date(a.paymentDate).getTime()
   )
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-IN", {
+  const formatDate = (date: Date) => {
+    return new Date(date).toLocaleDateString("en-IN", {
       day: '2-digit',
       month: 'short',
       year: 'numeric'

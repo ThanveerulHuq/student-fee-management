@@ -18,35 +18,7 @@ import {
   CheckCircle2,
   XCircle
 } from "lucide-react"
-
-interface StudentEnrollment {
-  id: string
-  section: string
-  enrollmentDate: string
-  isActive: boolean
-  student: {
-    admissionNumber: string
-    firstName: string
-    lastName: string
-    fatherName: string
-    phone: string
-    class: string
-    status: string
-  }
-  academicYear: {
-    year: string
-    startDate: string
-    endDate: string
-    isActive: boolean
-  }
-  class: {
-    className: string
-    order: number
-    isActive: boolean
-  }
-  createdAt: string
-  updatedAt: string
-}
+import { StudentEnrollment } from '@/types/enrollment'
 
 interface EnrollmentOverviewCardProps {
   enrollment: StudentEnrollment
@@ -54,12 +26,12 @@ interface EnrollmentOverviewCardProps {
 }
 
 export default function EnrollmentOverviewCard({ enrollment, onEdit }: EnrollmentOverviewCardProps) {
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-IN")
+  const formatDate = (date: Date) => {
+    return new Date(date).toLocaleDateString("en-IN")
   }
 
-  const formatDateTime = (dateString: string) => {
-    return new Date(dateString).toLocaleString("en-IN")
+  const formatDateTime = (date: Date) => {
+    return new Date(date).toLocaleString("en-IN")
   }
 
   return (

@@ -8,40 +8,10 @@ import {
   ArrowLeft,
   GraduationCap
 } from "lucide-react"
-
-interface StudentEnrollment {
-  id: string
-  section: string
-  enrollmentDate: string
-  isActive: boolean
-  student: {
-    admissionNumber: string
-    firstName: string
-    lastName: string
-    fatherName: string
-    phone: string
-    class: string
-    status: string
-  }
-  academicYear: {
-    year: string
-    startDate: string
-    endDate: string
-    isActive: boolean
-  }
-  class: {
-    className: string
-    order: number
-    isActive: boolean
-  }
-  feeStatus: {
-    status: string
-    overdueAmount: number
-  }
-}
+import { StudentEnrollmentForHeader } from '@/types/enrollment'
 
 interface EnrollmentHeaderProps {
-  enrollment: StudentEnrollment
+  enrollment: StudentEnrollmentForHeader
   onEdit: () => void
   onCollectFees: () => void
   onBack: () => void
@@ -60,9 +30,6 @@ export default function EnrollmentHeader({
   onCollectFees,
   onBack
 }: EnrollmentHeaderProps) {
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-IN")
-  }
 
   return (
     <div className="bg-white border-b border-gray-200">
@@ -87,7 +54,7 @@ export default function EnrollmentHeader({
               {/* Student Name */}
               <div>
                 <h1 className="text-xl lg:text-2xl font-bold text-gray-900">
-                  {enrollment.student.firstName} {enrollment.student.lastName}
+                  {enrollment.student.name}
                 </h1>
               </div>
               

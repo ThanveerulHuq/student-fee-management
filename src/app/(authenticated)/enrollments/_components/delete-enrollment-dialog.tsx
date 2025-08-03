@@ -10,24 +10,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-
-interface StudentEnrollment {
-  id: string
-  student: {
-    firstName: string
-    lastName: string
-    admissionNumber: string
-  }
-  class: {
-    className: string
-  }
-  section: string
-}
+import { StudentEnrollmentForDelete } from '@/types/enrollment'
 
 interface DeleteEnrollmentDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  enrollment: StudentEnrollment | null
+  enrollment: StudentEnrollmentForDelete | null
   onConfirm: () => void
   loading?: boolean
 }
@@ -66,7 +54,7 @@ export function DeleteEnrollmentDialog({
           <DialogDescription className="text-sm text-gray-600 mt-2">
             Are you sure you want to delete the enrollment for{" "}
             <span className="font-medium text-gray-900">
-              {enrollment.student.firstName} {enrollment.student.lastName}
+              {enrollment.student.name}
             </span>{" "}
             (Admission No: {enrollment.student.admissionNumber}) from{" "}
             <span className="font-medium text-gray-900">

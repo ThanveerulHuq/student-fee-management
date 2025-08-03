@@ -39,10 +39,9 @@ export enum PaymentMethod {
 // Embedded types
 export interface StudentInfo {
   admissionNumber: string
-  firstName: string
-  lastName: string
+  name: string
   fatherName: string
-  phone: string
+  mobileNo: string
   class: string
   status: StudentStatus
 }
@@ -161,3 +160,18 @@ export interface StudentEnrollment {
   createdAt: Date
   updatedAt: Date
 }
+
+// Derived partial types for specific use cases
+export type StudentEnrollmentBasic = Pick<StudentEnrollment, 'id' | 'studentId' | 'section' | 'student' | 'academicYear' | 'class'>
+
+export type StudentEnrollmentWithTotals = Pick<StudentEnrollment, 'id' | 'studentId' | 'section' | 'student' | 'academicYear' | 'class' | 'totals' | 'feeStatus' | 'fees' | 'scholarships'>
+
+export type StudentEnrollmentForDelete = Pick<StudentEnrollment, 'id' | 'student' | 'class' | 'section'>
+
+export type StudentEnrollmentForHeader = Pick<StudentEnrollment, 'id' | 'section' | 'enrollmentDate' | 'isActive' | 'student' | 'academicYear' | 'class' | 'feeStatus' | 'totals'>
+
+export type StudentEnrollmentOverview = Pick<StudentEnrollment, 'id' | 'section' | 'enrollmentDate' | 'isActive' | 'student' | 'academicYear' | 'class' | 'totals' | 'feeStatus' | 'createdAt' | 'updatedAt'>
+
+export type StudentEnrollmentForFees = Pick<StudentEnrollment, 'id' | 'fees'>
+
+export type StudentEnrollmentForPayments = Pick<StudentEnrollment, 'id' | 'fees'>

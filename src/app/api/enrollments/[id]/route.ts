@@ -64,7 +64,7 @@ export async function PUT(
       )
     }
 
-    const updateData: StudentEnrollment = {}
+    const updateData: any = {}
 
     // Update section if provided
     if (section) {
@@ -112,7 +112,7 @@ export async function PUT(
 
       updateData.feeStatus = {
         ...existingEnrollment.feeStatus,
-        status: netTotals.due <= 0 ? 'PAID' : netTotals.paid > 0 ? 'PARTIAL' : 'OVERDUE'
+        status: (netTotals.due <= 0 ? 'PAID' : netTotals.paid > 0 ? 'PARTIAL' : 'OVERDUE') as any
       }
     }
 
@@ -162,7 +162,7 @@ export async function PUT(
 
       updateData.feeStatus = {
         ...existingEnrollment.feeStatus,
-        status: netTotals.due <= 0 ? 'PAID' : netTotals.paid > 0 ? 'PARTIAL' : 'OVERDUE'
+        status: netTotals.due <= 0 ? 'PAID' : netTotals.paid > 0 ? 'PARTIAL' : 'OVERDUE' as any
       }
     }
 

@@ -7,35 +7,7 @@ import {
   ChevronRight,
   Info
 } from "lucide-react"
-
-interface StudentEnrollment {
-  id: string
-  section: string
-  enrollmentDate: string
-  isActive: boolean
-  student: {
-    admissionNumber: string
-    firstName: string
-    lastName: string
-    fatherName: string
-    phone: string
-    class: string
-    status: string
-  }
-  academicYear: {
-    year: string
-    startDate: string
-    endDate: string
-    isActive: boolean
-  }
-  class: {
-    className: string
-    order: number
-    isActive: boolean
-  }
-  createdAt: string
-  updatedAt: string
-}
+import { StudentEnrollment } from '@/types/enrollment'
 
 interface EnrollmentDetailsSectionProps {
   enrollment: StudentEnrollment
@@ -44,8 +16,8 @@ interface EnrollmentDetailsSectionProps {
 export default function EnrollmentDetailsSection({ enrollment }: EnrollmentDetailsSectionProps) {
   const [isDetailsExpanded, setIsDetailsExpanded] = useState(false)
   
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-IN")
+  const formatDate = (date: Date) => {
+    return new Date(date).toLocaleDateString("en-IN")
   }
 
   return (
@@ -85,7 +57,7 @@ export default function EnrollmentDetailsSection({ enrollment }: EnrollmentDetai
             {/* Phone Number */}
             <div className="flex flex-col space-y-1">
               <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Contact Number</span>
-              <span className="font-mono font-medium text-gray-900">{enrollment.student.phone}</span>
+              <span className="font-mono font-medium text-gray-900">{enrollment.student.mobileNo}</span>
             </div>
             
             {/* Enrollment Date */}

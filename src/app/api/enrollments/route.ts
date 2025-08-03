@@ -140,7 +140,7 @@ export async function POST(request: NextRequest) {
         feeItemId: feeItem.id,
         templateId: feeItem.templateId,
         templateName: feeItem.templateName,
-        templateCategory: feeItem.templateCategory,
+        templateCategory: feeItem.templateCategory as any,
         amount: finalAmount,
         originalAmount: feeItem.amount,
         amountPaid: 0,
@@ -163,7 +163,7 @@ export async function POST(request: NextRequest) {
           scholarshipItemId: scholarshipItem.id,
           templateId: scholarshipItem.templateId,
           templateName: scholarshipItem.templateName,
-          templateType: scholarshipItem.templateType,
+          templateType: scholarshipItem.templateType as any,
           amount: scholarshipItem.amount,
           originalAmount: scholarshipItem.amount,
           isAutoApplied: true,
@@ -186,7 +186,7 @@ export async function POST(request: NextRequest) {
           scholarshipItemId: scholarshipItem.id,
           templateId: scholarshipItem.templateId,
           templateName: scholarshipItem.templateName,
-          templateType: scholarshipItem.templateType,
+          templateType: scholarshipItem.templateType as any,
           amount: scholarshipItem.amount,
           originalAmount: scholarshipItem.amount,
           isAutoApplied: false,
@@ -269,7 +269,7 @@ export async function POST(request: NextRequest) {
         
         // Fee status
         feeStatus: {
-          status: netTotals.due > 0 ? 'PARTIAL' : 'PAID',
+          status: (netTotals.due > 0 ? 'PARTIAL' : 'PAID') as any,
           overdueAmount: 0
         }
       }

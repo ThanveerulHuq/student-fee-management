@@ -22,63 +22,7 @@ import { toast } from 'sonner'
 import { useAcademicYear, useAcademicYearNavigation } from '@/contexts/academic-year-context'
 import LoaderWrapper from '@/components/ui/loader-wrapper'
 import { DeleteEnrollmentDialog } from './_components/delete-enrollment-dialog'
-
-
-interface StudentEnrollment {
-  id: string
-  studentId: string
-  academicYearId: string
-  classId: string
-  section: string
-  enrollmentDate: string
-  isActive: boolean
-  student: {
-    admissionNumber: string
-    firstName: string
-    lastName: string
-    fatherName: string
-    phone: string
-    class: string
-    status: string
-  }
-  academicYear: {
-    year: string
-  }
-  class: {
-    className: string
-  }
-  totals: {
-    fees: {
-      total: number
-      paid: number
-      due: number
-    }
-    scholarships: {
-      applied: number
-    }
-    netAmount: {
-      total: number
-      paid: number
-      due: number
-    }
-  }
-  feeStatus: {
-    status: string
-    overdueAmount: number
-  }
-  fees: Array<{
-    templateName: string
-    amount: number
-    amountPaid: number
-    amountDue: number
-    isCompulsory: boolean
-  }>
-  scholarships: Array<{
-    templateName: string
-    amount: number
-    isActive: boolean
-  }>
-}
+import { StudentEnrollmentWithTotals } from '@/types/enrollment'
 
 const statusColors = {
   PAID: 'bg-green-100 text-green-800 border-green-200',
@@ -90,13 +34,13 @@ const statusColors = {
 export default function EnrollmentsPage() {
   const { academicYear } = useAcademicYear()
   const { navigateTo } = useAcademicYearNavigation()
-  const [enrollments, setEnrollments] = useState<StudentEnrollment[]>([])
-  const [filteredEnrollments, setFilteredEnrollments] = useState<StudentEnrollment[]>([])
+  const [enrollments, setEnrollments] = useState<StudentEnrollmentWithTotals[]>([])
+  const [filteredEnrollments, setFilteredEnrollments] = useState<StudentEnrollmentWithTotals[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set())
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
-  const [enrollmentToDelete, setEnrollmentToDelete] = useState<StudentEnrollment | null>(null)
+  const [enrollmentToDelete, setEnrollmentToDelete] = useState<StudentEnrollmentWithTotals | null>(null)
   const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
@@ -144,12 +88,12 @@ export default function EnrollmentsPage() {
     }
   }, [academicYear])
 
-  const handleEdit = (enrollment: StudentEnrollment) => {
+  const handleEdit = (enrollment: StudentEnrollmentWithTotals) => {
     // Navigate to edit enrollment page (could be implemented later)
     toast.info('Edit enrollment functionality will be available soon')
   }
 
-  const handleDelete = (enrollment: StudentEnrollment) => {
+  const handleDelete = (enrollment: StudentEnrollmentWithTotals) => {
     setEnrollmentToDelete(enrollment)
     setDeleteDialogOpen(true)
   }

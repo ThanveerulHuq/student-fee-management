@@ -17,33 +17,13 @@ import {
 import { useAcademicYear, useAcademicYearNavigation } from '@/contexts/academic-year-context'
 import LoaderWrapper from '@/components/ui/loader-wrapper'
 import LoaderOne from '@/components/ui/loader-one'
-
-interface StudentEnrollment {
-  id: string
-  studentId: string
-  section: string
-  student: {
-    admissionNumber: string
-    name: string
-    fatherName: string
-    phone: string
-    status: string
-  }
-  academicYear: {
-    id: string
-    year: string
-  }
-  class: {
-    className: string
-    order: number
-  }
-}
+import { StudentEnrollmentBasic } from '@/types/enrollment'
 
 export default function CollectFeePage() {
   const { academicYear } = useAcademicYear()
   const { navigateTo } = useAcademicYearNavigation()
-  const [enrollments, setEnrollments] = useState<StudentEnrollment[]>([])
-  const [filteredEnrollments, setFilteredEnrollments] = useState<StudentEnrollment[]>([])
+  const [enrollments, setEnrollments] = useState<StudentEnrollmentBasic[]>([])
+  const [filteredEnrollments, setFilteredEnrollments] = useState<StudentEnrollmentBasic[]>([])
   const [searchTerm, setSearchTerm] = useState('')
   const [loading, setLoading] = useState(true)
   const [isSearching, setIsSearching] = useState(false)
@@ -77,7 +57,7 @@ export default function CollectFeePage() {
         const filtered = enrollments.filter(enrollment => {
           const searchLower = searchTerm.toLowerCase()
           return (
-            enrollment.student.name.toLowerCase().includes(searchLower) ||
+            `${enrollment.student.name}`.toLowerCase().includes(searchLower) ||
             enrollment.student.admissionNumber.toLowerCase().includes(searchLower) ||
             enrollment.student.fatherName.toLowerCase().includes(searchLower)
           )
