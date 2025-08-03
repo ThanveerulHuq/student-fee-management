@@ -231,10 +231,9 @@ export async function POST(request: NextRequest) {
         // Embedded student info
         student: {
           admissionNumber: student.admissionNo,
-          firstName: student.name.split(' ')[0] || student.name,
-          lastName: student.name.split(' ').slice(1).join(' ') || '',
+          name: student.name,
           fatherName: student.fatherName,
-          phone: student.mobileNo1,
+          mobileNo: student.mobileNo1,
           class: classInfo.className,
           status: 'ACTIVE'
         },

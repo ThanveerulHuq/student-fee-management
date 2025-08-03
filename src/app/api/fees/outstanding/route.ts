@@ -37,9 +37,9 @@ export async function GET(request: NextRequest) {
       student: {
         id: enrollment.studentId,
         admissionNo: enrollment.student.admissionNumber,
-        name: `${enrollment.student.firstName} ${enrollment.student.lastName}`,
+        name: `${enrollment.student.name}`,
         fatherName: enrollment.student.fatherName,
-        phone: enrollment.student.phone,
+        mobileNo: enrollment.student.mobileNo,
         status: enrollment.student.status
       },
       

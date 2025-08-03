@@ -54,8 +54,7 @@ export default function EnrollmentsPage() {
   useEffect(() => {
     if (searchTerm.trim()) {
       const filtered = enrollments.filter(enrollment => 
-        enrollment.student.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        enrollment.student.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        enrollment.student.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         enrollment.student.admissionNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
         enrollment.class.className.toLowerCase().includes(searchTerm.toLowerCase()) ||
         enrollment.section.toLowerCase().includes(searchTerm.toLowerCase())
@@ -277,7 +276,7 @@ export default function EnrollmentsPage() {
                               </div>
                               <div>
                                 <div className="font-medium text-gray-900">
-                                  {enrollment.student.firstName} {enrollment.student.lastName}
+                                  {enrollment.student.name}
                                 </div>
                                 <div className="text-sm text-gray-500">
                                   {enrollment.student.fatherName}

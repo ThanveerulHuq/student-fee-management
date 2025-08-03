@@ -52,9 +52,9 @@ export async function GET(
       student: {
         id: enrollment.studentId,
         admissionNo: enrollment.student.admissionNumber,
-        name: `${enrollment.student.firstName} ${enrollment.student.lastName}`,
+        name: `${enrollment.student.name}`,
         fatherName: enrollment.student.fatherName,
-        phone: enrollment.student.phone,
+        mobileNo: enrollment.student.mobileNo,
         class: enrollment.student.class,
         status: enrollment.student.status
       },
@@ -115,9 +115,9 @@ export async function GET(
     const studentInfo = {
       id: enrollments[0].studentId,
       admissionNo: enrollments[0].student.admissionNumber,
-      name: `${enrollments[0].student.firstName} ${enrollments[0].student.lastName}`,
+      name: `${enrollments[0].student.name}`,
       fatherName: enrollments[0].student.fatherName,
-      phone: enrollments[0].student.phone,
+      mobileNo: enrollments[0].student.mobileNo,
       class: enrollments[0].student.class,
       status: enrollments[0].student.status
     }

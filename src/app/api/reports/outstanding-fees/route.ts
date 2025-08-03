@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
       orderBy: [
         { class: { order: "asc" } },
         { section: "asc" },
-        { student: { firstName: "asc" } }
+        { student: { name: "asc" } }
       ]
     })
 
@@ -63,9 +63,9 @@ export async function GET(request: NextRequest) {
         return {
           id: enrollment.id,
           admissionNo: enrollment.student.admissionNumber,
-          name: `${enrollment.student.firstName} ${enrollment.student.lastName}`,
+          name: `${enrollment.student.name}`,
           fatherName: enrollment.student.fatherName,
-          phone: enrollment.student.phone,
+          mobileNo: enrollment.student.mobileNo,
           class: enrollment.class.className,
           section: enrollment.section,
           totalFees,

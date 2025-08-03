@@ -73,7 +73,7 @@ export default function EnrollmentOverviewCard({ enrollment, onEdit }: Enrollmen
                   </TooltipProvider>
                 </label>
                 <p className="text-sm font-medium text-gray-900 mt-1">
-                  {enrollment.student.firstName} {enrollment.student.lastName}
+                  {enrollment.student.name}
                 </p>
               </div>
               
@@ -95,7 +95,7 @@ export default function EnrollmentOverviewCard({ enrollment, onEdit }: Enrollmen
                 <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Phone Number</label>
                 <div className="flex items-center mt-1 bg-gray-50 p-1.5 rounded w-fit">
                   <Phone className="w-4 h-4 text-gray-500 mr-2" />
-                  <p className="text-sm font-medium text-gray-900 font-mono">{enrollment.student.phone}</p>
+                  <p className="text-sm font-medium text-gray-900 font-mono">{enrollment.student.mobileNo}</p>
                 </div>
               </div>
               

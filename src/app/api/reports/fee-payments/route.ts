@@ -29,7 +29,6 @@ export async function GET(request: NextRequest) {
         contains?: string
         mode?: "insensitive"
       }
-      paymentMethod?: string
       status?: string
     } = {
       status: "COMPLETED" // Only completed payments
@@ -62,11 +61,6 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Payment method filter
-    if (paymentMethod && paymentMethod !== "ALL") {
-      paymentWhere.paymentMethod = paymentMethod
-    }
-
     // Get all payments with the filters applied
     const payments = await prisma.payment.findMany({
       where: paymentWhere,
@@ -79,9 +73,9 @@ export async function GET(request: NextRequest) {
     const processedPayments = payments.map(payment => ({
       id: payment.id,
       receiptNo: payment.receiptNo,
-      studentName: `${payment.student.firstName} ${payment.student.lastName}`,
+      studentName: `${payment.student.name}`,
       studentAdmissionNo: payment.student.admissionNumber,
-      studentPhone: payment.student.phone,
+      studentPhone: payment.student.mobileNo,
       studentClass: payment.student.class,
       academicYear: payment.academicYear.year,
       totalAmount: payment.totalAmount,

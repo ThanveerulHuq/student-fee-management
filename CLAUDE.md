@@ -79,9 +79,11 @@ npx tsc --noEmit       # Type check without emitting files
 - Prisma client auto-generated to `src/generated/prisma/`
 - ESLint ignores generated files
 - TypeScript paths configured for `@/*` imports
+- components that are use only in the given should be created in `_components` folder in the same directory. 
+- components that are reused across multiple pages should be put in 
+- do not auto build after changes, ask user to build the project
 
 **Payment System**:
-- Supports multiple fee types: school, book, uniform, Islamic studies, van fees
 - Individual fee customizations per student enrollment
 - Cumulative payment tracking with detailed transaction history
 - Receipt generation system
@@ -99,3 +101,6 @@ npx tsc --noEmit       # Type check without emitting files
 - Always use loading skeleton while loading data
 - use `loading.tsx` page in the directory if whole page is being loaded and there is no meaningful data to be shown
 - make the components as modular as possible for better readability
+
+**Coding Standards**
+- Do not name the components/apis based on the current modification. 

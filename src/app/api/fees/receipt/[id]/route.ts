@@ -43,9 +43,9 @@ export async function GET(
       student: {
         id: enrollment.studentId,
         admissionNo: enrollment.student.admissionNumber,
-        name: `${enrollment.student.firstName} ${enrollment.student.lastName}`,
+        name: `${enrollment.student.name}`,
         fatherName: enrollment.student.fatherName,
-        phone: enrollment.student.phone,
+        mobileNo: enrollment.student.mobileNo,
         class: enrollment.student.class,
         status: enrollment.student.status
       },
