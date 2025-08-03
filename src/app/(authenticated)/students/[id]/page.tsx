@@ -194,7 +194,7 @@ export default function StudentDetailPage({ params }: StudentDetailPageProps) {
       <StudentHeader
         student={student}
         onEdit={() => navigateTo(`/students/${studentId}/edit`)}
-        onEnroll={() => navigateTo(`/enroll/${studentId}`)}
+        onEnroll={() => navigateTo(`/enrollments/enroll/${studentId}`)}
         onDeactivate={handleDeactivateStudent}
         onReactivate={handleReactivateStudent}
         onBack={() => navigateTo("/students")}
@@ -205,7 +205,7 @@ export default function StudentDetailPage({ params }: StudentDetailPageProps) {
         <FamilyContactCard student={student} />
         <EnrollmentHistoryCard 
           enrollments={student.enrollments}
-          onEnrollClick={() => navigateTo(`/enroll/${studentId}`)}
+          onEnrollClick={() => navigateTo(`/enrollments/enroll/${studentId}`)}
           onFeeCollectionClick={(enrollmentId) => navigateTo(`/fees/collect/${enrollmentId}`)}
         />
       </main>

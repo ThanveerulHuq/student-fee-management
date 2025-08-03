@@ -8,17 +8,7 @@ import {
   AlertCircle
 } from "lucide-react"
 import FeeItemCard from "./fee-item-card"
-
-interface FeeItem {
-  id: string
-  templateId: string
-  templateName: string
-  templateCategory: string
-  amount: number
-  isCompulsory: boolean
-  isEditableDuringEnrollment: boolean
-  order: number
-}
+import { FeeItem } from "@/types/fee"
 
 interface FeeItemsSectionProps {
   feeItems: FeeItem[]

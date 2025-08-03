@@ -11,47 +11,12 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Separator } from "@/components/ui/separator"
 import { Save, Award, AlertTriangle, Info, ArrowLeft, RotateCcw } from "lucide-react"
 import LoaderWrapper from "@/components/ui/loader-wrapper"
-import FeeItemsSection from "../_components/fee-items-section"
-import ScholarshipItemsSection from "../_components/scholarship-items-section"
+import FeeItemsSection from "../../_components/form/fee-items-section"
+import ScholarshipItemsSection from "../../_components/form/scholarship-items-section"
+import { toast } from "sonner"
+import type { Student, Class } from "@/generated/prisma"
+import type { FeeItem, ScholarshipItem } from "@/types/fee"
 
-interface Student {
-  id: string
-  name: string
-  admissionNo: string
-  gender: string
-  age: number
-  fatherName: string
-  mobileNo1: string
-  isActive: boolean
-}
-
-interface Class {
-  id: string
-  className: string
-  order: number
-}
-
-interface FeeItem {
-  id: string
-  templateId: string
-  templateName: string
-  templateCategory: string
-  amount: number
-  isCompulsory: boolean
-  isEditableDuringEnrollment: boolean
-  order: number
-}
-
-interface ScholarshipItem {
-  id: string
-  templateId: string
-  templateName: string
-  templateType: string
-  amount: number
-  isAutoApplied: boolean
-  isEditableDuringEnrollment: boolean
-  order: number
-}
 
 interface FeeStructure {
   id: string
@@ -73,16 +38,31 @@ interface FeeStructure {
   }
 }
 
-export default function EnrollStudentPage() {
+interface Enrollment {
+  id: string
+  studentId: string
+  academicYearId: string
+  classId: string
+  section: string
+  customFees: Record<string, number>
+  customScholarships: Record<string, number>
+  selectedScholarships: string[]
+  enrollmentDate: string
+  isActive: boolean
+  student: Student
+}
+
+export default function EditEnrollmentPage() {
   const params = useParams()
-  const studentId = params.id as string
+  const enrollmentId = params.id as string
   const { academicYear } = useAcademicYear()
   const { navigateTo } = useAcademicYearNavigation()
   
   const [loading, setLoading] = useState(false)
+  const [fetchingData, setFetchingData] = useState(true)
   const [fetchingFeeStructure, setFetchingFeeStructure] = useState(false)
   const [error, setError] = useState("")
-  const [student, setStudent] = useState<Student | null>(null)
+  const [enrollment, setEnrollment] = useState<Enrollment | null>(null)
   const [classes, setClasses] = useState<Class[]>([])
   const [feeStructure, setFeeStructure] = useState<FeeStructure | null>(null)
 
@@ -94,20 +74,57 @@ export default function EnrollStudentPage() {
     selectedScholarships: [] as string[],
   })
 
-  const fetchStudent = useCallback(async () => {
+  const fetchEnrollment = useCallback(async () => {
+    if (!enrollmentId) return
+    
     try {
-      const response = await fetch(`/api/students/${studentId}`)
+      const response = await fetch(`/api/enrollments/${enrollmentId}`)
       if (response.ok) {
         const data = await response.json()
-        setStudent(data)
+        setEnrollment(data)
+        
+        // Transform enrollment fees to customFees format
+        const customFees: Record<string, number> = {}
+        if (data.fees) {
+          data.fees.forEach((fee: any) => {
+            // If current amount differs from original amount, it's a custom fee
+            if (fee.amount !== fee.originalAmount) {
+              customFees[fee.templateId] = fee.amount
+            }
+          })
+        }
+        
+        // Transform enrollment scholarships to customScholarships format
+        const customScholarships: Record<string, number> = {}
+        const selectedScholarships: string[] = []
+        if (data.scholarships) {
+          data.scholarships.forEach((scholarship: any) => {
+            // If current amount differs from original amount, it's a custom scholarship
+            if (scholarship.amount !== scholarship.originalAmount) {
+              customScholarships[scholarship.templateId] = scholarship.amount
+            }
+            // If scholarship is active and not auto-applied, it's selected
+            if (scholarship.isActive && !scholarship.isAutoApplied) {
+              selectedScholarships.push(scholarship.id)
+            }
+          })
+        }
+        
+        setFormData({
+          classId: data.classId,
+          section: data.section,
+          customFees,
+          customScholarships,
+          selectedScholarships,
+        })
       } else {
-        setError("Student not found")
+        setError("Enrollment not found")
       }
     } catch (error) {
-      console.error("Error fetching student:", error)
-      setError("Failed to load student information")
+      console.error("Error fetching enrollment:", error)
+      setError("Failed to load enrollment information")
     }
-  }, [studentId])
+  }, [enrollmentId])
 
   const fetchClasses = useCallback(async () => {
     try {
@@ -122,12 +139,19 @@ export default function EnrollStudentPage() {
   }, [])
 
   useEffect(() => {
-    if (studentId) {
-      fetchStudent()
-      fetchClasses()
+    if (!enrollmentId) {
+      setError("No enrollment ID provided")
+      return
     }
-  }, [studentId, fetchStudent, fetchClasses])
 
+    const loadData = async () => {
+      setFetchingData(true)
+      await Promise.all([fetchEnrollment(), fetchClasses()])
+      setFetchingData(false)
+    }
+
+    loadData()
+  }, [enrollmentId, fetchEnrollment, fetchClasses])
 
   const fetchFeeStructure = useCallback(async () => {
     if (!academicYear?.id || !formData.classId) {
@@ -144,12 +168,6 @@ export default function EnrollStudentPage() {
         const data = await response.json()
         if (data.length > 0) {
           setFeeStructure(data[0])
-          setFormData(prev => ({
-            ...prev,
-            customFees: {},
-            customScholarships: {},
-            selectedScholarships: []
-          }))
         } else {
           setFeeStructure(null)
         }
@@ -191,7 +209,8 @@ export default function EnrollStudentPage() {
     setFormData(prev => ({
       ...prev,
       customFees: {},
-      customScholarships: {}
+      customScholarships: {},
+      selectedScholarships: []
     }))
   }
 
@@ -226,7 +245,7 @@ export default function EnrollStudentPage() {
       }, 0)
 
     const manualScholarships = feeStructure.scholarshipItems
-      .filter(item => formData.selectedScholarships.includes(item.id))
+      .filter(item => formData.selectedScholarships.includes(item.id!))
       .reduce((sum, item) => {
         const customAmount = formData.customScholarships[item.templateId]
         const finalAmount = (customAmount !== undefined && item.isEditableDuringEnrollment) 
@@ -247,47 +266,56 @@ export default function EnrollStudentPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    if (!student || !feeStructure || !academicYear) return
+    if (!enrollment || !feeStructure || !academicYear) return
 
     try {
       setLoading(true)
       setError("")
 
       const submitData = {
-        studentId: student.id,
-        academicYearId: academicYear.id,
         classId: formData.classId,
         section: formData.section,
         customFees: formData.customFees,
         customScholarships: formData.customScholarships,
         selectedScholarships: formData.selectedScholarships,
-        enrollmentDate: new Date(),
         isActive: true,
       }
 
-      const response = await fetch("/api/enrollments", {
-        method: "POST",
+      const response = await fetch(`/api/enrollments/${enrollmentId}`, {
+        method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(submitData),
       })
 
-      console.log(response)
-
       if (response.ok) {
         const result = await response.json()
+        toast.success("Enrollment updated successfully")
         navigateTo(`/enrollments/${result.id}`)
       } else {
         const errorData = await response.json()
-        setError(errorData.error || "Failed to enroll student")
+        setError(errorData.error || "Failed to update enrollment")
       }
     } catch (error) {
-      console.error("Enrollment error:", error)
+      console.error("Update error:", error)
       setError("An error occurred. Please try again.")
     } finally {
       setLoading(false)
     }
+  }
+
+  if (!enrollmentId) {
+    return (
+      <div className="container mx-auto py-6">
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>
+            No enrollment ID provided. Please select an enrollment to edit.
+          </AlertDescription>
+        </Alert>
+      </div>
+    )
   }
 
   if (!academicYear) {
@@ -296,15 +324,15 @@ export default function EnrollStudentPage() {
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>
-            Please select an academic year from the header to proceed with enrollment.
+            Please select an academic year from the header to proceed with editing.
           </AlertDescription>
         </Alert>
       </div>
     )
   }
 
-  if (!student) {
-    return <LoaderWrapper fullScreen label="Loading student..." />
+  if (fetchingData || !enrollment) {
+    return <LoaderWrapper fullScreen label="Loading enrollment..." />
   }
 
   const totals = calculateTotals()
@@ -319,16 +347,16 @@ export default function EnrollStudentPage() {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => navigateTo("/enrollments")}
+                onClick={() => navigateTo(`/enrollments/${enrollmentId}`)}
                 className="text-gray-600 hover:text-gray-900 p-2"
-                title="Back to Students"
+                title="Back to Enrollment Details"
               >
                 <ArrowLeft className="h-5 w-5" />
               </Button>
               <div className="h-6 w-px bg-gray-300" />
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">{student.name}</h1>
-                <p className="text-sm text-gray-600">Student Enrollment</p>
+                <h1 className="text-2xl font-bold text-gray-900">{enrollment.student.name}</h1>
+                <p className="text-sm text-gray-600">Edit Enrollment</p>
               </div>
             </div>
             
@@ -336,15 +364,15 @@ export default function EnrollStudentPage() {
             <div className="hidden md:flex items-center space-x-50">
               <div>
                 <Label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Admission No</Label>
-                <p className="text-sm font-medium text-gray-700 mt-0.5">{student.admissionNo}</p>
+                <p className="text-sm font-medium text-gray-700 mt-0.5">{enrollment.student.admissionNo}</p>
               </div>
               <div>
                 <Label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Father&apos;s Name</Label>
-                <p className="text-sm font-medium text-gray-700 mt-0.5">{student.fatherName}</p>
+                <p className="text-sm font-medium text-gray-700 mt-0.5">{enrollment.student.fatherName}</p>
               </div>
               <div>
                 <Label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Contact</Label>
-                <p className="text-sm font-medium text-gray-700 mt-0.5">{student.mobileNo1}</p>
+                <p className="text-sm font-medium text-gray-700 mt-0.5">{enrollment.student.mobileNo1}</p>
               </div>
             </div>
           </div>
@@ -353,15 +381,15 @@ export default function EnrollStudentPage() {
           <div className="md:hidden mt-4 grid grid-cols-3 gap-3">
             <div>
               <Label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Admission No</Label>
-              <p className="text-sm font-medium text-gray-700 mt-0.5">{student.admissionNo}</p>
+              <p className="text-sm font-medium text-gray-700 mt-0.5">{enrollment.student.admissionNo}</p>
             </div>
             <div>
               <Label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Father&apos;s Name</Label>
-              <p className="text-sm font-medium text-gray-700 mt-0.5">{student.fatherName}</p>
+              <p className="text-sm font-medium text-gray-700 mt-0.5">{enrollment.student.fatherName}</p>
             </div>
             <div>
               <Label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Contact</Label>
-              <p className="text-sm font-medium text-gray-700 mt-0.5">{student.mobileNo1}</p>
+              <p className="text-sm font-medium text-gray-700 mt-0.5">{enrollment.student.mobileNo1}</p>
             </div>
           </div>
         </div>
@@ -409,7 +437,6 @@ export default function EnrollStudentPage() {
                     className="h-9"
                   />
                 </div>
-
 
               </div>
             </div>
@@ -463,6 +490,8 @@ export default function EnrollStudentPage() {
                           scholarshipItems={feeStructure.scholarshipItems}
                           customScholarships={formData.customScholarships}
                           onCustomScholarshipsChange={handleCustomScholarshipsChange}
+                          selectedScholarships={formData.selectedScholarships}
+                          onScholarshipToggle={handleScholarshipToggle}
                           disabled={loading}
                           autoSave={true}
                         />
@@ -470,7 +499,7 @@ export default function EnrollStudentPage() {
                     )}
 
                     {/* Reset All Button */}
-                    {(Object.keys(formData.customFees).length > 0 || Object.keys(formData.customScholarships).length > 0) && (
+                    {(Object.keys(formData.customFees).length > 0 || Object.keys(formData.customScholarships).length > 0 || formData.selectedScholarships.length > 0) && (
                       <div className="flex justify-end pt-4">
                         <Button
                           type="button"
@@ -514,21 +543,21 @@ export default function EnrollStudentPage() {
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => navigateTo("/enroll")}
+                    onClick={() => navigateTo(`/enrollments/${enrollmentId}`)}
                     disabled={loading}
                   >
-                    Back to Search
+                    Cancel
                   </Button>
                   <Button 
                     type="submit" 
                     disabled={loading || !feeStructure || fetchingFeeStructure}
                   >
                     {loading ? (
-                      "Enrolling..."
+                      "Updating..."
                     ) : (
                       <>
                         <Save className="h-4 w-4 mr-2" />
-                        Enroll Student
+                        Update Enrollment
                       </>
                     )}
                   </Button>

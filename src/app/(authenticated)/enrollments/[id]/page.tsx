@@ -79,7 +79,7 @@ export default function EnrollmentDetailPage({ params }: EnrollmentDetailPagePro
     <div className="min-h-screen bg-gray-50/30">
       <EnrollmentHeader
         enrollment={enrollment}
-        onEdit={() => toast.info("Edit enrollment functionality will be available soon")}
+        onEdit={() => navigateTo(`/enrollments/edit/${enrollmentId}`)}
         onCollectFees={() => navigateTo(`/fees/collect/${enrollmentId}`)}
         onBack={() => navigateTo("/enrollments")}
       />

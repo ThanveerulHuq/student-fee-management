@@ -73,7 +73,7 @@ function EnrollSearchContent() {
   }
 
   const handleStudentSelect = (student: Student) => {
-    navigateTo(`/enroll/${student.id}`)
+    navigateTo(`/enrollments/enroll/${student.id}`)
   }
 
   if (!academicYear) {

@@ -146,22 +146,6 @@ export default function PaymentHistoryCard({ enrollment }: PaymentHistoryCardPro
           </div>
         ))}
       </div>
-
-      {payments.length > 5 && (
-        <div className="mt-3 pt-3 border-t">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="w-full text-blue-600 hover:text-blue-700"
-            onClick={() => {
-              // Navigate to detailed payment history page
-              window.open(`/enrollments/${enrollment.id}/payments`, '_blank')
-            }}
-          >
-            View All Payment History
-          </Button>
-        </div>
-      )}
     </div>
   )
 }

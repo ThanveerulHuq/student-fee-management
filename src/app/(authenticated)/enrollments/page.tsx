@@ -13,7 +13,6 @@ import {
   GraduationCap, 
   IndianRupee,
   Award,
-  Eye,
   Search,
   ChevronDown,
   ChevronRight
@@ -88,8 +87,7 @@ export default function EnrollmentsPage() {
   }, [academicYear])
 
   const handleEdit = (enrollment: StudentEnrollmentWithTotals) => {
-    // Navigate to edit enrollment page (could be implemented later)
-    toast.info('Edit enrollment functionality will be available soon')
+    navigateTo(`/enrollments/edit/${enrollment.id}`)
   }
 
   const handleDelete = (enrollment: StudentEnrollmentWithTotals) => {
@@ -157,7 +155,7 @@ export default function EnrollmentsPage() {
             <Button 
               size="lg" 
               className="bg-blue-600 hover:bg-blue-700 shadow-sm"
-              onClick={() => navigateTo('/enroll')}
+              onClick={() => navigateTo('/enrollments/enroll')}
             >
               <Plus className="w-4 h-4 mr-2" />
               New Enrollment
@@ -227,7 +225,7 @@ export default function EnrollmentsPage() {
                     <Button 
                       size="lg" 
                       className="bg-blue-600 hover:bg-blue-700" 
-                      onClick={() => navigateTo('/enroll')}
+                      onClick={() => navigateTo('/enrollments/enroll')}
                     >
                       <Plus className="w-4 h-4 mr-2" />
                       Enroll First Student
@@ -256,14 +254,21 @@ export default function EnrollmentsPage() {
                     {filteredEnrollments.map((enrollment) => (
                       <>
                         {/* Collapsed Row */}
-                        <tr key={enrollment.id} className="border-b hover:bg-gray-50">
+                        <tr 
+                          key={enrollment.id} 
+                          className="border-b hover:bg-gray-50 cursor-pointer"
+                          onClick={() => navigateTo(`/enrollments/${enrollment.id}`)}
+                        >
                           <td className="py-3 px-4">
                             <div className="flex items-center gap-3">
                               <Button
                                 variant="ghost"
                                 size="sm"
                                 className="h-6 w-6 p-0"
-                                onClick={() => toggleRowExpansion(enrollment.id)}
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  toggleRowExpansion(enrollment.id)
+                                }}
                               >
                                 {expandedRows.has(enrollment.id) ? (
                                   <ChevronDown className="w-4 h-4" />
@@ -314,16 +319,10 @@ export default function EnrollmentsPage() {
                                 variant="ghost"
                                 size="sm"
                                 className="h-8 w-8 p-0"
-                                onClick={() => navigateTo(`/enrollments/${enrollment.id}`)}
-                                title="View Details"
-                              >
-                                <Eye className="w-4 h-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-8 w-8 p-0"
-                                onClick={() => handleEdit(enrollment)}
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  handleEdit(enrollment)
+                                }}
                               >
                                 <Edit className="w-4 h-4" />
                               </Button>
@@ -331,7 +330,10 @@ export default function EnrollmentsPage() {
                                 variant="ghost"
                                 size="sm"
                                 className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
-                                onClick={() => handleDelete(enrollment)}
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  handleDelete(enrollment)
+                                }}
                               >
                                 <Trash2 className="w-4 h-4" />
                               </Button>

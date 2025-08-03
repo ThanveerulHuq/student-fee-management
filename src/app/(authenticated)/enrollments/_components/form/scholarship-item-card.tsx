@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
+import { Checkbox } from "@/components/ui/checkbox"
 import { 
   Edit3, 
   Check, 
@@ -15,22 +16,14 @@ import {
   RotateCcw
 } from "lucide-react"
 import { cn } from "@/lib/utils"
-
-interface ScholarshipItem {
-  id: string
-  templateId: string
-  templateName: string
-  templateType: string
-  amount: number
-  isAutoApplied: boolean
-  isEditableDuringEnrollment: boolean
-  order: number
-}
+import { ScholarshipItem } from "@/types/fee"
 
 interface ScholarshipItemCardProps {
   item: ScholarshipItem
   customAmount?: number
   onAmountChange: (templateId: string, amount: number) => void
+  isSelected?: boolean
+  onToggle?: (scholarshipId: string, checked: boolean) => void
   disabled?: boolean
 }
 
@@ -38,6 +31,8 @@ export default function ScholarshipItemCard({
   item,
   customAmount,
   onAmountChange,
+  isSelected = false,
+  onToggle,
   disabled = false
 }: ScholarshipItemCardProps) {
   const [isEditing, setIsEditing] = useState(false)
@@ -122,6 +117,12 @@ export default function ScholarshipItemCard({
     if (error) setError("")
   }
 
+  const handleToggle = (checked: boolean) => {
+    if (onToggle && item.id) {
+      onToggle(item.id, checked)
+    }
+  }
+
 
   return (
     <Card className={cn(
@@ -134,9 +135,23 @@ export default function ScholarshipItemCard({
           {/* Left section - Scholarship info */}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
+              {/* Checkbox for manual scholarships */}
+              {!item.isAutoApplied && onToggle && (
+                <Checkbox
+                  checked={isSelected}
+                  onCheckedChange={handleToggle}
+                  disabled={disabled}
+                  className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
+                />
+              )}
               <h5 className="font-medium text-gray-900 truncate text-sm">
                 {item.templateName}
               </h5>
+              {item.isAutoApplied && (
+                <Badge variant="outline" className="text-xs text-green-600 border-green-300">
+                  Auto
+                </Badge>
+              )}
               {hasChanges && (
                 <Badge variant="outline" className="text-xs text-amber-600 border-amber-300">
                   Modified

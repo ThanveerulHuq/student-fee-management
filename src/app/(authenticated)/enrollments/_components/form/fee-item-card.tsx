@@ -15,17 +15,7 @@ import {
   RotateCcw
 } from "lucide-react"
 import { cn } from "@/lib/utils"
-
-interface FeeItem {
-  id: string
-  templateId: string
-  templateName: string
-  templateCategory: string
-  amount: number
-  isCompulsory: boolean
-  isEditableDuringEnrollment: boolean
-  order: number
-}
+import { FeeItem } from "@/types/fee"
 
 interface FeeItemCardProps {
   item: FeeItem
