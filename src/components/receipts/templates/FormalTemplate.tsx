@@ -41,61 +41,58 @@ export default function FormalTemplate({ receipt, schoolConfig }: ReceiptProps) 
     >
       {/* School Header */}
       <div className="border-b-4 border-double border-black pb-1 mb-1">
-        <table className="w-full">
-          <tbody>
-            <tr>
-              <td className="w-12 text-center">
-                {schoolConfig.header.showLogo && (
-                  <img 
-                    src={schoolConfig.header.logoPath} 
-                    alt="School Logo" 
-                    style={{
-                      width: schoolConfig.header.logoSize?.width || '40px',
-                      height: schoolConfig.header.logoSize?.height || '40px'
-                    }}
-                    className="mx-auto" 
-                  />
-                )}
-              </td>
-              <td className="text-center">
-                <div 
-                  className="text-sm font-black leading-tight tracking-wide" 
-                  style={{ 
-                    fontFamily: schoolConfig.branding.fonts.header,
-                    letterSpacing: '0.5px',
-                    color: schoolConfig.branding.colors.primary 
-                  }}
-                >
-                  {schoolConfig.header.schoolName}
-                </div>
-                {schoolConfig.header.managedBy && (
-                  <div 
-                    className="text-xs leading-tight font-medium" 
-                    style={{ fontFamily: schoolConfig.branding.fonts.header }}
-                  >
-                    (Managed by : {schoolConfig.header.managedBy})
-                  </div>
-                )}
-                {schoolConfig.header.address && (
-                  <div 
-                    className="text-xs leading-tight" 
-                    style={{ fontFamily: schoolConfig.branding.fonts.header }}
-                  >
-                    {schoolConfig.header.address}
-                  </div>
-                )}
-                <div 
-                  className="text-xs leading-tight" 
-                  style={{ fontFamily: schoolConfig.branding.fonts.header }}
-                >
-                  {schoolConfig.header.phone && `Ph: ${schoolConfig.header.phone}`}
-                  {schoolConfig.header.phone && schoolConfig.header.email && ' | '}
-                  {schoolConfig.header.email && `E-mail: ${schoolConfig.header.email}`}
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+        <div className="grid grid-cols-[1fr_3fr_1fr] gap-4 items-center px-2">
+          <div className="flex justify-center items-center">
+            {schoolConfig.header.showLogo && (
+              <img 
+                src={schoolConfig.header.logoPath} 
+                alt="School Logo" 
+                style={{
+                  width: schoolConfig.header.logoSize?.width || '40px',
+                  height: schoolConfig.header.logoSize?.height || '40px'
+                }}
+                className="mx-auto"
+              />
+            )}
+          </div>
+          <div className="text-center">
+            <div 
+              className="text-sm font-black leading-tight tracking-wide" 
+              style={{ 
+                fontFamily: schoolConfig.branding.fonts.header,
+                letterSpacing: '0.5px',
+                color: schoolConfig.branding.colors.primary 
+              }}
+            >
+              {schoolConfig.header.schoolName}
+            </div>
+            {schoolConfig.header.managedBy && (
+              <div 
+                className="text-xs leading-tight font-medium" 
+                style={{ fontFamily: schoolConfig.branding.fonts.header }}
+              >
+                (Managed by : {schoolConfig.header.managedBy})
+              </div>
+            )}
+            {schoolConfig.header.address && (
+              <div 
+                className="text-xs leading-tight" 
+                style={{ fontFamily: schoolConfig.branding.fonts.header }}
+              >
+                {schoolConfig.header.address}
+              </div>
+            )}
+            <div 
+              className="text-xs leading-tight" 
+              style={{ fontFamily: schoolConfig.branding.fonts.header }}
+            >
+              {schoolConfig.header.phone && `Ph: ${schoolConfig.header.phone}`}
+              {schoolConfig.header.phone && schoolConfig.header.email && ' | '}
+              {schoolConfig.header.email && `E-mail: ${schoolConfig.header.email}`}
+            </div>
+          </div>
+          <div></div>
+        </div>
       </div>
 
       {/* Key Info Bar */}

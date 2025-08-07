@@ -33,8 +33,8 @@ export const DHAARUS_SALAAM_CONFIG: SchoolConfig = {
     showLogo: true,
     logoPath: '/schools/dhaarus-salaam/logo.jpg',
     logoSize: {
-      width: '40px',
-      height: '40px'
+      width: '70px',
+      height: '70px'
     }
   },
   footer: {
