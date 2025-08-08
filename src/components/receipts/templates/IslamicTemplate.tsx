@@ -70,10 +70,10 @@ export default function IslamicTemplate({ receipt, schoolConfig }: ReceiptProps)
               alt="School Logo" 
               style={{
                 width: schoolConfig.header.logoSize?.width || '50px',
-                height: schoolConfig.header.logoSize?.height || '50px'
+                height: schoolConfig.header.logoSize?.height || '50px',
+                borderColor: schoolConfig.branding.colors.primary
               }}
               className="rounded-full border-2"
-              style={{ borderColor: schoolConfig.branding.colors.primary }}
             />
           )}
           <div className="text-center">

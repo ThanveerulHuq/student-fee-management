@@ -31,10 +31,10 @@ export const DHAARUS_SALAAM_CONFIG: SchoolConfig = {
     phone: '(0427) 2442018, +91 98942 50320',
     email: 'dhaarussalaam1@gmail.com',
     showLogo: true,
-    logoPath: '/schools/dhaarus-salaam/logo.jpg',
+    logoPath: '/schools/dhaarus-salaam/logo.png',
     logoSize: {
-      width: '70px',
-      height: '70px'
+      width: '60px',
+      height: 'auto'
     }
   },
   footer: {

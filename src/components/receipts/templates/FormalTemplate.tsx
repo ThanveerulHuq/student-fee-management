@@ -129,7 +129,7 @@ export default function FormalTemplate({ receipt, schoolConfig }: ReceiptProps) 
       </div>
 
       {/* Student Details */}
-      <div className="mb-1 border-l-4 border-black pl-1">
+      <div className="mb-1 pl-1">
         <table className="w-full" style={{ fontSize: schoolConfig.branding.fonts.size?.medium || '10px' }}>
           <tbody>
             <tr>
@@ -150,10 +150,6 @@ export default function FormalTemplate({ receipt, schoolConfig }: ReceiptProps) 
                     <span className="ml-2 font-extrabold">{field.defaultValue || '-'}</span>
                   </td>
                 ))}
-              <td className="w-1/5 py-0.5">
-                <span className="font-bold">ADM NO:</span>
-                <span className="ml-2 font-extrabold">{receipt.student.admissionNo}</span>
-              </td>
             </tr>
           </tbody>
         </table>
@@ -250,7 +246,7 @@ export default function FormalTemplate({ receipt, schoolConfig }: ReceiptProps) 
           </tr>
           <tr>
             <td className="border border-black py-0.5 px-1 text-right font-black bg-gray-200">
-              TOTAL PAID
+              PAID
             </td>
             <td className="border border-black py-0.5 px-1 font-black text-sm">
               {formatCurrency(receipt.calculatedData.totalPaidSoFar)}
@@ -260,7 +256,7 @@ export default function FormalTemplate({ receipt, schoolConfig }: ReceiptProps) 
             <td className="border border-black py-0.5 px-1 text-right font-black bg-gray-200">
               BALANCE
             </td>
-            <td className="border border-black py-0.5 px-1 font-black text-sm">
+            <td className="border border-black py-0.5 px-1 font-black text-lg">
               {formatCurrency(receipt.calculatedData.remainingBalance)}
             </td>
           </tr>
