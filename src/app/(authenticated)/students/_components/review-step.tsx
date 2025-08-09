@@ -1,8 +1,9 @@
 "use client"
 
-import React from "react"
+import React, { useState, useEffect } from "react"
 import { useFormContext } from "react-hook-form"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 
 import { 
   User, 
@@ -16,10 +17,17 @@ import {
   GraduationCap,
   FileText,
   Star,
-  MessageCircle
+  MessageCircle,
+  Hash
 } from "lucide-react"
 import { StudentFormData } from "@/lib/validations/student"
 import { MobileNumber } from "@/generated/prisma"
+
+interface SiblingInfo {
+  id: string
+  name: string
+  admissionNo: string
+}
 
 interface ReviewStepProps {
   loading?: boolean
@@ -28,6 +36,40 @@ interface ReviewStepProps {
 export default function ReviewStep({ loading = false }: ReviewStepProps) {
   const form = useFormContext<StudentFormData>()
   const values = form.getValues()
+  const [siblings, setSiblings] = useState<SiblingInfo[]>([])
+  const [loadingSiblings, setLoadingSiblings] = useState(false)
+
+  useEffect(() => {
+    if (values.siblingIds && values.siblingIds.length > 0) {
+      const fetchSiblings = async () => {
+        setLoadingSiblings(true)
+        try {
+          const promises = values.siblingIds.map(async (siblingId) => {
+            const response = await fetch(`/api/students/${siblingId}`)
+            if (response.ok) {
+              const sibling = await response.json()
+              return {
+                id: sibling.id,
+                name: sibling.name,
+                admissionNo: sibling.admissionNo
+              }
+            }
+            return null
+          })
+          
+          const results = await Promise.all(promises)
+          const validSiblings = results.filter((s): s is SiblingInfo => s !== null)
+          setSiblings(validSiblings)
+        } catch (error) {
+          console.error("Error loading siblings:", error)
+        } finally {
+          setLoadingSiblings(false)
+        }
+      }
+
+      fetchSiblings()
+    }
+  }, [values.siblingIds])
 
   const formatDate = (dateString: string) => {
     if (!dateString) return "Not provided"
@@ -169,6 +211,20 @@ export default function ReviewStep({ loading = false }: ReviewStepProps) {
                     icon={IdCard} 
                   />
                 )}
+                {values.penNumber && (
+                  <InfoItem 
+                    label="PEN Number" 
+                    value={values.penNumber} 
+                    icon={Hash} 
+                  />
+                )}
+                {values.udiseNumber && (
+                  <InfoItem 
+                    label="UDISE Number" 
+                    value={values.udiseNumber} 
+                    icon={Hash} 
+                  />
+                )}
               </dl>
             </CardContent>
           </Card>
@@ -196,6 +252,35 @@ export default function ReviewStep({ loading = false }: ReviewStepProps) {
                 {values.mobileNumbers?.map((mobileNumber, index) => (
                   mobileNumberItem({ ...mobileNumber, label: mobileNumber.label ?? null }, index)
                 ))}
+                {/* Sibling Information */}
+                {(siblings.length > 0 || loadingSiblings || (values.siblingIds && values.siblingIds.length > 0)) && (
+                  <div className="flex items-start space-x-3 py-2 md:col-span-2">
+                    <Users className="h-4 w-4 text-gray-500 mt-0.5 flex-shrink-0" />
+                    <div className="flex-grow">
+                      <dt className="text-sm font-medium text-gray-600">Siblings Studying in School</dt>
+                      <dd className="text-sm text-gray-900 mt-2">
+                        {loadingSiblings ? (
+                          <div className="flex items-center space-x-2 text-gray-500">
+                            <div className="animate-spin rounded-full h-4 w-4 border-2 border-gray-300 border-t-gray-600"></div>
+                            <span>Loading siblings...</span>
+                          </div>
+                        ) : siblings.length > 0 ? (
+                          <div className="flex flex-wrap gap-2">
+                            {siblings.map((sibling) => (
+                              <Badge key={sibling.id} variant="outline" className="text-sm">
+                                {sibling.name} ({sibling.admissionNo})
+                              </Badge>
+                            ))}
+                          </div>
+                        ) : values.siblingIds && values.siblingIds.length > 0 ? (
+                          <span className="text-gray-400 italic">Selected but unable to load details</span>
+                        ) : (
+                          <span className="text-gray-400 italic">No siblings selected</span>
+                        )}
+                      </dd>
+                    </div>
+                  </div>
+                )}
               </dl>
             </CardContent>
           </Card>

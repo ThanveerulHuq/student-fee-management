@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label"
 import { Users, User } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { type StudentFormData } from "@/lib/validations/student"
+import { MultiSelectStudents } from "@/components/ui/multi-select-students"
 import MobileNumbersField from "./mobile-numbers-field"
 
 interface FamilyInfoStepProps {
@@ -13,7 +14,7 @@ interface FamilyInfoStepProps {
 }
 
 export default function FamilyInfoStep({ loading }: FamilyInfoStepProps) {
-  const { register, formState: { errors } } = useFormContext<StudentFormData>()
+  const { register, formState: { errors }, watch, setValue } = useFormContext<StudentFormData>()
   return (
     <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
       <div className="bg-gradient-to-r from-green-50 to-emerald-50 -mx-8 -mt-8 mb-8 p-6 rounded-t-2xl">
@@ -70,6 +71,22 @@ export default function FamilyInfoStep({ loading }: FamilyInfoStepProps) {
               <p className="text-sm text-red-600">{errors.motherName.message}</p>
             )}
           </div>
+        </div>
+
+        {/* Siblings */}
+        <div className="space-y-2">
+          <Label className="text-sm font-medium text-gray-700">
+            Siblings Studying in School
+          </Label>
+          <MultiSelectStudents
+            value={watch("siblingIds") || []}
+            onChange={(value) => setValue("siblingIds", value)}
+            placeholder="Search and select siblings..."
+            disabled={loading}
+          />
+          {errors.siblingIds && (
+            <p className="text-sm text-red-600">{errors.siblingIds.message}</p>
+          )}
         </div>
 
         {/* Mobile Numbers */}

@@ -27,6 +27,8 @@ model Student {
   admissionNo   String    @unique
   aadharNo      String?
   emisNo        String?
+  penNumber     String?
+  udiseNumber   String?
   name          String
   gender        Gender
   dateOfBirth   DateTime
@@ -42,6 +44,7 @@ model Student {
   caste         String
   nationality   String   @default("Indian")
   remarks       String?
+  siblingIds    String[] @db.ObjectId
   isActive      Boolean  @default(true)
   admissionDate DateTime @default(now())
   profilePhotoUrl String?

@@ -71,6 +71,9 @@ export default function StudentFormWizard({
       religion: formData.religion || "",
       caste: formData.caste || "",
       nationality: formData.nationality || "Indian",
+      penNumber: formData.penNumber || undefined,
+      udiseNumber: formData.udiseNumber || undefined,
+      siblingIds: formData.siblingIds || [],
       remarks: formData.remarks || undefined,
     },
   })
@@ -103,6 +106,9 @@ export default function StudentFormWizard({
       religion: formData.religion || "",
       caste: formData.caste || "",
       nationality: formData.nationality || "Indian",
+      penNumber: formData.penNumber || undefined,
+      udiseNumber: formData.udiseNumber || undefined,
+      siblingIds: formData.siblingIds || [],
       remarks: formData.remarks || undefined,
     })
   }, [formData, form])

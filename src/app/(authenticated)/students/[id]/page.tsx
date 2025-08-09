@@ -20,6 +20,8 @@ interface Student {
   admissionNo: string
   aadharNo?: string
   emisNo?: string
+  penNumber?: string
+  udiseNumber?: string
   name: string
   gender: string
   dateOfBirth: string
@@ -35,6 +37,7 @@ interface Student {
   caste: string
   nationality: string
   remarks?: string
+  siblingIds: string[]
   isActive: boolean
   admissionDate: string
   enrollments: Array<StudentEnrollment>

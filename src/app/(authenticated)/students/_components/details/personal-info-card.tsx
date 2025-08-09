@@ -7,6 +7,8 @@ interface Student {
   admissionNo: string
   aadharNo?: string
   emisNo?: string
+  penNumber?: string
+  udiseNumber?: string
   name: string
   gender: string
   dateOfBirth: string
@@ -90,7 +92,7 @@ export default function PersonalInfoCard({ student }: PersonalInfoCardProps) {
       </div>
 
       {/* Additional Information Card */}
-      {(student.aadharNo || student.emisNo || student.previousSchool || student.remarks) && (
+      {(student.aadharNo || student.emisNo || student.penNumber || student.udiseNumber || student.previousSchool || student.remarks) && (
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <h4 className="text-sm font-semibold text-gray-900 mb-4">Additional Information</h4>
           <div className="space-y-4">
@@ -104,6 +106,18 @@ export default function PersonalInfoCard({ student }: PersonalInfoCardProps) {
               <div>
                 <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">EMIS Number</label>
                 <p className="text-sm font-medium text-gray-900 mt-1">{student.emisNo}</p>
+              </div>
+            )}
+            {student.penNumber && (
+              <div>
+                <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">PEN Number</label>
+                <p className="text-sm font-medium text-gray-900 mt-1">{student.penNumber}</p>
+              </div>
+            )}
+            {student.udiseNumber && (
+              <div>
+                <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">UDISE Number</label>
+                <p className="text-sm font-medium text-gray-900 mt-1">{student.udiseNumber}</p>
               </div>
             )}
             {student.previousSchool && (

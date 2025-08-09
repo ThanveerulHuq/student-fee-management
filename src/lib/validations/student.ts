@@ -93,6 +93,12 @@ export const familyInfoSchema = z.object({
       }
       return numbers;
     }),
+  siblingIds: z.array(z.string())
+    .optional()
+    .default([])
+    .refine((ids) => !ids || ids.length <= 10, {
+      message: "Maximum 10 siblings allowed"
+    }),
 })
 
 // Additional Information Schema
@@ -121,6 +127,16 @@ export const additionalInfoSchema = z.object({
     .optional()
     .refine((val) => !val || val.length <= 200, {
       message: "Previous school name must be at most 200 characters"
+    }),
+  penNumber: z.string()
+    .optional()
+    .refine((val) => !val || val.length <= 50, {
+      message: "PEN number must be at most 50 characters"
+    }),
+  udiseNumber: z.string()
+    .optional()
+    .refine((val) => !val || val.length <= 50, {
+      message: "UDISE number must be at most 50 characters"
     }),
   remarks: z.string()
     .optional()

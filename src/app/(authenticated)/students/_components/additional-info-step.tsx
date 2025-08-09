@@ -4,7 +4,7 @@ import { useFormContext } from "react-hook-form"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Globe, Languages, Church, Users2, MapPin, School, FileText } from "lucide-react"
+import { Globe, Languages, Church, Users2, MapPin, School, FileText, Hash } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { type StudentFormData } from "@/lib/validations/student"
 
@@ -166,6 +166,55 @@ export default function AdditionalInfoStep({ loading }: AdditionalInfoStepProps)
               </div>
               {errors.previousSchool && (
                 <p className="text-sm text-red-600">{errors.previousSchool.message}</p>
+              )}
+            </div>
+          </div>
+
+          {/* Fourth Row - PEN and UDISE Numbers */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* PEN Number */}
+            <div className="space-y-2">
+              <Label htmlFor="penNumber" className="text-sm font-medium text-gray-700">
+                PEN Number
+              </Label>
+              <div className="relative">
+                <Hash className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                <Input
+                  id="penNumber"
+                  {...register("penNumber")}
+                  disabled={loading}
+                  placeholder="Enter PEN number"
+                  className={cn(
+                    "pl-10 transition-all duration-200 focus:ring-2 focus:ring-purple-500",
+                    errors.penNumber ? "border-red-500 focus:border-red-500" : ""
+                  )}
+                />
+              </div>
+              {errors.penNumber && (
+                <p className="text-sm text-red-600">{errors.penNumber.message}</p>
+              )}
+            </div>
+
+            {/* UDISE Number */}
+            <div className="space-y-2">
+              <Label htmlFor="udiseNumber" className="text-sm font-medium text-gray-700">
+                UDISE Number
+              </Label>
+              <div className="relative">
+                <Hash className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                <Input
+                  id="udiseNumber"
+                  {...register("udiseNumber")}
+                  disabled={loading}
+                  placeholder="Enter UDISE number"
+                  className={cn(
+                    "pl-10 transition-all duration-200 focus:ring-2 focus:ring-purple-500",
+                    errors.udiseNumber ? "border-red-500 focus:border-red-500" : ""
+                  )}
+                />
+              </div>
+              {errors.udiseNumber && (
+                <p className="text-sm text-red-600">{errors.udiseNumber.message}</p>
               )}
             </div>
           </div>
