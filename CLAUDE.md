@@ -31,13 +31,6 @@ This is a Next.js 15 student fee management system for "BlueMoon" school. The ap
 
 **Core Models**:
 - `Student`: Student information with admission details, demographics, contact info
-- `AcademicYear`: Academic year management with date ranges
-- `Class`: Grade levels with ordering
-- `StudentYear`: Student enrollment per academic year with individual fee customizations
-- `FeeTxn`: Fee payment transactions with detailed breakdown
-- `PaidFee`: Cumulative payment tracking per student-year
-- `CommonFee`: Base fee structure per class and academic year
-- `User`: System users with roles (ADMIN, STAFF)
 
 ## Common Commands
 

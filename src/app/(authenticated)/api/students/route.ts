@@ -1,123 +1,91 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth/next"
-import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
 import { studentSchema } from "@/lib/validations/student"
+import { 
+  withAuth, 
+  handleApiError, 
+  getPaginationParams, 
+  getSearchParams,
+  createSuccessResponse,
+  ConflictError
+} from "@/lib/api-utils"
 
-export async function GET(request: NextRequest) {
-  try {
-    const session = await getServerSession(authOptions)
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+export const GET = withAuth(async (request: NextRequest) => {
+  const { page, limit, skip } = getPaginationParams(request)
+  const { search, status } = getSearchParams(request)
 
-    const { searchParams } = new URL(request.url)
-    const page = parseInt(searchParams.get("page") || "1")
-    const limit = parseInt(searchParams.get("limit") || "10")
-    const search = searchParams.get("search") || ""
-    const status = searchParams.get("status") || "all"
+  // Build where clause with search and status filtering
+  const where: {
+    isActive?: boolean
+    OR?: Array<{
+      name?: { contains: string; mode: "insensitive" }
+      admissionNo?: { contains: string; mode: "insensitive" }
+      fatherName?: { contains: string; mode: "insensitive" }
+    }>
+  } = {}
 
-    const skip = (page - 1) * limit
-
-    // Build where clause with search and status filtering
-    const where: {
-      isActive?: boolean
-      OR?: Array<{
-        name?: { contains: string; mode: "insensitive" }
-        admissionNo?: { contains: string; mode: "insensitive" }
-        fatherName?: { contains: string; mode: "insensitive" }
-      }>
-    } = {}
-
-    // Add status filtering
-    if (status === "active") {
-      where.isActive = true
-    } else if (status === "inactive") {
-      where.isActive = false
-    }
-    // If status is "all", don't filter by isActive
-
-    // Add search filtering
-    if (search) {
-      where.OR = [
-        { name: { contains: search, mode: "insensitive" as const } },
-        { admissionNo: { contains: search, mode: "insensitive" as const } },
-        { fatherName: { contains: search, mode: "insensitive" as const } },
-      ]
-    }
-
-    const [students, total] = await Promise.all([
-      prisma.student.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy: { createdAt: "desc" },
-      }),
-      prisma.student.count({ where }),
-    ])
-
-    return NextResponse.json({
-      students,
-      pagination: {
-        page,
-        limit,
-        total,
-        pages: Math.ceil(total / limit),
-      },
-    })
-  } catch (error) {
-    console.error("Error fetching students:", error)
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    )
+  // Add status filtering
+  if (status === "active") {
+    where.isActive = true
+  } else if (status === "inactive") {
+    where.isActive = false
   }
-}
 
-export async function POST(request: NextRequest) {
-  try {
-    const session = await getServerSession(authOptions)
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
-
-    const body = await request.json()
-    const validatedData = studentSchema.parse(body)
-
-
-    // Calculate age from date of birth
-    const age = new Date().getFullYear() - new Date(validatedData.dateOfBirth).getFullYear()
-
-    // Check if admission number already exists
-    const existingStudent = await prisma.student.findUnique({
-      where: { admissionNo: validatedData.admissionNo },
-    })
-
-    if (existingStudent) {
-      return NextResponse.json(
-        { error: "Admission number already exists" },
-        { status: 400 }
-      )
-    }
-
-    const student = await prisma.student.create({
-      data: {
-        ...validatedData,
-        dateOfBirth: new Date(validatedData.dateOfBirth),
-        admissionDate: new Date(validatedData.admissionDate),
-        age,
-      },
-    })
-
-    return NextResponse.json(student, { status: 201 })
-  } catch (error) {
-    if (error instanceof Error) {
-      return NextResponse.json({ error: error.message }, { status: 400 })
-    }
-    console.error("Error creating student:", error)
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    )
+  // Add search filtering
+  if (search) {
+    where.OR = [
+      { name: { contains: search, mode: "insensitive" as const } },
+      { admissionNo: { contains: search, mode: "insensitive" as const } },
+      { fatherName: { contains: search, mode: "insensitive" as const } },
+    ]
   }
-}
+
+  const [students, total] = await Promise.all([
+    prisma.student.findMany({
+      where,
+      skip,
+      take: limit,
+      include: { mobileNumbers: true },
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.student.count({ where }),
+  ])
+
+  return createSuccessResponse({
+    students,
+    pagination: {
+      page,
+      limit,
+      total,
+      pages: Math.ceil(total / limit),
+    },
+  })
+})
+
+export const POST = withAuth(async (request: NextRequest) => {
+  const body = await request.json()
+  const validatedData = studentSchema.parse(body)
+
+  // Calculate age from date of birth
+  const age = new Date().getFullYear() - new Date(validatedData.dateOfBirth).getFullYear()
+
+  // Check if admission number already exists
+  const existingStudent = await prisma.student.findUnique({
+    where: { admissionNo: validatedData.admissionNo },
+  })
+
+  if (existingStudent) {
+    throw new ConflictError("Admission number already exists")
+  }
+
+  const student = await prisma.student.create({
+    data: {
+      ...validatedData,
+      dateOfBirth: new Date(validatedData.dateOfBirth),
+      admissionDate: new Date(validatedData.admissionDate),
+      age,
+    },
+  })
+
+  return createSuccessResponse(student, "Student created successfully", 201)
+})
