@@ -1,9 +1,25 @@
 // Utility functions for receipt generation and fee calculations
+import { prisma } from "@/lib/prisma"
 
-export function generateReceiptNumber(): string {
-  const timestamp = Date.now().toString()
-  const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0')
-  return `RCP${timestamp.slice(-8)}${random}`
+export function generateReceiptNumber(academicYear: string, sequenceNumber: number): string {
+  return `${academicYear}-${sequenceNumber}`
+}
+
+export async function getNextReceiptSequence(academicYear: string): Promise<number> {
+  const result = await prisma.receiptSequence.upsert({
+    where: { academicYear },
+    create: {
+      academicYear,
+      lastSequence: 1
+    },
+    update: {
+      lastSequence: {
+        increment: 1
+      }
+    }
+  })
+  
+  return result.lastSequence
 }
 
 export function calculateTotalFee(enrollment: {

@@ -31,7 +31,7 @@ export default function FamilyContactCard({ student }: FamilyContactCardProps) {
           <p className="text-sm font-medium text-gray-900 mt-1">{student.motherName}</p>
         </div>
         {student.mobileNumbers.map((mobileNumber, index) => (
-          <div>
+          <div key={mobileNumber.id}>
             <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Mobile Number {index + 1}</label>
             <div className="flex items-center space-x-2 mt-1">
               <Phone className="h-4 w-4 text-gray-400" />

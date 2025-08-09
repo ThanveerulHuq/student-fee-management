@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 
 import { 
@@ -8,7 +9,6 @@ import {
   Printer,
   ArrowLeft
 } from "lucide-react"
-import { formatCurrency, formatDateTime, formatDate } from "@/lib/utils/receipt"
 import LoaderWrapper from "@/components/ui/loader-wrapper"
 import WhatsAppShare from "@/components/ui/whatsapp-share"
 import ReceiptRenderer from "@/components/receipts/ReceiptRenderer"
@@ -93,6 +93,7 @@ interface ReceiptPageProps {
 }
 
 export default function ReceiptPage({ params }: ReceiptPageProps) {
+  const router = useRouter()
   const [receiptId, setReceiptId] = useState<string>("")
   const [receipt, setReceipt] = useState<PaymentReceipt | null>(null)
   const [loading, setLoading] = useState(true)
@@ -163,6 +164,14 @@ export default function ReceiptPage({ params }: ReceiptPageProps) {
         <div className="bg-white shadow-sm border-b px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
+              <Button 
+                variant="outline" 
+                onClick={() => router.push('/fees/collect')}
+                className="flex items-center"
+              >
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back
+              </Button>
               <h1 className="text-xl font-semibold text-gray-900">Fee Receipt</h1>
             </div>
             <div className="flex items-center space-x-2">

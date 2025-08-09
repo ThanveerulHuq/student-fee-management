@@ -15,6 +15,7 @@ interface PaymentFormData {
   paymentMethod: 'CASH' | 'ONLINE' | 'CHEQUE'
   remarks: string
   paymentItems: Record<string, number>
+  paymentDate: Date
 }
 
 export default function FeePaymentPage({ params }: { params: Promise<{ id: string }> }) {
@@ -27,7 +28,8 @@ export default function FeePaymentPage({ params }: { params: Promise<{ id: strin
   const [paymentForm, setPaymentForm] = useState<PaymentFormData>({
     paymentMethod: 'CASH',
     remarks: '',
-    paymentItems: {}
+    paymentItems: {},
+    paymentDate: new Date()
   })
 
   useEffect(() => {
@@ -97,7 +99,8 @@ export default function FeePaymentPage({ params }: { params: Promise<{ id: strin
           totalAmount,
           paymentMethod: paymentForm.paymentMethod,
           remarks: paymentForm.remarks,
-          paymentItems
+          paymentItems,
+          paymentDate: paymentForm.paymentDate
         })
       })
 

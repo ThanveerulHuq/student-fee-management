@@ -352,6 +352,16 @@ model Document {
   @@map("documents")
 }
 
+model ReceiptSequence {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  academicYear String   @unique
+  lastSequence Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("receipt_sequences")
+}
+
 enum Role {
   ADMIN
   STAFF

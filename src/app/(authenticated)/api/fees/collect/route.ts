@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
-import { generateReceiptNumber } from "@/lib/utils/receipt"
+import { generateReceiptNumber, getNextReceiptSequence } from "@/lib/utils/receipt"
 import type { Session } from "next-auth"
 import { z } from "zod"
 import { ObjectId } from "mongodb"
@@ -16,7 +16,7 @@ const feePaymentSchema = z.object({
     amount: z.number().min(0.01)
   })),
   totalAmount: z.number().min(0.01),
-  paymentDate: z.date().optional(),
+  paymentDate: z.string().datetime().transform((str) => new Date(str)),
   paymentMethod: z.enum(["CASH", "ONLINE", "CHEQUE"]).default("CASH"),
   remarks: z.string().optional(),
   createdBy: z.string()
@@ -33,7 +33,6 @@ export async function POST(request: NextRequest) {
     const validatedData = feePaymentSchema.parse({
       ...body,
       createdBy: session?.user?.username,
-      paymentDate: body.paymentDate ? new Date(body.paymentDate) : new Date(),
     })
 
     // Get the student enrollment details
@@ -89,7 +88,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Generate unique receipt number
-    const receiptNo = generateReceiptNumber()
+    const sequenceNumber = await getNextReceiptSequence(enrollment.academicYear.year)
+    const receiptNo = generateReceiptNumber(enrollment.academicYear.year, sequenceNumber)
 
     // Update in a transaction
     const result = await prisma.$transaction(async (tx) => {
@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
           receiptNo,
           studentEnrollmentId: validatedData.studentEnrollmentId,
           totalAmount: validatedData.totalAmount,
-          paymentDate: validatedData.paymentDate || new Date(),
+          paymentDate: validatedData.paymentDate,
           paymentMethod: validatedData.paymentMethod,
           remarks: validatedData.remarks,
           createdBy: validatedData.createdBy,
@@ -122,11 +122,11 @@ export async function POST(request: NextRequest) {
               {
                 paymentId: payment.id,
                 amount: paymentItem.amount,
-                paymentDate: validatedData.paymentDate || new Date(),
+                paymentDate: validatedData.paymentDate,
                 receiptNo,
                 paymentMethod: validatedData.paymentMethod
               },
-              ...fee.recentPayments.slice(0, 4) // Keep last 5 payments
+              ...fee.recentPayments
             ]
           }
         }

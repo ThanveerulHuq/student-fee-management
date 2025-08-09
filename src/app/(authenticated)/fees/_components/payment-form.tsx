@@ -1,17 +1,23 @@
 'use client'
 
+import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
-import { Receipt, IndianRupee, CreditCard } from 'lucide-react'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Calendar } from '@/components/ui/calendar'
+import { Receipt, IndianRupee, CreditCard, Calendar as CalendarIcon } from 'lucide-react'
+import { format } from 'date-fns'
+import { cn } from '@/lib/utils'
 import FeeItem from './fee-item'
 
 interface PaymentFormData {
   paymentMethod: 'CASH' | 'ONLINE' | 'CHEQUE'
   remarks: string
   paymentItems: Record<string, number>
+  paymentDate: Date
 }
 
 interface Fee {
@@ -43,6 +49,8 @@ export default function PaymentForm({
   getTotalPaymentAmount,
   onCancel
 }: PaymentFormProps) {
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false)
+
   const updatePaymentAmount = (feeId: string, amount: number) => {
     onPaymentFormChange({
       ...paymentForm,
@@ -59,13 +67,49 @@ export default function PaymentForm({
     <form onSubmit={onSubmit}>
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
-          <div className="flex items-center space-x-3">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <Receipt className="h-5 w-5 text-blue-600" />
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="p-2 bg-blue-100 rounded-lg">
+                <Receipt className="h-5 w-5 text-blue-600" />
+              </div>
+              <div>
+                <h4 className="text-lg font-semibold text-gray-900">Fee Payment</h4>
+                <p className="text-sm text-gray-600">Select fees to pay and record payment</p>
+              </div>
             </div>
-            <div>
-              <h4 className="text-lg font-semibold text-gray-900">Fee Payment</h4>
-              <p className="text-sm text-gray-600">Select fees to pay and record payment</p>
+            <div className="flex items-center space-x-2">
+              <Label htmlFor="paymentDate" className="text-sm text-gray-600 font-medium">Payment Date:</Label>
+              <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "h-9 w-44 pl-3 text-left font-normal text-sm border-gray-300 hover:border-gray-400",
+                      !paymentForm.paymentDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {paymentForm.paymentDate ? (
+                      format(paymentForm.paymentDate, "PPP")
+                    ) : (
+                      <span>Pick a date</span>
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={paymentForm.paymentDate}
+                    onSelect={(date) => {
+                      if (date) {
+                        onPaymentFormChange({ ...paymentForm, paymentDate: date })
+                        setIsCalendarOpen(false)
+                      }
+                    }}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
           </div>
         </div>
