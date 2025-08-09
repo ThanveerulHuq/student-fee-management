@@ -33,8 +33,7 @@ model Student {
   age           Int
   community     String
   motherTongue  String
-  mobileNo1     String
-  mobileNo2     String?
+  mobileNumbers MobileNumber[]
   fatherName    String
   motherName    String
   address       String
@@ -114,6 +113,13 @@ type AcademicYearInfo {
   isActive  Boolean
 }
 
+type MobileNumber {
+  number     String
+  isWhatsApp Boolean @default(false)
+  isPrimary  Boolean @default(false)
+  label      String? // "Personal", "Father", "Mother", etc.
+}
+
 type ClassInfo {
   className String
   order     Int
@@ -185,7 +191,7 @@ type StudentInfo {
   admissionNumber String
   name            String
   fatherName      String
-  mobileNo        String
+  mobileNo        String 
   class           String
   status          StudentStatus
 }

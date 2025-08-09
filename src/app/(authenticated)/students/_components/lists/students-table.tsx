@@ -12,6 +12,7 @@ import {
 import { Users } from "lucide-react"
 import { StudentStatusBadge } from "@/components/students/student-status-badge"
 import { Skeleton } from "@/components/ui/skeleton"
+import { MobileNumber } from "@/generated/prisma"
 
 interface Student {
   id: string
@@ -20,7 +21,7 @@ interface Student {
   gender: string
   age: number
   fatherName: string
-  mobileNo1: string
+  mobileNumbers: MobileNumber[]
   isActive: boolean
   createdAt: string
 }
@@ -140,7 +141,7 @@ export default function StudentsTable({
                     </TableCell>
                     <TableCell className="py-6 px-8">
                       <div className="text-sm text-gray-900 font-mono">
-                        {student.mobileNo1}
+                        {student.mobileNumbers.find((mobile: MobileNumber) => mobile.isPrimary)?.number}
                       </div>
                     </TableCell>
                     <TableCell className="py-6 px-8">

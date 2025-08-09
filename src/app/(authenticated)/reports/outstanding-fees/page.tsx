@@ -28,6 +28,7 @@ import {
   Phone
 } from "lucide-react"
 import LoaderWrapper from "@/components/ui/loader-wrapper"
+import { MobileNumber } from "@/generated/prisma"
 
 interface OutstandingStudent {
   id: string
@@ -36,7 +37,7 @@ interface OutstandingStudent {
     name: string
     admissionNo: string
     fatherName: string
-    mobileNo1: string
+    mobileNo: string
     isActive: boolean
   }
   academicYear: {
@@ -136,7 +137,7 @@ export default function OutstandingFeesReportPage({}: OutstandingFeesPageProps) 
           name: student.name,
           admissionNo: student.admissionNo,
           fatherName: student.fatherName,
-          mobileNo1: student.phone,
+          mobileNo: student.mobileNo,
           isActive: true, // API only returns active students
         },
         academicYear: {
@@ -230,7 +231,7 @@ export default function OutstandingFeesReportPage({}: OutstandingFeesPageProps) 
         student.student.admissionNo,
         student.student.name,
         student.student.fatherName,
-        student.student.mobileNo1,
+        student.student.mobileNo,
         student.academicYear.year,
         student.class.className,
         student.section,
@@ -496,7 +497,7 @@ export default function OutstandingFeesReportPage({}: OutstandingFeesPageProps) 
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex items-center text-sm text-gray-500">
                               <Phone className="h-4 w-4 mr-1" />
-                              {student.student.mobileNo1}
+                              {student.student.mobileNo}
                             </div>
                           </td>
                         </tr>

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma"
-import { Gender } from "@/generated/prisma"
+import { Gender, MobileNumber } from "@/generated/prisma"
 import type { Session } from "next-auth"
 
 export async function GET(request: NextRequest) {
@@ -105,7 +105,7 @@ export async function GET(request: NextRequest) {
     const reportData = {
       students: students.map(student => ({
         ...student,
-        enrollments: student.enrollments.map(enrollment => {
+        enrollments: student.enrollments.map((enrollment: Enrollment) => {
           const totalFee = 
             enrollment.commonFee.schoolFee +
             enrollment.commonFee.bookFee +
@@ -176,7 +176,7 @@ interface StudentWithEnrollments {
   fatherName: string
   gender: string
   age: number
-  mobileNo1: string
+  mobileNumbers: MobileNumber[]
   isActive: boolean
   admissionDate: Date | string
   enrollments: {
@@ -217,7 +217,7 @@ function generateStudentCSV(students: StudentWithEnrollments[]): string {
           student.fatherName,
           student.gender,
           student.age,
-          student.mobileNo1,
+          student.mobileNumbers.find((mobile: MobileNumber) => mobile.isPrimary)?.number,
           enrollment.academicYear.year,
           enrollment.class.className,
           enrollment.section,
@@ -233,7 +233,7 @@ function generateStudentCSV(students: StudentWithEnrollments[]): string {
           student.fatherName,
           student.gender,
           student.age,
-          student.mobileNo1,
+          student.mobileNumbers.find((mobile: MobileNumber) => mobile.isPrimary)?.number,
           "",
           "",
           "",

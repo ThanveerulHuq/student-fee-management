@@ -11,7 +11,7 @@ interface Student {
   name: string
   admissionNo: string
   fatherName: string
-  mobileNo1: string
+  mobileNo: string
   class?: {
     className: string
   }

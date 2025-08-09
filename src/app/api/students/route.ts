@@ -84,6 +84,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const validatedData = studentSchema.parse(body)
 
+
     // Calculate age from date of birth
     const age = new Date().getFullYear() - new Date(validatedData.dateOfBirth).getFullYear()
 

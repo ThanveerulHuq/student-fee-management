@@ -18,7 +18,7 @@ interface Student {
   gender: string
   age: number
   fatherName: string
-  mobileNo1: string
+  mobileNo: string
   isActive: boolean
 }
 
@@ -154,7 +154,7 @@ function EnrollSearchContent() {
                                   <span>Father: {student.fatherName}</span>
                                   <span className="flex items-center">
                                     <Phone className="w-3 h-3 mr-1" />
-                                    {student.mobileNo1}
+                                    {student.mobileNo}
                                   </span>
                                 </div>
                               </div>

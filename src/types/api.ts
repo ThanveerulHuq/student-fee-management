@@ -1,4 +1,4 @@
-// API Types for lint error fixes
+import { MobileNumber } from "@/generated/prisma"
 
 export interface WhereCondition {
   [key: string]: unknown
@@ -48,8 +48,6 @@ export interface PrismaStudentUpdate {
   age?: number
   community?: string
   motherTongue?: string
-  mobileNo1?: string
-  mobileNo2?: string
   fatherName?: string
   motherName?: string
   address?: string
@@ -59,4 +57,5 @@ export interface PrismaStudentUpdate {
   nationality?: string
   remarks?: string
   isActive?: boolean
+  mobileNumbers?: MobileNumber[]
 }

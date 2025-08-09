@@ -14,7 +14,7 @@ import LoaderWrapper from "@/components/ui/loader-wrapper"
 import FeeItemsSection from "../../_components/form/fee-items-section"
 import ScholarshipItemsSection from "../../_components/form/scholarship-items-section"
 import { toast } from "sonner"
-import type { Student, Class } from "@/generated/prisma"
+import type { StudentInfo, Class } from "@/generated/prisma"
 import type { FeeItem, ScholarshipItem } from "@/types/fee"
 
 
@@ -49,7 +49,7 @@ interface Enrollment {
   selectedScholarships: string[]
   enrollmentDate: string
   isActive: boolean
-  student: Student
+  student: StudentInfo
 }
 
 export default function EditEnrollmentPage() {
@@ -364,7 +364,7 @@ export default function EditEnrollmentPage() {
             <div className="hidden md:flex items-center space-x-50">
               <div>
                 <Label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Admission No</Label>
-                <p className="text-sm font-medium text-gray-700 mt-0.5">{enrollment.student.admissionNo}</p>
+                <p className="text-sm font-medium text-gray-700 mt-0.5">{enrollment.student.admissionNumber}</p>
               </div>
               <div>
                 <Label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Father&apos;s Name</Label>
@@ -372,7 +372,7 @@ export default function EditEnrollmentPage() {
               </div>
               <div>
                 <Label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Contact</Label>
-                <p className="text-sm font-medium text-gray-700 mt-0.5">{enrollment.student.mobileNo1}</p>
+                <p className="text-sm font-medium text-gray-700 mt-0.5">{enrollment.student.mobileNo}</p>
               </div>
             </div>
           </div>
@@ -381,7 +381,7 @@ export default function EditEnrollmentPage() {
           <div className="md:hidden mt-4 grid grid-cols-3 gap-3">
             <div>
               <Label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Admission No</Label>
-              <p className="text-sm font-medium text-gray-700 mt-0.5">{enrollment.student.admissionNo}</p>
+              <p className="text-sm font-medium text-gray-700 mt-0.5">{enrollment.student.admissionNumber}</p>
             </div>
             <div>
               <Label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Father&apos;s Name</Label>
@@ -389,7 +389,7 @@ export default function EditEnrollmentPage() {
             </div>
             <div>
               <Label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Contact</Label>
-              <p className="text-sm font-medium text-gray-700 mt-0.5">{enrollment.student.mobileNo1}</p>
+              <p className="text-sm font-medium text-gray-700 mt-0.5">{enrollment.student.mobileNo}</p>
             </div>
           </div>
         </div>

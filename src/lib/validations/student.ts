@@ -3,6 +3,15 @@ import { z } from "zod"
 const phoneRegex = /^[6-9]\d{9}$/
 const aadharRegex = /^\d{12}$/
 
+// Mobile Number Schema
+export const mobileNumberSchema = z.object({
+  number: z.string()
+    .regex(phoneRegex, "Mobile number must be 10 digits starting with 6-9"),
+  isWhatsApp: z.boolean().default(false),
+  isPrimary: z.boolean().default(false),
+  label: z.string().optional(),
+})
+
 // Basic Information Schema
 export const basicInfoSchema = z.object({
   admissionNo: z.string()
@@ -64,13 +73,25 @@ export const familyInfoSchema = z.object({
     .min(2, "Mother's name must be at least 2 characters")
     .max(100, "Mother's name must be at most 100 characters")
     .regex(/^[a-zA-Z\s.]+$/, "Mother's name must contain only letters, spaces, and dots"),
-  mobileNo1: z.string()
-    .min(1, "Primary mobile number is required")
-    .regex(phoneRegex, "Mobile number must be 10 digits starting with 6-9"),
-  mobileNo2: z.string()
-    .optional()
-    .refine((val) => !val || phoneRegex.test(val), {
-      message: "Mobile number must be 10 digits starting with 6-9"
+  mobileNumbers: z.array(mobileNumberSchema)
+    .min(1, "At least one mobile number is required")
+    .max(5, "Maximum 5 mobile numbers allowed")
+    .refine((numbers) => {
+      // Check for duplicate numbers
+      const phoneNumbers = numbers.map(m => m.number);
+      return new Set(phoneNumbers).size === phoneNumbers.length;
+    }, "Duplicate mobile numbers are not allowed")
+    .refine((numbers) => {
+      // Ensure only one primary number
+      const primaryCount = numbers.filter(m => m.isPrimary).length;
+      return primaryCount <= 1;
+    }, "Only one mobile number can be marked as primary")
+    .transform((numbers) => {
+      // Auto-mark first as primary if no primary is set
+      if (numbers.length > 0 && !numbers.some(m => m.isPrimary)) {
+        numbers[0].isPrimary = true;
+      }
+      return numbers;
     }),
 })
 
@@ -124,6 +145,7 @@ export const studentSchema = studentFormSchema.extend({
 export const studentUpdateSchema = studentSchema.partial()
 
 // Export types
+export type MobileNumberData = z.infer<typeof mobileNumberSchema>
 export type BasicInfoData = z.infer<typeof basicInfoSchema>
 export type FamilyInfoData = z.infer<typeof familyInfoSchema>
 export type AdditionalInfoData = z.infer<typeof additionalInfoSchema>

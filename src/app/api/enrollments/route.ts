@@ -233,7 +233,7 @@ export async function POST(request: NextRequest) {
           admissionNumber: student.admissionNo,
           name: student.name,
           fatherName: student.fatherName,
-          mobileNo: student.mobileNo1,
+          mobileNo: student.mobileNumbers?.find(m => m.isPrimary)?.number || student.mobileNumbers?.[0]?.number || '',
           class: classInfo.className,
           status: 'ACTIVE'
         },

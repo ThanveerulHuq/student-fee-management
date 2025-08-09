@@ -41,6 +41,7 @@ export default function EditStudentPage({ params }: EditStudentPageProps) {
         const data = await response.json()
         setIsActive(data.isActive)
         // Convert the student data to form format
+
         const formData: StudentFormData = {
           admissionNo: data.admissionNo,
           admissionDate: data.admissionDate,
@@ -51,8 +52,7 @@ export default function EditStudentPage({ params }: EditStudentPageProps) {
           dateOfBirth: data.dateOfBirth.split('T')[0], // Convert ISO date to YYYY-MM-DD
           community: data.community,
           motherTongue: data.motherTongue,
-          mobileNo1: data.mobileNo1,
-          mobileNo2: data.mobileNo2 || "",
+          mobileNumbers: data.mobileNumbers || [],
           fatherName: data.fatherName,
           motherName: data.motherName,
           address: data.address,

@@ -13,6 +13,7 @@ import { Save, Award, AlertTriangle, Info, ArrowLeft, RotateCcw } from "lucide-r
 import LoaderWrapper from "@/components/ui/loader-wrapper"
 import FeeItemsSection from "../../_components/form/fee-items-section"
 import ScholarshipItemsSection from "../../_components/form/scholarship-items-section"
+import { MobileNumber } from "@/generated/prisma"
 
 interface Student {
   id: string
@@ -21,8 +22,8 @@ interface Student {
   gender: string
   age: number
   fatherName: string
-  mobileNo1: string
   isActive: boolean
+  mobileNumbers: MobileNumber[]
 }
 
 interface Class {
@@ -344,7 +345,7 @@ export default function EnrollStudentPage() {
               </div>
               <div>
                 <Label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Contact</Label>
-                <p className="text-sm font-medium text-gray-700 mt-0.5">{student.mobileNo1}</p>
+                <p className="text-sm font-medium text-gray-700 mt-0.5">{student.mobileNumbers.find((mobile: MobileNumber) => mobile.isPrimary)?.number}</p>
               </div>
             </div>
           </div>
@@ -361,7 +362,7 @@ export default function EnrollStudentPage() {
             </div>
             <div>
               <Label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Contact</Label>
-              <p className="text-sm font-medium text-gray-700 mt-0.5">{student.mobileNo1}</p>
+              <p className="text-sm font-medium text-gray-700 mt-0.5">{student.mobileNumbers.find((mobile: MobileNumber) => mobile.isPrimary)?.number}</p>
             </div>
           </div>
         </div>

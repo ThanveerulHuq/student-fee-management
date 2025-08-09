@@ -7,7 +7,8 @@ import StudentsTable from "./_components/lists/students-table"
 import StudentsPagination from "./_components/lists/students-pagination"
 import { StudentsListSkeleton } from "./_components/common/loading-skeletons"
 import { trackSearch, trackPageView } from "@/lib/analytics"
-
+import { MobileNumber } from "@/generated/prisma"
+  
 interface Student {
   id: string
   admissionNo: string
@@ -15,7 +16,7 @@ interface Student {
   gender: string
   age: number
   fatherName: string
-  mobileNo1: string
+  mobileNumbers: MobileNumber[]
   isActive: boolean
   createdAt: string
   enrollments: Array<{

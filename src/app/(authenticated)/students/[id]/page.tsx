@@ -13,6 +13,7 @@ import PersonalInfoCard from "../_components/details/personal-info-card"
 import FamilyContactCard from "../_components/details/family-contact-card"
 import EnrollmentHistoryCard from "../_components/details/enrollment-history-card"
 import { StudentEnrollment } from "@/types/enrollment"
+import { MobileNumber } from "@/generated/prisma"
 
 interface Student {
   id: string
@@ -25,8 +26,7 @@ interface Student {
   age: number
   community: string
   motherTongue: string
-  mobileNo1: string
-  mobileNo2?: string
+  mobileNo: string
   fatherName: string
   motherName: string
   address: string
@@ -38,6 +38,7 @@ interface Student {
   isActive: boolean
   admissionDate: string
   enrollments: Array<StudentEnrollment>
+  mobileNumbers: Array<MobileNumber>
 }
 
 interface StudentDetailPageProps {

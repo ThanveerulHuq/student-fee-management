@@ -1,12 +1,12 @@
 "use client"
 
-import { User, Phone, MapPin } from "lucide-react"
+import { User, Phone, MapPin, Star, MessageCircle } from "lucide-react"
+import { MobileNumber } from "@/generated/prisma"
 
 interface Student {
   fatherName: string
   motherName: string
-  mobileNo1: string
-  mobileNo2?: string
+  mobileNumbers: Array<MobileNumber>
   address: string
 }
 
@@ -30,29 +30,21 @@ export default function FamilyContactCard({ student }: FamilyContactCardProps) {
           <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Mother&apos;s Name</label>
           <p className="text-sm font-medium text-gray-900 mt-1">{student.motherName}</p>
         </div>
-        <div>
-          <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Primary Mobile</label>
-          <div className="flex items-center space-x-2 mt-1">
-            <Phone className="h-4 w-4 text-gray-400" />
-            <p className="text-sm font-medium text-gray-900 font-mono">{student.mobileNo1}</p>
-          </div>
-        </div>
-        {student.mobileNo2 && (
+        {student.mobileNumbers.map((mobileNumber, index) => (
           <div>
-            <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Secondary Mobile</label>
+            <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Mobile Number {index + 1}</label>
             <div className="flex items-center space-x-2 mt-1">
               <Phone className="h-4 w-4 text-gray-400" />
-              <p className="text-sm font-medium text-gray-900 font-mono">{student.mobileNo2}</p>
+              <p className="text-sm font-medium text-gray-900 font-mono">{mobileNumber.number}</p>
+              {mobileNumber.isPrimary && (
+                <Star className="h-4 w-4 text-yellow-500" />
+              )}
+              {mobileNumber.isWhatsApp && (
+                <MessageCircle className="h-4 w-4 text-green-500" />
+              )}
             </div>
           </div>
-        )}
-        <div className={student.mobileNo2 ? "md:col-span-2" : "md:col-span-2"}>
-          <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Address</label>
-          <div className="flex items-start space-x-2 mt-1">
-            <MapPin className="h-4 w-4 text-gray-400 mt-0.5" />
-            <p className="text-sm font-medium text-gray-900">{student.address}</p>
-          </div>
-        </div>
+        ))}
       </div>
     </div>
   )
