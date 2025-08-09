@@ -1,16 +1,9 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-
-import { 
-  Download,
-  Printer,
-  ArrowLeft
-} from "lucide-react"
+import { Download } from "lucide-react"
 import LoaderWrapper from "@/components/ui/loader-wrapper"
-import WhatsAppShare from "@/components/ui/whatsapp-share"
 import ReceiptRenderer from "@/components/receipts/ReceiptRenderer"
 import { getSchoolConfigFromEnv } from "@/lib/schools/config"
 
@@ -94,14 +87,13 @@ interface PaymentReceipt {
   }>
 }
 
-interface ReceiptPageProps {
+interface PublicReceiptPageProps {
   params: Promise<{
     id: string
   }>
 }
 
-export default function ReceiptPage({ params }: ReceiptPageProps) {
-  const router = useRouter()
+export default function PublicReceiptPage({ params }: PublicReceiptPageProps) {
   const [receiptId, setReceiptId] = useState<string>("")
   const [receipt, setReceipt] = useState<PaymentReceipt | null>(null)
   const [loading, setLoading] = useState(true)
@@ -122,7 +114,7 @@ export default function ReceiptPage({ params }: ReceiptPageProps) {
     try {
       setLoading(true)
       setError(null)
-      const response = await fetch(`/api/receipts/${receiptId}`)
+      const response = await fetch(`/api/public-receipts/${receiptId}`)
       if (response.ok) {
         const data = await response.json()
         setReceipt(data)
@@ -143,11 +135,6 @@ export default function ReceiptPage({ params }: ReceiptPageProps) {
     fetchReceipt()
   }, [fetchReceipt])
 
-  const handlePrint = () => {
-    window.print()
-  }
-
-
   if (loading) {
     return <LoaderWrapper fullScreen label="Loading receipt..." />
   }
@@ -162,40 +149,13 @@ export default function ReceiptPage({ params }: ReceiptPageProps) {
     )
   }
 
-  const ReceiptContent = () => (
-    <ReceiptRenderer receipt={receipt} schoolConfig={schoolConfig} />
-  )
-
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="print:hidden">
         <div className="bg-white shadow-sm border-b px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <Button 
-                variant="outline" 
-                onClick={() => router.push('/fees/collect')}
-                className="flex items-center"
-              >
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back
-              </Button>
               <h1 className="text-xl font-semibold text-gray-900">Fee Receipt</h1>
-            </div>
-            <div className="flex items-center space-x-2">
-              <WhatsAppShare
-                receiptId={receipt.id}
-                receiptNo={receipt.receiptNo}
-                studentName={receipt.student.name}
-                totalAmount={receipt.totalAmount}
-                paymentDate={receipt.paymentDate}
-                phoneNumber={receipt.student.phone}
-                size="default"
-              />
-              <Button variant="outline" onClick={handlePrint}>
-                <Printer className="h-4 w-4 mr-2" />
-                Print
-              </Button>
             </div>
           </div>
         </div>
@@ -216,8 +176,7 @@ export default function ReceiptPage({ params }: ReceiptPageProps) {
             }
             
             .receipt-container,
-            .receipt-container *,
-            .receipt-separator {
+            .receipt-container * {
               visibility: visible;
             }
             
@@ -228,23 +187,6 @@ export default function ReceiptPage({ params }: ReceiptPageProps) {
               top: 0;
               width: 100%;
               page-break-inside: avoid;
-              height: 48vh;
-              margin-bottom: 1vh;
-            }
-            
-            .receipt-separator {
-              position: absolute;
-              left: 0;
-              top: 49vh;
-              width: 100%;
-              border-top: 2px dashed black;
-              margin: 1vh 0;
-              page-break-before: avoid;
-              visibility: visible;
-            }
-            
-            .receipt-container:last-of-type {
-              top: 50vh;
             }
             
             /* Ensure print only shows receipt content */
@@ -254,17 +196,9 @@ export default function ReceiptPage({ params }: ReceiptPageProps) {
           }
         `}</style>
         
-        {/* First Receipt */}
+        {/* Single Receipt */}
         <div className="receipt-container">
-          <ReceiptContent />
-        </div>
-        
-        {/* Separator */}
-        <div className="receipt-separator print:block hidden"></div>
-        
-        {/* Second Receipt */}
-        <div className="receipt-container">
-          <ReceiptContent />
+          <ReceiptRenderer receipt={receipt} schoolConfig={schoolConfig} />
         </div>
       </main>
     </div>

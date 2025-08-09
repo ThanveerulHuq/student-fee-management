@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { prisma } from '@/lib/prisma'
 import { authOptions } from '@/lib/auth'
-import { StudentEnrollment } from '@/types/enrollment'
 
 // GET /api/flexible-enrollments/[id] - Get specific enrollment
 export async function GET(
@@ -17,8 +16,11 @@ export async function GET(
 
     const resolvedParams = await params
     const enrollment = await prisma.studentEnrollment.findUnique({
-      where: { id: resolvedParams.id }
+      where: { id: resolvedParams.id },
     })
+
+
+
 
     if (!enrollment) {
       return NextResponse.json(
@@ -27,7 +29,17 @@ export async function GET(
       )
     }
 
-    return NextResponse.json(enrollment)
+    const payments = await prisma.payment.findMany({
+      where: {
+        studentEnrollmentId: resolvedParams.id
+      }
+    })
+
+
+    return NextResponse.json({
+      ...enrollment,
+      payments: payments
+    })
   } catch (error) {
     console.error('Error fetching enrollment:', error)
     return NextResponse.json(

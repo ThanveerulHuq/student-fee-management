@@ -4,6 +4,7 @@ import { AcademicYearProvider } from '@/contexts/academic-year-context'
 import AcademicYearGuard from '@/components/ui/academic-year-guard'
 import EnhancedPageHeader from '@/components/ui/enhanced-page-header'
 import {getSchoolConfigFromEnv} from '@/lib/schools/config'
+import { Providers } from '@/components/providers/session-provider'
 
 export default function AuthenticatedLayout({
   children,
@@ -11,6 +12,7 @@ export default function AuthenticatedLayout({
   children: React.ReactNode
 }) {
   return (
+    <Providers>
     <AcademicYearProvider>
       <AcademicYearGuard>
         <div className="min-h-screen bg-gray-50">
@@ -21,5 +23,6 @@ export default function AuthenticatedLayout({
         </div>
       </AcademicYearGuard>
     </AcademicYearProvider>
+    </Providers>
   )
 }

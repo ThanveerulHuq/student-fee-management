@@ -252,7 +252,7 @@ export default function EnrollmentsPage() {
                   </thead>
                   <tbody>
                     {filteredEnrollments.map((enrollment) => (
-                      <>
+                      <div key={enrollment.id}>
                         {/* Collapsed Row */}
                         <tr 
                           key={enrollment.id} 
@@ -444,7 +444,7 @@ export default function EnrollmentsPage() {
                             </td>
                           </tr>
                         )}
-                      </>
+                      </div>
                     ))}
                   </tbody>
                 </table>

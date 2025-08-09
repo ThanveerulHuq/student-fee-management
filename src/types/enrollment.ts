@@ -1,3 +1,5 @@
+import { Payment } from "@/generated/prisma/client"
+
 // Enums
 export enum FeeCategory {
   REGULAR = 'REGULAR',
@@ -83,7 +85,6 @@ export interface StudentFee {
   waivedBy?: string
   waivedDate?: Date
   order: number
-  recentPayments: RecentPayment[]
 }
 
 export interface StudentScholarship {
@@ -156,6 +157,7 @@ export interface StudentEnrollment {
   // Pre-computed totals
   totals: StudentTotals
   feeStatus: FeeStatus
+  payments: Payment[]
   
   createdAt: Date
   updatedAt: Date

@@ -18,6 +18,7 @@ export const config = {
     "/fees/:path*",
     "/reports/:path*",
     "/enrollments/:path*",
-    "/api/((?!auth).*)/:path*"
+    "/receipts/:path*",
+    "/api/((?!auth|public-receipts).*)/:path*"
   ]
 }

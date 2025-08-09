@@ -19,24 +19,8 @@ interface PaymentHistoryCardProps {
 }
 
 export default function PaymentHistoryCard({ enrollment }: PaymentHistoryCardProps) {
-  // Collect all payments from all fees and deduplicate by paymentId
-  const allPayments = new Map<string, PaymentRecord>()
-  
-  enrollment.fees.forEach(fee => {
-    fee.recentPayments.forEach(payment => {
-      if (!allPayments.has(payment.paymentId)) {
-        allPayments.set(payment.paymentId, {
-          ...payment,
-          feeTemplateName: fee.templateName
-        })
-      }
-    })
-  })
 
-  // Convert to array and sort by payment date (most recent first)
-  const payments = Array.from(allPayments.values()).sort((a, b) => 
-    new Date(b.paymentDate).getTime() - new Date(a.paymentDate).getTime()
-  )
+  const payments = enrollment.payments
 
   const formatDate = (date: Date) => {
     return new Date(date).toLocaleDateString("en-IN", {
@@ -93,7 +77,7 @@ export default function PaymentHistoryCard({ enrollment }: PaymentHistoryCardPro
       <div className="space-y-2">
         {payments.map((payment) => (
           <div 
-            key={payment.paymentId} 
+            key={payment.receiptNo} 
             className="border rounded-lg p-3 hover:bg-gray-50 transition-colors"
           >
             <div className="flex items-center justify-between">
@@ -116,7 +100,7 @@ export default function PaymentHistoryCard({ enrollment }: PaymentHistoryCardPro
               <div className="flex items-center space-x-3">
                 <div className="text-right">
                   <div className="font-medium text-gray-900 text-sm">
-                    ₹{payment.amount.toFixed(2)}
+                    ₹{payment.totalAmount.toFixed(2)}
                   </div>
                   <Badge 
                     variant="outline" 
@@ -135,7 +119,7 @@ export default function PaymentHistoryCard({ enrollment }: PaymentHistoryCardPro
                   className="h-8 px-3 text-xs"
                   onClick={() => {
                     // Open receipt in new tab
-                    window.open(`/receipts/${payment.paymentId}`, '_blank')
+                    window.open(`/receipts/${payment.id}`, '_blank')
                   }}
                 >
                   <ExternalLink className="w-3 h-3 mr-1" />

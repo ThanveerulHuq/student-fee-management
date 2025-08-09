@@ -35,9 +35,7 @@ export default function RootLayout({
         <Suspense>
           <Analytics />
           <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS_ID || ''} />
-          <Providers>
             {children}
-          </Providers>
           <Toaster />
         </Suspense>
       </body>
