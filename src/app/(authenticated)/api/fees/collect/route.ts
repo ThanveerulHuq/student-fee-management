@@ -117,17 +117,7 @@ export async function POST(request: NextRequest) {
           return {
             ...fee,
             amountPaid: newAmountPaid,
-            amountDue: fee.amount - newAmountPaid,
-            recentPayments: [
-              {
-                paymentId: payment.id,
-                amount: paymentItem.amount,
-                paymentDate: validatedData.paymentDate,
-                receiptNo,
-                paymentMethod: validatedData.paymentMethod
-              },
-              ...fee.recentPayments
-            ]
+            amountDue: fee.amount - newAmountPaid
           }
         }
         return fee

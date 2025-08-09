@@ -84,6 +84,14 @@ interface PaymentReceipt {
       }
     }
   }
+
+  recentPayments: Array<{
+    id: string
+    receiptNo: string
+    paymentDate: string
+    totalAmount: number
+    paymentMethod: string
+  }>
 }
 
 interface ReceiptPageProps {

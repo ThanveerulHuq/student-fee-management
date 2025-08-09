@@ -235,7 +235,11 @@ export default function FormalTemplate({ receipt, schoolConfig }: ReceiptProps) 
           <tr>
             <td rowSpan={3} className="w-2/5 px-1 py-0.5 align-top border-2 border-black">
               <div className="font-black text-xs">Payment History:</div>
-              <div className="text-xs font-medium">Recent payments recorded</div>
+              {receipt.recentPayments.map((payment: any) => (
+                <div key={payment.id} className="text-xs font-medium">
+                  {formatDate(payment.paymentDate)} - {formatCurrency(payment.totalAmount)}
+                </div>
+              ))}
             </td>
             <td className="border border-black py-0.5 px-1 text-right font-black bg-gray-200">
               TOTAL FEE

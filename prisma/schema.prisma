@@ -143,7 +143,6 @@ type ScholarshipItem {
   templateName    String
   templateType    ScholarshipType
   amount          Float
-  isAutoApplied   Boolean
   isEditableDuringEnrollment   Boolean
   order           Int
 }
@@ -196,13 +195,6 @@ type StudentInfo {
   status          StudentStatus
 }
 
-type RecentPayment {
-  paymentId     String        @db.ObjectId
-  amount        Float
-  paymentDate   DateTime
-  receiptNo     String
-  paymentMethod PaymentMethod
-}
 
 type StudentFee {
   id               String           @db.ObjectId
@@ -215,12 +207,6 @@ type StudentFee {
   amountPaid       Float
   amountDue        Float
   isCompulsory     Boolean
-  isWaived         Boolean         @default(false)
-  waivedReason     String?
-  waivedBy         String?
-  waivedDate       DateTime?
-  order            Int
-  recentPayments   RecentPayment[]
 }
 
 type StudentScholarship {
@@ -296,6 +282,8 @@ model StudentEnrollment {
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  payments Payment[]
   
   @@unique([studentId, academicYearId])
   @@map("student_enrollments")
@@ -316,6 +304,7 @@ model Payment {
   // Embedded student info for receipts
   student      StudentInfo
   academicYear AcademicYearInfo
+  studentEnrollment StudentEnrollment @relation(fields: [studentEnrollmentId], references: [id])    
   
   // Payment breakdown
   paymentItems PaymentItem[]

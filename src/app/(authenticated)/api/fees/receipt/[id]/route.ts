@@ -28,6 +28,16 @@ export async function GET(
       return NextResponse.json({ error: "Student enrollment not found" }, { status: 404 })
     }
 
+    // get recent payments before this payment
+    const recentPayments = await prisma.payment.findMany({
+      where: {
+        studentEnrollmentId: payment.studentEnrollmentId,
+        paymentDate: { lt: payment.paymentDate }
+      },
+      orderBy: { paymentDate: 'desc' },
+      take: 5
+    })
+
     // Prepare receipt data using the embedded information
     const receiptData = {
       id: payment.id,
@@ -90,7 +100,14 @@ export async function GET(
           type: scholarship.templateType
         })),
         totals: enrollment.totals
-      }
+      },
+      recentPayments: recentPayments.map(payment => ({
+        id: payment.id,
+        receiptNo: payment.receiptNo,
+        paymentDate: payment.paymentDate,
+        totalAmount: payment.totalAmount,
+        paymentMethod: payment.paymentMethod,
+      }))
     }
 
     return NextResponse.json(receiptData)
