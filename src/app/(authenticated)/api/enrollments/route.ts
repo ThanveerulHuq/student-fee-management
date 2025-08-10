@@ -154,25 +154,6 @@ export async function POST(request: NextRequest) {
 
     // Apply scholarships
     const studentScholarships = []
-    
-    // Auto-apply scholarships
-    for (const scholarshipItem of feeStructure.scholarshipItems) {
-      if (scholarshipItem.isAutoApplied) {
-        studentScholarships.push({
-          id: new ObjectId().toString(),
-          scholarshipItemId: scholarshipItem.id,
-          templateId: scholarshipItem.templateId,
-          templateName: scholarshipItem.templateName,
-          templateType: scholarshipItem.templateType as any,
-          amount: scholarshipItem.amount,
-          originalAmount: scholarshipItem.amount,
-          isAutoApplied: true,
-          appliedDate: new Date(),
-          appliedBy: session.user.username,
-          isActive: true
-        })
-      }
-    }
 
     // Apply manually selected scholarships
     for (const selectedScholarshipId of selectedScholarships) {
@@ -180,7 +161,7 @@ export async function POST(request: NextRequest) {
         item => item.id === selectedScholarshipId
       )
       
-      if (scholarshipItem && !scholarshipItem.isAutoApplied) {
+      if (scholarshipItem) {
         studentScholarships.push({
           id: new ObjectId().toString(),
           scholarshipItemId: scholarshipItem.id,
@@ -189,18 +170,16 @@ export async function POST(request: NextRequest) {
           templateType: scholarshipItem.templateType as any,
           amount: scholarshipItem.amount,
           originalAmount: scholarshipItem.amount,
-          isAutoApplied: false,
           appliedDate: new Date(),
           appliedBy: session.user.username,
-          isActive: true
+          isActive: true,
+          isAutoApplied: false
         })
       }
     }
 
     // Calculate totals
     const feeTotals = {
-      compulsory: studentFees.filter(f => f.isCompulsory).reduce((sum, f) => sum + f.amount, 0),
-      optional: studentFees.filter(f => !f.isCompulsory).reduce((sum, f) => sum + f.amount, 0),
       total: studentFees.reduce((sum, f) => sum + f.amount, 0),
       paid: 0,
       due: studentFees.reduce((sum, f) => sum + f.amount, 0)
@@ -208,8 +187,6 @@ export async function POST(request: NextRequest) {
 
     const scholarshipTotals = {
       applied: studentScholarships.reduce((sum, s) => sum + s.amount, 0),
-      autoApplied: studentScholarships.filter(s => s.isAutoApplied).reduce((sum, s) => sum + s.amount, 0),
-      manual: studentScholarships.filter(s => !s.isAutoApplied).reduce((sum, s) => sum + s.amount, 0)
     }
 
     const netTotals = {

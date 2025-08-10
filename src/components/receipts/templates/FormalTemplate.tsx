@@ -245,7 +245,7 @@ export default function FormalTemplate({ receipt, schoolConfig }: ReceiptProps) 
               TOTAL FEE
             </td>
             <td className="border border-black py-0.5 px-1 font-black text-sm">
-              {formatCurrency(receipt.calculatedData.totalAnnualFee)}
+              {formatCurrency(receipt.calculatedData.netAnnualFee)}
             </td>
           </tr>
           <tr>
@@ -253,7 +253,7 @@ export default function FormalTemplate({ receipt, schoolConfig }: ReceiptProps) 
               PAID
             </td>
             <td className="border border-black py-0.5 px-1 font-black text-sm">
-              {formatCurrency(receipt.calculatedData.totalPaidSoFar)}
+              {formatCurrency(receipt.totalAmount)}
             </td>
           </tr>
           <tr>

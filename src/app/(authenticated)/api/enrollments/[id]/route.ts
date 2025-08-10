@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth'
 import { prisma } from '@/lib/prisma'
 import { authOptions } from '@/lib/auth'
 
-// GET /api/flexible-enrollments/[id] - Get specific enrollment
+// GET /api/enrollments/[id] - Get specific enrollment
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -102,8 +102,6 @@ export async function PUT(
 
       // Recalculate totals
       const feeTotals = {
-        compulsory: updatedFees.filter(f => f.isCompulsory).reduce((sum, f) => sum + f.amount, 0),
-        optional: updatedFees.filter(f => !f.isCompulsory).reduce((sum, f) => sum + f.amount, 0),
         total: updatedFees.reduce((sum, f) => sum + f.amount, 0),
         paid: updatedFees.reduce((sum, f) => sum + f.amountPaid, 0),
         due: updatedFees.reduce((sum, f) => sum + f.amountDue, 0)
@@ -155,8 +153,6 @@ export async function PUT(
       const activeScholarships = updatedScholarships.filter(s => s.isActive)
       const scholarshipTotals = {
         applied: activeScholarships.reduce((sum, s) => sum + s.amount, 0),
-        autoApplied: activeScholarships.filter(s => s.isAutoApplied).reduce((sum, s) => sum + s.amount, 0),
-        manual: activeScholarships.filter(s => !s.isAutoApplied).reduce((sum, s) => sum + s.amount, 0)
       }
 
       const feeTotals = updateData.totals?.fees || existingEnrollment.totals.fees

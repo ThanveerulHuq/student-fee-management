@@ -228,8 +228,6 @@ type StudentScholarship {
 }
 
 type FeeAmounts {
-  compulsory Float
-  optional   Float
   total      Float
   paid       Float
   due        Float
@@ -237,8 +235,6 @@ type FeeAmounts {
 
 type ScholarshipAmounts {
   applied     Float
-  autoApplied Float
-  manual      Float
 }
 
 type NetAmounts {

@@ -2,7 +2,7 @@
 
 import { useAcademicYear } from '@/contexts/academic-year-context'
 import { useSession } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 import LoaderOne from '@/components/ui/loader-one'
 
@@ -14,8 +14,14 @@ export default function AcademicYearGuard({ children }: AcademicYearGuardProps) 
   const { academicYear, loading, error, isReady } = useAcademicYear()
   const { data: session, status } = useSession()
   const router = useRouter()
+  const pathname = usePathname()
 
   useEffect(() => {
+
+    if (pathname === "/select-academic-year") {
+      return
+    }
+
     if (status === "unauthenticated") {
       router.push("/auth/login")
       return

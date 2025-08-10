@@ -125,17 +125,13 @@ export async function POST(request: NextRequest) {
 
       // Recalculate totals
       const feeTotals = {
-        compulsory: updatedFees.filter(f => f.isCompulsory).reduce((sum, f) => sum + f.amount, 0),
-        optional: updatedFees.filter(f => !f.isCompulsory).reduce((sum, f) => sum + f.amount, 0),
         total: updatedFees.reduce((sum, f) => sum + f.amount, 0),
         paid: updatedFees.reduce((sum, f) => sum + f.amountPaid, 0),
         due: updatedFees.reduce((sum, f) => sum + f.amountDue, 0)
       }
 
       const scholarshipTotals = {
-        applied: enrollment.scholarships.filter(s => s.isActive).reduce((sum, s) => sum + s.amount, 0),
-        autoApplied: enrollment.scholarships.filter(s => s.isActive && s.isAutoApplied).reduce((sum, s) => sum + s.amount, 0),
-        manual: enrollment.scholarships.filter(s => s.isActive && !s.isAutoApplied).reduce((sum, s) => sum + s.amount, 0)
+        applied: enrollment.scholarships.reduce((sum, s) => sum + s.amount, 0),
       }
 
       const netTotals = {
