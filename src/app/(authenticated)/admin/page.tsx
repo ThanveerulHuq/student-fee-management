@@ -6,7 +6,8 @@ import {
   Layers,
   Award,
   Settings,
-  Shield
+  Shield,
+  Calendar
 } from "lucide-react"
 import { useAcademicYearNavigation } from "@/contexts/academic-year-context"
 
@@ -20,6 +21,13 @@ export default function AdminDashboard() {
       icon: UserCog,
       action: () => navigateTo("/admin/users"),
       color: "bg-red-500",
+    },
+    {
+      title: "Academic Years",
+      description: "Manage academic year periods and settings",
+      icon: Calendar,
+      action: () => navigateTo("/admin/academic-years"),
+      color: "bg-blue-500",
     },
     {
       title: "Fee Templates",
