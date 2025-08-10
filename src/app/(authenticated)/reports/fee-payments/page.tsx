@@ -13,7 +13,6 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { DateRangePicker } from "@/components/ui/date-range-picker"
-// import StudentSelector from "@/components/ui/student-selector"
 import LoaderWrapper from "@/components/ui/loader-wrapper"
 import { 
   Download,
@@ -127,15 +126,6 @@ export default function FeePaymentsReportPage({}: FeePaymentsPageProps) {
         from: startDate ? new Date(startDate) : undefined,
         to: endDate ? new Date(endDate) : undefined,
       })
-    } else {
-      // Default to current month
-      const now = new Date()
-      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
-      const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0)
-      setDateRange({
-        from: monthStart,
-        to: monthEnd,
-      })
     }
   }, [searchParams])
 
@@ -248,10 +238,6 @@ export default function FeePaymentsReportPage({}: FeePaymentsPageProps) {
       studentId: "",
       receiptNo: "",
       paymentMethod: "ALL",
-    })
-    setDateRange({
-      from: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
-      to: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0),
     })
   }
 

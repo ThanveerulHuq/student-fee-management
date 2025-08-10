@@ -51,6 +51,9 @@ model Student {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
+  // Migration tracking
+  migrationData Json?
+
   documents   Document[]
 
   @@map("students")
@@ -183,6 +186,9 @@ model FeeStructure {
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  // Migration tracking
+  migrationData Json?
   
   @@unique([academicYearId, classId])
   @@map("fee_structures")
@@ -282,6 +288,9 @@ model StudentEnrollment {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // Migration tracking
+  migrationData Json?
+
   payments Payment[]
   
   @@unique([studentId, academicYearId])
@@ -310,6 +319,9 @@ model Payment {
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  
+  // Migration tracking
+  migrationData Json?
   
   @@map("payments")
 }
