@@ -4,7 +4,6 @@ import { useEffect, useState, useCallback } from "react"
 import { useAcademicYear, useAcademicYearNavigation } from "@/contexts/academic-year-context"
 import StudentsSearch from "./_components/lists/students-search"
 import StudentsTable from "./_components/lists/students-table"
-import StudentsPagination from "./_components/lists/students-pagination"
 import { StudentsListSkeleton } from "./_components/common/loading-skeletons"
 import { trackSearch, trackPageView } from "@/lib/analytics"
 import { MobileNumber } from "@/generated/prisma"
@@ -150,6 +149,9 @@ export default function StudentsPage() {
           onIncludeInactiveChange={handleToggleInactive}
           onAddStudent={handleAddStudent}
           totalStudents={pagination.total}
+          pagination={pagination}
+          currentPage={page}
+          onPageChange={setPage}
         />
         
         <StudentsTable
@@ -160,11 +162,6 @@ export default function StudentsPage() {
         />
       </div>
 
-      <StudentsPagination
-        pagination={pagination}
-        currentPage={page}
-        onPageChange={setPage}
-      />
     </main>
   )
 }

@@ -47,25 +47,24 @@ export default function StudentsTable({
 }: StudentsTableProps) {
   if (loading) {
     return (
-      <div className="p-8">
-        <div className="space-y-4">
-          <div className="flex justify-between items-center py-4 border-b border-gray-100">
+      <div className="p-4">
+        <div className="space-y-2">
+          <div className="flex justify-between items-center py-2 border-b border-gray-100">
             {Array.from({ length: 6 }).map((_, i) => (
-              <Skeleton key={i} className="h-4 w-20" />
+              <Skeleton key={i} className="h-3 w-16" />
             ))}
           </div>
-          {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="flex justify-between items-center py-6 border-b border-gray-50">
-              <Skeleton className="h-4 w-16" />
-              <div className="space-y-2">
-                <Skeleton className="h-4 w-32" />
-                <Skeleton className="h-3 w-20" />
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div key={i} className="flex justify-between items-center py-3 border-b border-gray-50">
+              <Skeleton className="h-3 w-12" />
+              <div className="space-y-1">
+                <Skeleton className="h-3 w-24" />
+                <Skeleton className="h-2 w-16" />
               </div>
-              <Skeleton className="h-4 w-24" />
-              <Skeleton className="h-4 w-20" />
-              <Skeleton className="h-4 w-16" />
-              <Skeleton className="h-4 w-20" />
-              <Skeleton className="h-8 w-8 rounded" />
+              <Skeleton className="h-3 w-20" />
+              <Skeleton className="h-3 w-16" />
+              <Skeleton className="h-3 w-12" />
+              <Skeleton className="h-6 w-6 rounded" />
             </div>
           ))}
         </div>
@@ -79,22 +78,22 @@ export default function StudentsTable({
         <Table>
           <TableHeader>
             <TableRow className="bg-gradient-to-r from-gray-100 to-gray-50 border-b-2 border-gray-200 hover:bg-gray-100">
-              <TableHead className="font-bold text-gray-800 py-5 px-8 text-sm tracking-wide uppercase">
+              <TableHead className="font-bold text-gray-800 py-3 px-4 text-sm tracking-wide uppercase">
                 Admission No
               </TableHead>
-              <TableHead className="font-bold text-gray-800 py-5 px-8 text-sm tracking-wide uppercase">
+              <TableHead className="font-bold text-gray-800 py-3 px-4 text-sm tracking-wide uppercase">
                 Student Name
               </TableHead>
-              <TableHead className="font-bold text-gray-800 py-5 px-8 text-sm tracking-wide uppercase">
-                Father&apos;s Name
+              <TableHead className="font-bold text-gray-800 py-3 px-4 text-sm tracking-wide uppercase">
+                Father's Name
               </TableHead>
-              <TableHead className="font-bold text-gray-800 py-5 px-8 text-sm tracking-wide uppercase">
+              <TableHead className="font-bold text-gray-800 py-3 px-4 text-sm tracking-wide uppercase">
                 Contact
               </TableHead>
-              <TableHead className="font-bold text-gray-800 py-5 px-8 text-sm tracking-wide uppercase">
+              <TableHead className="font-bold text-gray-800 py-3 px-4 text-sm tracking-wide uppercase">
                 Details
               </TableHead>
-              <TableHead className="font-bold text-gray-800 py-5 px-8 text-sm tracking-wide uppercase">
+              <TableHead className="font-bold text-gray-800 py-3 px-4 text-sm tracking-wide uppercase">
                 Status
               </TableHead>
             </TableRow>
@@ -124,27 +123,27 @@ export default function StudentsTable({
                     className="hover:bg-blue-50/30 transition-all duration-200 border-b border-gray-100 last:border-b-0 cursor-pointer group"
                     onClick={() => onStudentClick(student.id)}
                   >
-                    <TableCell className="py-6 px-8">
-                      <div className="font-mono text-sm font-semibold text-gray-900 group-hover:text-blue-700 transition-colors">
+                    <TableCell className="py-3 px-4">
+                      <div className="font-mono text-xs font-semibold text-gray-900 group-hover:text-blue-700 transition-colors">
                         {student.admissionNo}
                       </div>
                     </TableCell>
-                    <TableCell className="py-6 px-8">
-                      <div className="font-medium text-gray-900 text-base group-hover:text-blue-700 transition-colors">
+                    <TableCell className="py-3 px-4">
+                      <div className="font-medium text-gray-900 text-sm group-hover:text-blue-700 transition-colors">
                         {student.name}
                       </div>
                     </TableCell>
-                    <TableCell className="py-6 px-8">
-                      <div className="text-gray-700 text-sm font-medium">
+                    <TableCell className="py-3 px-4">
+                      <div className="text-gray-700 text-xs font-medium">
                         {student.fatherName}
                       </div>
                     </TableCell>
-                    <TableCell className="py-6 px-8">
-                      <div className="text-sm text-gray-900 font-mono">
+                    <TableCell className="py-3 px-4">
+                      <div className="text-xs text-gray-900 font-mono">
                         {student.mobileNumbers.find((mobile: MobileNumber) => mobile.isPrimary)?.number}
                       </div>
                     </TableCell>
-                    <TableCell className="py-6 px-8">
+                    <TableCell className="py-3 px-4">
                       <div className="flex items-center space-x-2">
                         <Badge 
                           variant="outline" 
@@ -156,10 +155,10 @@ export default function StudentsTable({
                         >
                           {student.gender}
                         </Badge>
-                        <span className="text-sm text-gray-600 font-medium">Age {student.age}</span>
+                        <span className="text-xs text-gray-600 font-medium">Age {student.age}</span>
                       </div>
                     </TableCell>
-                    <TableCell className="py-6 px-8">
+                    <TableCell className="py-3 px-4">
                       <StudentStatusBadge 
                         student={student} 
                         showDeactivationInfo={true}

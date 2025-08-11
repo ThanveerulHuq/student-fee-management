@@ -16,6 +16,7 @@ export async function GET(request: NextRequest) {
     const academicYearId = searchParams.get('academicYearId')
     const classId = searchParams.get('classId')
     const studentId = searchParams.get('studentId')
+    const search = searchParams.get('search')
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '10')
 
@@ -25,6 +26,16 @@ export async function GET(request: NextRequest) {
     if (academicYearId) whereClause.academicYearId = academicYearId
     if (classId) whereClause.classId = classId
     if (studentId) whereClause.studentId = studentId
+    
+    // Add search functionality
+    if (search) {
+      whereClause.OR = [
+        { student: { is: { name: { contains: search, mode: 'insensitive' } } } },
+        { student: { is: { admissionNumber: { contains: search, mode: 'insensitive' } } } },
+        { class: { is: { className: { contains: search, mode: 'insensitive' } } } },
+        { section: { contains: search, mode: 'insensitive' } }
+      ]
+    }
 
     const [enrollments, total] = await Promise.all([
       prisma.studentEnrollment.findMany({

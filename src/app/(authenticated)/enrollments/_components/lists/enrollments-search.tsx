@@ -3,9 +3,7 @@
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Label } from "@/components/ui/label"
-import { Plus, Search, Users } from "lucide-react"
+import { Plus, Search, GraduationCap } from "lucide-react"
 import LoaderOne from "@/components/ui/loader-one"
 
 interface PaginationData {
@@ -15,31 +13,27 @@ interface PaginationData {
   pages: number
 }
 
-interface StudentsSearchProps {
+interface EnrollmentsSearchProps {
   searchTerm: string
-  includeInactive: boolean
   isSearching: boolean
   onSearchChange: (term: string) => void
-  onIncludeInactiveChange: (include: boolean) => void
-  onAddStudent: () => void
-  totalStudents: number
+  onAddEnrollment: () => void
+  totalEnrollments: number
   pagination?: PaginationData
   currentPage?: number
   onPageChange?: (page: number) => void
 }
 
-export default function StudentsSearch({ 
+export default function EnrollmentsSearch({ 
   searchTerm,
-  includeInactive,
   isSearching,
   onSearchChange,
-  onIncludeInactiveChange,
-  onAddStudent,
-  totalStudents,
+  onAddEnrollment,
+  totalEnrollments,
   pagination,
   currentPage = 1,
   onPageChange
-}: StudentsSearchProps) {
+}: EnrollmentsSearchProps) {
   return (
     <>
       {/* Header Section */}
@@ -47,14 +41,14 @@ export default function StudentsSearch({
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg">
-              <Users className="h-5 w-5 text-white" />
+              <GraduationCap className="h-5 w-5 text-white" />
             </div>
             <div>
               <h1 className="text-xl font-bold text-gray-900 tracking-tight">
-                {includeInactive ? "All Students" : "Active Students"}
+                Student Enrollments
               </h1>
               <p className="text-xs text-gray-600 font-medium">
-                {totalStudents} {totalStudents === 1 ? 'student' : 'students'}
+                {totalEnrollments} {totalEnrollments === 1 ? 'enrollment' : 'enrollments'}
                 {pagination && pagination.total > 0 && (
                   <span className="text-gray-400 mx-2">•</span>
                 )}
@@ -66,27 +60,13 @@ export default function StudentsSearch({
               </p>
             </div>
           </div>
-          <div className="flex items-center space-x-3">
-            <div className="flex items-center space-x-2 px-3 py-2 bg-white/80 backdrop-blur-sm rounded-lg border border-gray-200/50 shadow-sm">
-              <Checkbox
-                id="include-inactive"
-                checked={includeInactive}
-                onCheckedChange={(checked) => onIncludeInactiveChange(checked === true)}
-                className="data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600 border-gray-300"
-              />
-              <Label 
-                htmlFor="include-inactive" 
-                className="text-xs font-medium text-gray-700 cursor-pointer select-none"
-              >
-                Include inactive
-              </Label>
-            </div>
+          <div className="flex items-center space-x-4">
             <Button 
-              onClick={onAddStudent}
+              onClick={onAddEnrollment}
               className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-sm transition-colors"
             >
               <Plus className="h-4 w-4 mr-2" />
-              Add Student
+              New Enrollment
             </Button>
           </div>
         </div>
@@ -99,7 +79,7 @@ export default function StudentsSearch({
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
             <Input
-              placeholder="Search by name, admission number..."
+              placeholder="Search students by name, admission number..."
               value={searchTerm}
               onChange={(e) => onSearchChange(e.target.value)}
               className="pl-11 pr-20 h-10 border-gray-200 focus:border-blue-500 focus:ring-blue-500/20 text-sm bg-gray-50/50 focus:bg-white transition-colors"
