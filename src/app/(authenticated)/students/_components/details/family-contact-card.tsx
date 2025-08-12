@@ -90,10 +90,10 @@ export default function FamilyContactCard({ student }: FamilyContactCardProps) {
                 <Badge variant="outline" className="text-xs">{mobileNumber.label}</Badge>
               )}
               {mobileNumber.isPrimary && (
-                <Star className="h-4 w-4 text-yellow-500" title="Primary Contact" />
+                <Star className="h-4 w-4 text-yellow-500" />
               )}
               {mobileNumber.isWhatsApp && (
-                <MessageCircle className="h-4 w-4 text-green-500" title="WhatsApp Available" />
+                <MessageCircle className="h-4 w-4 text-green-500" />
               )}
             </div>
           ))}

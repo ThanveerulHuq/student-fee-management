@@ -16,34 +16,7 @@ import {
   MessageCircle,
   FileText
 } from "lucide-react"
-
-interface OutstandingStudent {
-  id: string
-  student: {
-    id: string
-    name: string
-    admissionNo: string
-    fatherName: string
-    mobileNo: string
-    isActive: boolean
-  }
-  academicYear: {
-    year: string
-  }
-  class: {
-    className: string
-  }
-  section: string
-  totalFee: number
-  totalPaid: number
-  outstanding: number
-  fees: Array<{
-    name: string
-    amount: number
-    paid: number
-    outstandingAmount: number
-  }>
-}
+import { OutstandingStudent } from "../page"
 
 interface OutstandingFeesTableProps {
   students: OutstandingStudent[]

@@ -142,7 +142,9 @@ export default function EnrollmentsTable({
                   {/* Collapsed Row */}
                   <TableRow 
                     key={enrollment.id} 
-                    className="hover:bg-blue-50/30 transition-all duration-200 border-b border-gray-100 last:border-b-0 cursor-pointer group"
+                    className={`hover:bg-blue-50/30 transition-all duration-200 border-b border-gray-100 last:border-b-0 cursor-pointer group ${
+                      !enrollment.isActive ? 'opacity-60 bg-gray-50/50' : ''
+                    }`}
                     onClick={() => onEnrollmentClick(enrollment.id)}
                   >
                     <TableCell className="py-3 px-4">
@@ -166,8 +168,13 @@ export default function EnrollmentsTable({
                           <User className="w-3 h-3 text-blue-600" />
                         </div>
                         <div>
-                          <div className="font-medium text-gray-900 group-hover:text-blue-700 transition-colors text-sm">
+                          <div className="font-medium text-gray-900 group-hover:text-blue-700 transition-colors text-sm flex items-center gap-2">
                             {enrollment.student.name}
+                            {!enrollment.isActive && (
+                              <Badge variant="secondary" className="text-xs text-red-600 bg-red-50 border-red-200">
+                                Inactive
+                              </Badge>
+                            )}
                           </div>
                           <div className="text-xs text-gray-500">
                             {enrollment.student.fatherName}

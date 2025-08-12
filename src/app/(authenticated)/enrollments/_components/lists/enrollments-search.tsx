@@ -3,6 +3,8 @@
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
+import { Switch } from "@/components/ui/switch"
+import { Label } from "@/components/ui/label"
 import { Plus, Search, GraduationCap } from "lucide-react"
 import LoaderOne from "@/components/ui/loader-one"
 
@@ -17,6 +19,8 @@ interface EnrollmentsSearchProps {
   searchTerm: string
   isSearching: boolean
   onSearchChange: (term: string) => void
+  includeInactive: boolean
+  onIncludeInactiveChange: (value: boolean) => void
   onAddEnrollment: () => void
   totalEnrollments: number
   pagination?: PaginationData
@@ -28,6 +32,8 @@ export default function EnrollmentsSearch({
   searchTerm,
   isSearching,
   onSearchChange,
+  includeInactive,
+  onIncludeInactiveChange,
   onAddEnrollment,
   totalEnrollments,
   pagination,
@@ -96,6 +102,18 @@ export default function EnrollmentsSearch({
                 <LoaderOne />
               </div>
             )}
+          </div>
+
+          {/* Include Inactive Toggle */}
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="include-inactive"
+              checked={includeInactive}
+              onCheckedChange={onIncludeInactiveChange}
+            />
+            <Label htmlFor="include-inactive" className="text-sm font-medium text-gray-700">
+              Include Inactive
+            </Label>
           </div>
           
           {/* Pagination */}

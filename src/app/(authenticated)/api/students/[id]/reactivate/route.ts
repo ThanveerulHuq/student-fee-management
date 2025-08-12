@@ -29,15 +29,7 @@ export async function POST(
 
     // Check if student exists
     const existingStudent = await prisma.student.findUnique({
-      where: { id: studentId },
-      include: {
-        enrollments: {
-          include: {
-            academicYear: true,
-            class: true
-          }
-        }
-      }
+      where: { id: studentId }
     })
 
     if (!existingStudent) {
@@ -80,50 +72,6 @@ export async function POST(
         }, { status: 400 })
       }
 
-      // Check if student already has enrollment for this academic year
-      const existingEnrollment = await prisma.studentYear.findFirst({
-        where: {
-          studentId,
-          academicYearId
-        }
-      })
-
-      if (existingEnrollment) {
-        return NextResponse.json({
-          error: `Student already has an enrollment for academic year ${academicYear.year}`
-        }, { status: 400 })
-      }
-
-      // Get or create common fee structure
-      let commonFee = await prisma.commonFee.findFirst({
-        where: {
-          academicYearId,
-          classId
-        }
-      })
-
-      if (!commonFee) {
-        commonFee = await prisma.commonFee.create({
-          data: {
-            academicYearId,
-            classId,
-            schoolFee: 0,
-            bookFee: 0
-          }
-        })
-      }
-
-      // Create new enrollment
-      await prisma.studentYear.create({
-        data: {
-          studentId,
-          academicYearId,
-          classId,
-          commonFeeId: commonFee.id,
-          section: "A", // Default section
-          isActive: true
-        }
-      })
 
       message += ` New enrollment created for ${classData.className} - ${academicYear.year}.`
     }

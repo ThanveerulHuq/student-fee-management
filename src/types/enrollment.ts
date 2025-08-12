@@ -57,7 +57,6 @@ export interface AcademicYearInfo {
 
 export interface ClassInfo {
   className: string
-  order: number
   isActive: boolean
 }
 
@@ -162,7 +161,7 @@ export interface StudentEnrollment {
 // Derived partial types for specific use cases
 export type StudentEnrollmentBasic = Pick<StudentEnrollment, 'id' | 'studentId' | 'section' | 'student' | 'academicYear' | 'class'>
 
-export type StudentEnrollmentWithTotals = Pick<StudentEnrollment, 'id' | 'studentId' | 'section' | 'student' | 'academicYear' | 'class' | 'totals' | 'feeStatus' | 'fees' | 'scholarships'>
+export type StudentEnrollmentWithTotals = Pick<StudentEnrollment, 'id' | 'studentId' | 'section' | 'isActive' | 'student' | 'academicYear' | 'class' | 'totals' | 'feeStatus' | 'fees' | 'scholarships'>
 
 export type StudentEnrollmentForDelete = Pick<StudentEnrollment, 'id' | 'student' | 'class' | 'section'>
 

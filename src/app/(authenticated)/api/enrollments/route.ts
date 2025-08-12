@@ -17,12 +17,18 @@ export async function GET(request: NextRequest) {
     const classId = searchParams.get('classId')
     const studentId = searchParams.get('studentId')
     const search = searchParams.get('search')
+    const includeInactive = searchParams.get('includeInactive') === 'true'
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '10')
 
     const skip = (page - 1) * limit
 
-    const whereClause: Record<string, unknown> = { isActive: true }
+    const whereClause: Record<string, unknown> = {}
+    
+    // Only filter by active status if includeInactive is false
+    if (!includeInactive) {
+      whereClause.isActive = true
+    }
     if (academicYearId) whereClause.academicYearId = academicYearId
     if (classId) whereClause.classId = classId
     if (studentId) whereClause.studentId = studentId
@@ -157,9 +163,6 @@ export async function POST(request: NextRequest) {
         amountPaid: 0,
         amountDue: finalAmount,
         isCompulsory: feeItem.isCompulsory,
-        isWaived: false,
-        order: feeItem.order,
-        recentPayments: []
       }
     })
 
@@ -222,7 +225,6 @@ export async function POST(request: NextRequest) {
           name: student.name,
           fatherName: student.fatherName,
           mobileNo: student.mobileNumbers?.find(m => m.isPrimary)?.number || student.mobileNumbers?.[0]?.number || '',
-          class: classInfo.className,
           status: 'ACTIVE'
         },
         
@@ -237,7 +239,6 @@ export async function POST(request: NextRequest) {
         // Embedded class info
         class: {
           className: classInfo.className,
-          order: classInfo.order,
           isActive: classInfo.isActive
         },
         

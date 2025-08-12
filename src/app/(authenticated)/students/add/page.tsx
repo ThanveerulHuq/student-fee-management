@@ -1,5 +1,6 @@
 "use client"
 
+import { useRouter } from "next/navigation"
 import { useAcademicYearNavigation } from "@/contexts/academic-year-context"
 import StudentForm from "@/app/(authenticated)/students/_components/student-form"
 import { type StudentFormData } from "@/lib/validations/student"
@@ -10,6 +11,7 @@ interface AddStudentPageProps {
 }
 
 export default function AddStudentPage({}: AddStudentPageProps) {
+  const router = useRouter()
   const { navigateTo } = useAcademicYearNavigation()
 
   const handleSubmit = async (data: StudentFormData) => {
@@ -35,7 +37,7 @@ export default function AddStudentPage({}: AddStudentPageProps) {
   }
 
   const handleCancel = () => {
-    navigateTo('/students')
+    router.back()
   }
 
   return (

@@ -127,7 +127,6 @@ type MobileNumber {
 
 type ClassInfo {
   className String
-  order     Int
   isActive  Boolean
 }
 

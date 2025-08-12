@@ -55,7 +55,7 @@ export async function GET(
         name: `${enrollment.student.name}`,
         fatherName: enrollment.student.fatherName,
         mobileNo: enrollment.student.mobileNo,
-        class: enrollment.student.class,
+        class: enrollment.class.className,
         status: enrollment.student.status
       },
       
@@ -72,7 +72,6 @@ export async function GET(
       class: {
         id: enrollment.classId,
         className: enrollment.class.className,
-        order: enrollment.class.order,
         isActive: enrollment.class.isActive
       },
       
@@ -115,7 +114,7 @@ export async function GET(
       name: `${enrollments[0].student.name}`,
       fatherName: enrollments[0].student.fatherName,
       mobileNo: enrollments[0].student.mobileNo,
-      class: enrollments[0].student.class,
+      class: enrollments[0].class.className,
       status: enrollments[0].student.status
     }
 

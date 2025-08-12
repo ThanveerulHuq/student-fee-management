@@ -61,6 +61,7 @@ export default function EditStudentPage({ params }: EditStudentPageProps) {
           caste: data.caste,
           nationality: data.nationality,
           remarks: data.remarks || "",
+          siblingIds: data.siblingIds || [],
         }
         setStudent(formData)
       } else {
@@ -102,7 +103,7 @@ export default function EditStudentPage({ params }: EditStudentPageProps) {
   }
 
   const handleCancel = () => {
-    navigateTo(`/students/${studentId}`)
+    router.back()
   }
 
   if (status === "loading" || loading) {

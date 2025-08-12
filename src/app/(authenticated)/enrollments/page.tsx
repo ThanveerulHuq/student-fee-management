@@ -27,6 +27,7 @@ export default function EnrollmentsPage() {
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [isSearching, setIsSearching] = useState(false)
+  const [includeInactive, setIncludeInactive] = useState(false)
   const [page, setPage] = useState(1)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [enrollmentToDelete, setEnrollmentToDelete] = useState<StudentEnrollmentWithTotals | null>(null)
@@ -71,6 +72,7 @@ export default function EnrollmentsPage() {
         limit: "10",
         academicYearId: academicYear.id,
         ...(debouncedSearch && { search: debouncedSearch }),
+        ...(includeInactive && { includeInactive: 'true' }),
       })
 
       const response = await fetch(`/api/enrollments?${params}`)
@@ -87,7 +89,7 @@ export default function EnrollmentsPage() {
     } finally {
       setLoading(false)
     }
-  }, [page, debouncedSearch, academicYear])
+  }, [page, debouncedSearch, includeInactive, academicYear])
 
   useEffect(() => {
     fetchEnrollments()
@@ -95,6 +97,11 @@ export default function EnrollmentsPage() {
 
   const handleSearch = (value: string) => {
     setSearch(value)
+  }
+
+  const handleIncludeInactiveChange = (value: boolean) => {
+    setIncludeInactive(value)
+    setPage(1) // Reset to first page when filter changes
   }
 
   const handleAddEnrollment = () => {
@@ -147,6 +154,8 @@ export default function EnrollmentsPage() {
           searchTerm={search}
           isSearching={isSearching}
           onSearchChange={handleSearch}
+          includeInactive={includeInactive}
+          onIncludeInactiveChange={handleIncludeInactiveChange}
           onAddEnrollment={handleAddEnrollment}
           totalEnrollments={pagination.total}
           pagination={pagination}

@@ -56,7 +56,6 @@ export async function GET(
         name: `${enrollment.student.name}`,
         fatherName: enrollment.student.fatherName,
         mobileNo: enrollment.student.mobileNo,
-        class: enrollment.student.class,
         status: enrollment.student.status
       },
       

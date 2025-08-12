@@ -93,7 +93,6 @@ export async function PUT(
         startDate: new Date(validatedData.startDate),
         endDate: new Date(validatedData.endDate),
         isActive: validatedData.isActive ?? existingYear.isActive,
-        description: validatedData.description,
       },
     })
 
@@ -136,12 +135,11 @@ export async function DELETE(
     }
 
     // Check if there are any associated records (students, fee structures, etc.)
-    const [studentYears, feeStructures] = await Promise.all([
-      prisma.studentYear.findFirst({ where: { academicYearId: params.id } }),
+    const [feeStructures] = await Promise.all([
       prisma.feeStructure.findFirst({ where: { academicYearId: params.id } }),
     ])
 
-    if (studentYears || feeStructures) {
+    if (feeStructures) {
       return NextResponse.json(
         { 
           error: "Cannot delete academic year that has associated students or fee structures" 

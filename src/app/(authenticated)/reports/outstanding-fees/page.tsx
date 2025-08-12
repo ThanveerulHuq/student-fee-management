@@ -14,7 +14,7 @@ interface OutstandingFeesPageProps {
   params: Promise<Record<string, never>>
 }
 
-interface OutstandingStudent {
+export interface OutstandingStudent {
   id: string
   student: {
     id: string

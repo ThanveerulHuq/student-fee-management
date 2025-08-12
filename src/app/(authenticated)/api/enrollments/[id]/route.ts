@@ -62,7 +62,7 @@ export async function PUT(
 
     const resolvedParams = await params
     const body = await request.json()
-    const { section, customFees, scholarshipUpdates } = body
+    const { section, customFees, customScholarships } = body
 
     // Check if enrollment exists
     const existingEnrollment = await prisma.studentEnrollment.findUnique({
@@ -127,14 +127,14 @@ export async function PUT(
     }
 
     // Update scholarships if provided
-    if (scholarshipUpdates) {
+    if (customScholarships) {
       const updatedScholarships = existingEnrollment.scholarships.map(scholarship => {
         interface ScholarshipUpdate {
           scholarshipItemId: string;
           amount: number;
           isActive?: boolean;
         }
-        const update = scholarshipUpdates.find(
+        const update = customScholarships.find(
           (u: ScholarshipUpdate) => u.scholarshipItemId === scholarship.scholarshipItemId
         )
         if (update) {

@@ -201,7 +201,7 @@ export default function StudentDetailPage({ params }: StudentDetailPageProps) {
         onEnroll={() => navigateTo(`/enrollments/enroll/${studentId}`)}
         onDeactivate={handleDeactivateStudent}
         onReactivate={handleReactivateStudent}
-        onBack={() => navigateTo("/students")}
+        onBack={() => router.back()}
       />
 
       <main className="w-full py-6 px-4 sm:px-6 lg:px-8 space-y-6">

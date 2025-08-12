@@ -2,7 +2,7 @@
 import { prisma } from "@/lib/prisma"
 
 export function generateReceiptNumber(academicYear: string, sequenceNumber: number): string {
-  return `${academicYear}-${sequenceNumber}`
+  return `${sequenceNumber}`
 }
 
 export async function getNextReceiptSequence(academicYear: string): Promise<number> {
@@ -22,22 +22,6 @@ export async function getNextReceiptSequence(academicYear: string): Promise<numb
   return result.lastSequence
 }
 
-export function calculateTotalFee(enrollment: {
-  commonFee: { schoolFee: number; bookFee: number }
-  uniformFee: number
-  islamicStudies: number
-  vanFee: number
-  scholarship: number
-}) {
-  return (
-    enrollment.commonFee.schoolFee +
-    enrollment.commonFee.bookFee +
-    enrollment.uniformFee +
-    enrollment.islamicStudies +
-    enrollment.vanFee -
-    enrollment.scholarship
-  )
-}
 
 export function calculateOutstandingBalance(
   totalFee: number,

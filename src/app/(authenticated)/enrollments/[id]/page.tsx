@@ -81,7 +81,7 @@ export default function EnrollmentDetailPage({ params }: EnrollmentDetailPagePro
         enrollment={enrollment}
         onEdit={() => navigateTo(`/enrollments/edit/${enrollmentId}`)}
         onCollectFees={() => navigateTo(`/fees/collect/${enrollmentId}`)}
-        onBack={() => navigateTo("/enrollments")}
+        onBack={() => router.back()}
       />
         <EnrollmentDetailsSection enrollment={enrollment} />
       <div className="space-y-6 px-6 pb-6 mt-4">

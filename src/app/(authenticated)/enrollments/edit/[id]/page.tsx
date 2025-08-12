@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { useParams } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import { useAcademicYear, useAcademicYearNavigation } from "@/contexts/academic-year-context"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -53,6 +53,7 @@ interface Enrollment {
 }
 
 export default function EditEnrollmentPage() {
+  const router = useRouter()
   const params = useParams()
   const enrollmentId = params.id as string
   const { academicYear } = useAcademicYear()
@@ -347,7 +348,7 @@ export default function EditEnrollmentPage() {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => navigateTo(`/enrollments/${enrollmentId}`)}
+                onClick={() => router.back()}
                 className="text-gray-600 hover:text-gray-900 p-2"
                 title="Back to Enrollment Details"
               >
@@ -543,7 +544,7 @@ export default function EditEnrollmentPage() {
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => navigateTo(`/enrollments/${enrollmentId}`)}
+                    onClick={() => router.back()}
                     disabled={loading}
                   >
                     Cancel

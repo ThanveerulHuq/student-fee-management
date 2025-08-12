@@ -1,6 +1,7 @@
 "use client"
 
 import { useSession, signOut } from "next-auth/react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -11,22 +12,21 @@ import Image from "next/image"
 interface EnhancedPageHeaderProps {
   title: string
   showBackButton?: boolean
-  backPath?: string
   children?: React.ReactNode
 }
 
 export default function EnhancedPageHeader({ 
   title, 
   showBackButton = false, 
-  backPath = "/dashboard",
   children 
 }: EnhancedPageHeaderProps) {
   const { data: session } = useSession()
+  const router = useRouter()
   const { academicYear, academicYears, switchAcademicYear } = useAcademicYear()
   const { navigateTo } = useAcademicYearNavigation()
 
   const handleBack = () => {
-    navigateTo(backPath)
+    router.back()
   }
 
   const handleAcademicYearChange = (yearId: string) => {

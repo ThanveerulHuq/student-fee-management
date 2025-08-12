@@ -2,25 +2,23 @@
 
 import { Button } from "@/components/ui/button"
 import { ArrowLeft } from "lucide-react"
-import { useAcademicYearNavigation } from "@/contexts/academic-year-context"
+import { useRouter } from "next/navigation"
 
 interface SecondaryHeaderProps {
   title: string
   showBackButton?: boolean
-  backPath?: string
   children?: React.ReactNode
 }
 
 export default function SecondaryHeader({ 
   title, 
   showBackButton = false, 
-  backPath = "/dashboard",
   children 
 }: SecondaryHeaderProps) {
-  const { navigateTo } = useAcademicYearNavigation()
+  const router = useRouter()
 
   const handleBack = () => {
-    navigateTo(backPath)
+    router.back()
   }
 
   return (

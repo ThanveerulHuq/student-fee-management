@@ -17,7 +17,6 @@ interface PageHeaderProps {
   title: string
   academicYearId?: string
   showBackButton?: boolean
-  backUrl?: string
   children?: React.ReactNode
 }
 
@@ -25,7 +24,6 @@ export default function PageHeader({
   title, 
   academicYearId,
   showBackButton = false, 
-  backUrl,
   children 
 }: PageHeaderProps) {
   const router = useRouter()
@@ -45,8 +43,6 @@ export default function PageHeader({
     }
   }, [academicYearId])
 
-  const defaultBackUrl = academicYearId ? `/${academicYearId}/dashboard` : "/dashboard"
-  const finalBackUrl = backUrl || defaultBackUrl
 
   return (
     <header className="bg-white shadow-sm border-b">
@@ -57,7 +53,7 @@ export default function PageHeader({
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => router.push(finalBackUrl)}
+                onClick={() => router.back()}
               >
                 <ArrowLeft className="h-4 w-4" />
               </Button>

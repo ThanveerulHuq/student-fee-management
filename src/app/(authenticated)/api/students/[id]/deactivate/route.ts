@@ -28,15 +28,6 @@ export async function POST(
     // Check if student exists
     const existingStudent = await prisma.student.findUnique({
       where: { id: studentId },
-      include: {
-        enrollments: {
-          where: { isActive: true },
-          include: {
-            academicYear: true,
-            class: true
-          }
-        }
-      }
     })
 
     if (!existingStudent) {

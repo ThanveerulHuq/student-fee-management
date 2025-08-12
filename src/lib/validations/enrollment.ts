@@ -1,23 +1,52 @@
-import { z } from "zod"
+import { z } from 'zod'
 
+// Enrollment Schema
 export const enrollmentSchema = z.object({
-  studentId: z.string().min(1, "Student is required"),
-  academicYearId: z.string().min(1, "Academic year is required"),
-  classId: z.string().min(1, "Class is required"),
-  section: z.string().min(1, "Section is required"),
-  commonFeeId: z.string().optional(),
-  uniformFee: z.union([z.number(), z.string()]).transform((val) => Number(val) || 0),
-  islamicStudies: z.union([z.number(), z.string()]).transform((val) => Number(val) || 0),
-  vanFee: z.union([z.number(), z.string()]).transform((val) => Number(val) || 0),
-  scholarship: z.union([z.number(), z.string()]).transform((val) => Number(val) || 0),
-  enrollmentDate: z.union([z.string(), z.date()]).optional().transform((val) => {
-    if (!val) return undefined
-    return val instanceof Date ? val : new Date(val)
-  }),
-  isActive: z.boolean().default(true),
+  studentId: z.string().min(1, 'Student ID is required'),
+  academicYearId: z.string().min(1, 'Academic year ID is required'),
+  classId: z.string().min(1, 'Class ID is required'),
+  section: z.string().min(1, 'Section is required'),
+  enrollmentDate: z.date().optional(),
+  customFees: z.record(z.string(), z.number().min(0)).optional().default({}),
+  selectedScholarships: z.array(z.string()).optional().default([]),
+  isActive: z.boolean().optional().default(true)
 })
 
-export const enrollmentUpdateSchema = enrollmentSchema.partial()
+// Enrollment Update Schema
+export const enrollmentUpdateSchema = z.object({
+  section: z.string().optional(),
+  customFees: z.record(z.string(), z.number().min(0)).optional(),
+  scholarshipUpdates: z.array(z.object({
+    scholarshipItemId: z.string(),
+    amount: z.number().min(0).optional(),
+    isActive: z.boolean().optional()
+  })).optional(),
+  isActive: z.boolean().optional()
+})
 
-export type EnrollmentFormData = z.infer<typeof enrollmentSchema>
-export type EnrollmentUpdateData = z.infer<typeof enrollmentUpdateSchema>
+// Fee Structure Query Schema
+export const feeStructureQuerySchema = z.object({
+  academicYearId: z.string().min(1, 'Academic year ID is required'),
+  classId: z.string().min(1, 'Class ID is required')
+})
+
+// Student Fee Update Schema
+export const studentFeeUpdateSchema = z.object({
+  feeId: z.string().min(1, 'Fee ID is required'),
+  amount: z.number().min(0, 'Amount must be non-negative'),
+})
+
+// Student Scholarship Schema
+export const studentScholarshipSchema = z.object({
+  scholarshipItemId: z.string().min(1, 'Scholarship item ID is required'),
+  amount: z.number().min(0, 'Amount must be non-negative'),
+  isActive: z.boolean().optional().default(true),
+  remarks: z.string().optional()
+})
+
+// Type exports
+export type EnrollmentInput = z.infer<typeof enrollmentSchema>
+export type EnrollmentUpdateInput = z.infer<typeof enrollmentUpdateSchema>
+export type FeeStructureQueryInput = z.infer<typeof feeStructureQuerySchema>
+export type StudentFeeUpdateInput = z.infer<typeof studentFeeUpdateSchema>
+export type StudentScholarshipInput = z.infer<typeof studentScholarshipSchema>

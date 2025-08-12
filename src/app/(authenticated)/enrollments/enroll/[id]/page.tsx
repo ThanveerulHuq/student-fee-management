@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { useParams } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import { useAcademicYear, useAcademicYearNavigation } from "@/contexts/academic-year-context"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -76,6 +76,7 @@ interface FeeStructure {
 
 export default function EnrollStudentPage() {
   const params = useParams()
+  const router = useRouter()
   const studentId = params.id as string
   const { academicYear } = useAcademicYear()
   const { navigateTo } = useAcademicYearNavigation()
@@ -320,7 +321,7 @@ export default function EnrollStudentPage() {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => navigateTo("/enrollments")}
+                onClick={() => router.back()}
                 className="text-gray-600 hover:text-gray-900 p-2"
                 title="Back to Students"
               >
