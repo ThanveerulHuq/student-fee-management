@@ -181,3 +181,5 @@ npx tsc --noEmit       # Type check without emitting files
 - Follow the denormalization strategy for performance-critical operations
 - Use embedded documents and pre-computed totals where appropriate
 - Maintain data consistency between normalized masters and denormalized documents 
+
+- Do not build the project unless specifically asked. ask the user to build it. I have the dev server running already
