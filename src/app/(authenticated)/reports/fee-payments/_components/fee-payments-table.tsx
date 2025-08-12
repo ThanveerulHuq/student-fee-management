@@ -13,6 +13,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton"
 import { format } from "date-fns"
 import WhatsAppShare from "@/components/ui/whatsapp-share"
+import { formatCurrency } from "@/lib/format"
 import { 
   FileText,
   Printer,
@@ -179,7 +180,7 @@ export default function FeePaymentsTable({
                   <TableCell className="py-2 px-3">
                     <div>
                       <div className="text-lg font-bold text-green-600">
-                        ₹{payment.totalAmount.toLocaleString()}
+                        {formatCurrency(payment.totalAmount)}
                       </div>
                       <Badge className={getPaymentMethodColor(payment.paymentMethod)}>
                         {payment.paymentMethod}
@@ -193,7 +194,7 @@ export default function FeePaymentsTable({
                       {payment.paymentItems.map((item, index) => (
                         <div key={index} className="flex items-center justify-start text-md">
                           <span className="text-sm text-gray-900">{item.feeTemplateName}:</span>
-                          <span className="text-green-600 text-sm font-medium ml-1">₹{item.amount.toLocaleString()}</span>
+                          <span className="text-green-600 text-sm font-medium ml-1">{formatCurrency(item.amount)}</span>
                         </div>
                       ))}
                     </div>

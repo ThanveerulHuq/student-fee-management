@@ -5,6 +5,7 @@ import { Suspense } from "react";
 import { Analytics } from "@vercel/analytics/react";
 import { Toaster } from "@/components/ui/sonner";
 import { GoogleAnalytics } from '@next/third-parties/google'
+import { getSchoolConfigFromEnv } from "@/lib/schools/config";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -15,10 +16,11 @@ const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
 });
+const schoolConfig = getSchoolConfigFromEnv()
 
 export const metadata: Metadata = {
-  title: "BlueMoon SDMS",
-  description: "School Data Management System",
+  title: schoolConfig.shortName,
+  description: schoolConfig.shortName,
 };
 
 export default function RootLayout({

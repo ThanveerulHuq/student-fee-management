@@ -19,7 +19,8 @@ import {
   ChevronRight,
   IndianRupee,
   Award,
-  GraduationCap
+  GraduationCap,
+  RotateCcw
 } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { StudentEnrollmentWithTotals } from '@/types/enrollment'
@@ -37,6 +38,7 @@ interface EnrollmentsTableProps {
   onEnrollmentClick: (enrollmentId: string) => void
   onEdit: (enrollment: StudentEnrollmentWithTotals) => void
   onDelete: (enrollment: StudentEnrollmentWithTotals) => void
+  onReactivate?: (enrollment: StudentEnrollmentWithTotals) => void
 }
 
 export default function EnrollmentsTable({ 
@@ -44,7 +46,8 @@ export default function EnrollmentsTable({
   loading, 
   onEnrollmentClick,
   onEdit,
-  onDelete
+  onDelete,
+  onReactivate
 }: EnrollmentsTableProps) {
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set())
 
@@ -216,28 +219,45 @@ export default function EnrollmentsTable({
                     </TableCell>
                     <TableCell className="py-3 px-4">
                       <div className="flex items-center justify-center space-x-1">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-7 w-7 p-0"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            onEdit(enrollment)
-                          }}
-                        >
-                          <Edit className="w-3.5 h-3.5" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-7 w-7 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            onDelete(enrollment)
-                          }}
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </Button>
+                        {!enrollment.isActive && onReactivate ? (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 w-7 p-0 text-green-600 hover:text-green-700 hover:bg-green-50"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              onReactivate(enrollment)
+                            }}
+                            title="Reactivate Student"
+                          >
+                            <RotateCcw className="w-3.5 h-3.5" />
+                          </Button>
+                        ) : (
+                          <>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 w-7 p-0"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                onEdit(enrollment)
+                              }}
+                            >
+                              <Edit className="w-3.5 h-3.5" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 w-7 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                onDelete(enrollment)
+                              }}
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </Button>
+                          </>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>

@@ -14,6 +14,7 @@ import { useAcademicYearNavigation } from "@/contexts/academic-year-context"
 import { useAcademicYear } from "@/contexts/academic-year-context"
 import { useSession } from "next-auth/react"
 import { trackDashboardVisit, trackPageView } from "@/lib/analytics"
+import { formatCurrency } from "@/lib/format"
 
 interface DashboardStats {
   totalStudents: number
@@ -158,7 +159,7 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-gray-900">
-                {loading ? "₹--" : `₹${(stats?.monthlyCollections || 0).toLocaleString()}`}
+                {loading ? "₹--" : formatCurrency(stats?.monthlyCollections || 0)}
               </div>
               <p className="text-sm text-gray-600">This month</p>
             </CardContent>
@@ -172,7 +173,7 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-gray-900">
-                {loading ? "₹--" : `₹${(stats?.pendingFees || 0).toLocaleString()}`}
+                {loading ? "₹--" : formatCurrency(stats?.pendingFees || 0)}
               </div>
               <p className="text-sm text-gray-600">Outstanding amount</p>
             </CardContent>

@@ -5,7 +5,6 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { Checkbox } from "@/components/ui/checkbox"
 import { 
   Edit3, 
   Check, 
@@ -18,12 +17,11 @@ import {
 import { cn } from "@/lib/utils"
 import { ScholarshipItem } from "@/types/fee"
 
+import { formatCurrency } from "@/lib/format"
 interface ScholarshipItemCardProps {
   item: ScholarshipItem
   customAmount?: number
   onAmountChange: (templateId: string, amount: number) => void
-  isSelected?: boolean
-  onToggle?: (scholarshipId: string, checked: boolean) => void
   disabled?: boolean
 }
 
@@ -31,8 +29,6 @@ export default function ScholarshipItemCard({
   item,
   customAmount,
   onAmountChange,
-  isSelected = false,
-  onToggle,
   disabled = false
 }: ScholarshipItemCardProps) {
   const [isEditing, setIsEditing] = useState(false)
@@ -44,6 +40,9 @@ export default function ScholarshipItemCard({
   const finalAmount = customAmount !== undefined && item.isEditableDuringEnrollment 
     ? customAmount 
     : item.amount
+
+  // Determine if scholarship is applied (for manual scholarships, applied if amount > 0)
+  const isApplied = item.isAutoApplied || finalAmount > 0
 
   useEffect(() => {
     if (customAmount !== undefined && customAmount !== item.amount) {
@@ -70,8 +69,13 @@ export default function ScholarshipItemCard({
       return false
     }
     
-    // Scholarships can be negative (discounts)
-    if (Math.abs(numValue) > 1000000) {
+    // For manual scholarships, allow 0 to disable the scholarship
+    if (numValue < 0) {
+      setError("Scholarship amount cannot be negative")
+      return false
+    }
+    
+    if (numValue > 1000000) {
       setError("Amount cannot exceed ₹10,00,000")
       return false
     }
@@ -117,17 +121,16 @@ export default function ScholarshipItemCard({
     if (error) setError("")
   }
 
-  const handleToggle = (checked: boolean) => {
-    if (onToggle && item.id) {
-      onToggle(item.id, checked)
-    }
-  }
 
 
   return (
     <Card className={cn(
-      "group transition-all duration-200 hover:shadow-md border-l-4 border-l-green-500 rounded-md bg-green-50",
-      hasChanges && "border-l-4 border-l-amber-500 bg-amber-50",
+      "group transition-all duration-200 hover:shadow-md border-l-4 rounded-md",
+      isApplied 
+        ? hasChanges 
+          ? "border-l-amber-500 bg-amber-50" 
+          : "border-l-green-500 bg-green-50"
+        : "border-l-gray-300 bg-gray-50",
       error && "ring-2 ring-red-500 ring-opacity-50"
     )}>
       <CardContent>
@@ -135,21 +138,17 @@ export default function ScholarshipItemCard({
           {/* Left section - Scholarship info */}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
-              {/* Checkbox for manual scholarships */}
-              {!item.isAutoApplied && onToggle && (
-                <Checkbox
-                  checked={isSelected}
-                  onCheckedChange={handleToggle}
-                  disabled={disabled}
-                  className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
-                />
-              )}
               <h5 className="font-medium text-gray-900 truncate text-sm">
                 {item.templateName}
               </h5>
               {item.isAutoApplied && (
                 <Badge variant="outline" className="text-xs text-green-600 border-green-300">
                   Auto
+                </Badge>
+              )}
+              {isApplied && !item.isAutoApplied && (
+                <Badge variant="outline" className="text-xs text-green-600 border-green-300">
+                  Applied
                 </Badge>
               )}
               {hasChanges && (
@@ -162,7 +161,7 @@ export default function ScholarshipItemCard({
             {/* Progressive disclosure - show details only when editing or modified */}
             {(isEditing || hasChanges) && (
               <div className="text-xs text-gray-500 mb-1">
-                Default: ₹{item.amount.toLocaleString()}
+                Default: {formatCurrency(item.amount)}
               </div>
             )}
 
@@ -202,16 +201,19 @@ export default function ScholarshipItemCard({
                 </div>
               ) : (
                 <div className="flex items-center">
-                  {finalAmount < 0 ? (
-                    <Minus className="h-3 w-3 text-green-600" />
-                  ) : (
-                    <IndianRupee className="h-3 w-3 text-gray-600" />
-                  )}
+                  <IndianRupee className={cn(
+                    "h-3 w-3",
+                    isApplied ? "text-gray-600" : "text-gray-400"
+                  )} />
                   <span className={cn(
                     "text-sm font-semibold ml-1",
-                    hasChanges ? "text-amber-700" : "text-green-700"
+                    isApplied 
+                      ? hasChanges 
+                        ? "text-amber-700" 
+                        : "text-green-700"
+                      : "text-gray-500"
                   )}>
-                    {Math.abs(finalAmount).toLocaleString()}
+                    {formatCurrency(finalAmount)}
                   </span>
                 </div>
               )}

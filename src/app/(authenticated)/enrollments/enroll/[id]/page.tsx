@@ -15,6 +15,7 @@ import FeeItemsSection from "../../_components/form/fee-items-section"
 import ScholarshipItemsSection from "../../_components/form/scholarship-items-section"
 import { MobileNumber } from "@/generated/prisma"
 
+import { formatCurrency } from "@/lib/format"
 interface Student {
   id: string
   name: string
@@ -93,7 +94,6 @@ export default function EnrollStudentPage() {
     section: "",
     customFees: {} as Record<string, number>,
     customScholarships: {} as Record<string, number>,
-    selectedScholarships: [] as string[],
   })
 
   const fetchStudent = useCallback(async () => {
@@ -150,7 +150,6 @@ export default function EnrollStudentPage() {
             ...prev,
             customFees: {},
             customScholarships: {},
-            selectedScholarships: []
           }))
         } else {
           setFeeStructure(null)
@@ -197,15 +196,6 @@ export default function EnrollStudentPage() {
     }))
   }
 
-  const handleScholarshipToggle = (scholarshipId: string, checked: boolean) => {
-    setFormData(prev => ({
-      ...prev,
-      selectedScholarships: checked
-        ? [...prev.selectedScholarships, scholarshipId]
-        : prev.selectedScholarships.filter(id => id !== scholarshipId)
-    }))
-  }
-
   const calculateTotals = () => {
     if (!feeStructure) return { totalFees: 0, totalScholarships: 0, netAmount: 0 }
 
@@ -228,13 +218,14 @@ export default function EnrollStudentPage() {
       }, 0)
 
     const manualScholarships = feeStructure.scholarshipItems
-      .filter(item => formData.selectedScholarships.includes(item.id))
+      .filter(item => !item.isAutoApplied)
       .reduce((sum, item) => {
         const customAmount = formData.customScholarships[item.templateId]
         const finalAmount = (customAmount !== undefined && item.isEditableDuringEnrollment) 
           ? customAmount 
           : item.amount
-        return sum + finalAmount
+        // Only include scholarship if amount > 0 (applied)
+        return finalAmount > 0 ? sum + finalAmount : sum
       }, 0)
 
     const totalScholarships = autoScholarships + manualScholarships
@@ -262,7 +253,6 @@ export default function EnrollStudentPage() {
         section: formData.section,
         customFees: formData.customFees,
         customScholarships: formData.customScholarships,
-        selectedScholarships: formData.selectedScholarships,
         enrollmentDate: new Date(),
         isActive: true,
       }
@@ -495,16 +485,16 @@ export default function EnrollStudentPage() {
                       <div className="space-y-2">
                         <div className="flex justify-between items-center">
                           <span className="text-gray-600">Total Fees:</span>
-                          <span className="font-semibold">₹{totals.totalFees.toLocaleString()}</span>
+                          <span className="font-semibold">{formatCurrency(totals.totalFees)}</span>
                         </div>
                         <div className="flex justify-between items-center text-green-600">
                           <span>Total Scholarships:</span>
-                          <span className="font-semibold">-₹{totals.totalScholarships.toLocaleString()}</span>
+                          <span className="font-semibold">-{formatCurrency(totals.totalScholarships)}</span>
                         </div>
                         <Separator />
                         <div className="flex justify-between items-center text-lg font-bold">
                           <span>Net Amount:</span>
-                          <span>₹{totals.netAmount.toLocaleString()}</span>
+                          <span>{formatCurrency(totals.netAmount)}</span>
                         </div>
                       </div>
                     </div>

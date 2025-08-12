@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
       classId, 
       section, 
       customFees = {}, 
-      selectedScholarships = [] 
+      customScholarships = {},
     } = body
 
     // Validate required fields
@@ -170,25 +170,30 @@ export async function POST(request: NextRequest) {
     const studentScholarships = []
 
     // Apply manually selected scholarships
-    for (const selectedScholarshipId of selectedScholarships) {
-      const scholarshipItem = feeStructure.scholarshipItems.find(
-        item => item.id === selectedScholarshipId
-      )
+    for (const scholarshipItem of feeStructure.scholarshipItems) {
       
       if (scholarshipItem) {
-        studentScholarships.push({
-          id: new ObjectId().toString(),
-          scholarshipItemId: scholarshipItem.id,
-          templateId: scholarshipItem.templateId,
-          templateName: scholarshipItem.templateName,
-          templateType: scholarshipItem.templateType as any,
-          amount: scholarshipItem.amount,
-          originalAmount: scholarshipItem.amount,
-          appliedDate: new Date(),
-          appliedBy: session.user.username,
-          isActive: true,
-          isAutoApplied: false
-        })
+        const customAmount = customScholarships[scholarshipItem.templateId]
+        const finalAmount = (customAmount !== undefined && scholarshipItem.isEditableDuringEnrollment) 
+          ? customAmount 
+          : scholarshipItem.amount
+
+        // Only add the scholarship if the final amount is greater than 0
+        if (finalAmount > 0) {
+          studentScholarships.push({
+            id: new ObjectId().toString(),
+            scholarshipItemId: scholarshipItem.id,
+            templateId: scholarshipItem.templateId,
+            templateName: scholarshipItem.templateName,
+            templateType: scholarshipItem.templateType as any,
+            amount: finalAmount,
+            originalAmount: scholarshipItem.amount,
+            appliedDate: new Date(),
+            appliedBy: session.user.username,
+            isActive: true,
+            isAutoApplied: false
+          })
+        }
       }
     }
 

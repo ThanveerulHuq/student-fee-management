@@ -194,10 +194,17 @@ export default function PaymentForm({
             <Button 
               type="submit" 
               disabled={getTotalPaymentAmount() <= 0 || submitting}
-              className="h-9 px-4 bg-green-600 hover:bg-green-700"
+              className="h-9 px-4 bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={(e) => {
+                // Immediate visual feedback
+                if (submitting) {
+                  e.preventDefault()
+                  return
+                }
+              }}
             >
               <Receipt className="w-4 h-4 mr-2" />
-              {submitting ? 'Processing...' : `Record Payment (₹${getTotalPaymentAmount().toFixed(2)})`}
+              {submitting ? 'Processing Payment...' : `Record Payment (₹${getTotalPaymentAmount().toFixed(2)})`}
             </Button>
           </div>
         </div>

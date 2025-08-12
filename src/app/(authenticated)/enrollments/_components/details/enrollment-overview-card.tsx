@@ -20,6 +20,7 @@ import {
 } from "lucide-react"
 import { StudentEnrollment } from '@/types/enrollment'
 
+import { formatCurrency } from "@/lib/format"
 interface EnrollmentOverviewCardProps {
   enrollment: StudentEnrollment
   onEdit?: () => void

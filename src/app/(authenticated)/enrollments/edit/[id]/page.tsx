@@ -17,6 +17,7 @@ import { toast } from "sonner"
 import type { StudentInfo, Class } from "@/generated/prisma"
 import type { FeeItem, ScholarshipItem } from "@/types/fee"
 
+import { formatCurrency } from "@/lib/format"
 
 interface FeeStructure {
   id: string
@@ -72,7 +73,6 @@ export default function EditEnrollmentPage() {
     section: "",
     customFees: {} as Record<string, number>,
     customScholarships: {} as Record<string, number>,
-    selectedScholarships: [] as string[],
   })
 
   const fetchEnrollment = useCallback(async () => {
@@ -97,16 +97,15 @@ export default function EditEnrollmentPage() {
         
         // Transform enrollment scholarships to customScholarships format
         const customScholarships: Record<string, number> = {}
-        const selectedScholarships: string[] = []
         if (data.scholarships) {
           data.scholarships.forEach((scholarship: any) => {
-            // If current amount differs from original amount, it's a custom scholarship
-            if (scholarship.amount !== scholarship.originalAmount) {
+            // If scholarship is active and not auto-applied, set the amount
+            if (scholarship.isActive && !scholarship.isAutoApplied) {
               customScholarships[scholarship.templateId] = scholarship.amount
             }
-            // If scholarship is active and not auto-applied, it's selected
-            if (scholarship.isActive && !scholarship.isAutoApplied) {
-              selectedScholarships.push(scholarship.id)
+            // If current amount differs from original amount, it's a custom scholarship
+            else if (scholarship.amount !== scholarship.originalAmount) {
+              customScholarships[scholarship.templateId] = scholarship.amount
             }
           })
         }
@@ -116,7 +115,6 @@ export default function EditEnrollmentPage() {
           section: data.section,
           customFees,
           customScholarships,
-          selectedScholarships,
         })
       } else {
         setError("Enrollment not found")
@@ -211,17 +209,25 @@ export default function EditEnrollmentPage() {
       ...prev,
       customFees: {},
       customScholarships: {},
-      selectedScholarships: []
     }))
   }
 
-  const handleScholarshipToggle = (scholarshipId: string, checked: boolean) => {
-    setFormData(prev => ({
-      ...prev,
-      selectedScholarships: checked
-        ? [...prev.selectedScholarships, scholarshipId]
-        : prev.selectedScholarships.filter(id => id !== scholarshipId)
-    }))
+  // Derive selected scholarships from amounts (scholarships with amount > 0)
+  const getSelectedScholarships = () => {
+    if (!feeStructure) return []
+    
+    return feeStructure.scholarshipItems
+      .filter(item => {
+        if (item.isAutoApplied) return false // Skip auto-applied scholarships
+        
+        const customAmount = formData.customScholarships[item.templateId]
+        const finalAmount = (customAmount !== undefined && item.isEditableDuringEnrollment) 
+          ? customAmount 
+          : item.amount
+          
+        return finalAmount > 0 // Include if amount > 0
+      })
+      .map(item => item.id!)
   }
 
   const calculateTotals = () => {
@@ -246,13 +252,14 @@ export default function EditEnrollmentPage() {
       }, 0)
 
     const manualScholarships = feeStructure.scholarshipItems
-      .filter(item => formData.selectedScholarships.includes(item.id!))
+      .filter(item => !item.isAutoApplied)
       .reduce((sum, item) => {
         const customAmount = formData.customScholarships[item.templateId]
         const finalAmount = (customAmount !== undefined && item.isEditableDuringEnrollment) 
           ? customAmount 
           : item.amount
-        return sum + finalAmount
+        // Only include scholarship if amount > 0 (applied)
+        return finalAmount > 0 ? sum + finalAmount : sum
       }, 0)
 
     const totalScholarships = autoScholarships + manualScholarships
@@ -269,16 +276,22 @@ export default function EditEnrollmentPage() {
     
     if (!enrollment || !feeStructure || !academicYear) return
 
+    // Validate form data
+    if (!formData.classId || !formData.section?.trim()) {
+      setError("Please select a class and enter a section")
+      return
+    }
+
     try {
       setLoading(true)
       setError("")
 
       const submitData = {
         classId: formData.classId,
-        section: formData.section,
+        section: formData.section.trim(),
         customFees: formData.customFees,
         customScholarships: formData.customScholarships,
-        selectedScholarships: formData.selectedScholarships,
+        selectedScholarships: getSelectedScholarships(),
         isActive: true,
       }
 
@@ -491,8 +504,6 @@ export default function EditEnrollmentPage() {
                           scholarshipItems={feeStructure.scholarshipItems}
                           customScholarships={formData.customScholarships}
                           onCustomScholarshipsChange={handleCustomScholarshipsChange}
-                          selectedScholarships={formData.selectedScholarships}
-                          onScholarshipToggle={handleScholarshipToggle}
                           disabled={loading}
                           autoSave={true}
                         />
@@ -500,7 +511,7 @@ export default function EditEnrollmentPage() {
                     )}
 
                     {/* Reset All Button */}
-                    {(Object.keys(formData.customFees).length > 0 || Object.keys(formData.customScholarships).length > 0 || formData.selectedScholarships.length > 0) && (
+                    {(Object.keys(formData.customFees).length > 0 || Object.keys(formData.customScholarships).length > 0) && (
                       <div className="flex justify-end pt-4">
                         <Button
                           type="button"
@@ -523,16 +534,16 @@ export default function EditEnrollmentPage() {
                       <div className="space-y-2">
                         <div className="flex justify-between items-center">
                           <span className="text-gray-600">Total Fees:</span>
-                          <span className="font-semibold">₹{totals.totalFees.toLocaleString()}</span>
+                          <span className="font-semibold">{formatCurrency(totals.totalFees)}</span>
                         </div>
                         <div className="flex justify-between items-center text-green-600">
                           <span>Total Scholarships:</span>
-                          <span className="font-semibold">-₹{totals.totalScholarships.toLocaleString()}</span>
+                          <span className="font-semibold">-{formatCurrency(totals.totalScholarships)}</span>
                         </div>
                         <Separator />
                         <div className="flex justify-between items-center text-lg font-bold">
                           <span>Net Amount:</span>
-                          <span>₹{totals.netAmount.toLocaleString()}</span>
+                          <span>{formatCurrency(totals.netAmount)}</span>
                         </div>
                       </div>
                     </div>

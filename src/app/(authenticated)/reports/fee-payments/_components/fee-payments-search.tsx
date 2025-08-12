@@ -13,6 +13,7 @@ import {
   FileText,
   DollarSign
 } from "lucide-react"
+import { formatCurrency, formatNumber } from "@/lib/format"
 
 interface ReportSummary {
   totalPayments: number
@@ -218,12 +219,12 @@ export default function FeePaymentsSearch({
                 <>
                   <div className="flex items-center space-x-1 text-gray-600">
                     <FileText className="h-4 w-4" />
-                    <span>{reportData.summary.totalPayments} payments</span>
+                    <span>{formatNumber(reportData.summary.totalPayments)} payments</span>
                   </div>
                   <div className="w-px h-4 bg-gray-300"></div>
                   <div className="flex items-center space-x-1 text-gray-600">
                     <DollarSign className="h-4 w-4" />
-                    <span>₹{reportData.summary.totalAmount.toLocaleString()} total</span>
+                    <span>{formatCurrency(reportData.summary.totalAmount)} total</span>
                   </div>
                 </>
               )}

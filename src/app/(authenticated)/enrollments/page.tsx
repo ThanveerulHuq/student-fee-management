@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { toast } from 'sonner'
 import { useAcademicYear, useAcademicYearNavigation } from '@/contexts/academic-year-context'
 import { DeleteEnrollmentDialog } from './_components/delete-enrollment-dialog'
+import { ReactivateStudentDialog } from './_components/reactivate-student-dialog'
 import { StudentEnrollmentWithTotals } from '@/types/enrollment'
 import EnrollmentsSearch from './_components/lists/enrollments-search'
 import EnrollmentsTable from './_components/lists/enrollments-table'
@@ -32,6 +33,9 @@ export default function EnrollmentsPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [enrollmentToDelete, setEnrollmentToDelete] = useState<StudentEnrollmentWithTotals | null>(null)
   const [deleting, setDeleting] = useState(false)
+  const [reactivateDialogOpen, setReactivateDialogOpen] = useState(false)
+  const [enrollmentToReactivate, setEnrollmentToReactivate] = useState<StudentEnrollmentWithTotals | null>(null)
+  const [reactivating, setReactivating] = useState(false)
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 10,
@@ -99,8 +103,8 @@ export default function EnrollmentsPage() {
     setSearch(value)
   }
 
-  const handleIncludeInactiveChange = (value: boolean) => {
-    setIncludeInactive(value)
+  const handleToggleInactive = (checked: boolean) => {
+    setIncludeInactive(checked)
     setPage(1) // Reset to first page when filter changes
   }
 
@@ -115,6 +119,11 @@ export default function EnrollmentsPage() {
   const handleDelete = (enrollment: StudentEnrollmentWithTotals) => {
     setEnrollmentToDelete(enrollment)
     setDeleteDialogOpen(true)
+  }
+
+  const handleReactivate = (enrollment: StudentEnrollmentWithTotals) => {
+    setEnrollmentToReactivate(enrollment)
+    setReactivateDialogOpen(true)
   }
 
   const handleConfirmDelete = async () => {
@@ -143,6 +152,37 @@ export default function EnrollmentsPage() {
     }
   }
 
+  const handleConfirmReactivate = async () => {
+    if (!enrollmentToReactivate) return
+
+    setReactivating(true)
+    try {
+      const response = await fetch(`/api/enrollments/${enrollmentToReactivate.id}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({})
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        toast.success(data.message || 'Enrollment reactivated successfully')
+        setReactivateDialogOpen(false)
+        setEnrollmentToReactivate(null)
+        fetchEnrollments()
+      } else {
+        const errorData = await response.json()
+        toast.error(errorData.error || 'Failed to reactivate enrollment')
+      }
+    } catch (err) {
+      console.error(err)
+      toast.error('Error reactivating enrollment')
+    } finally {
+      setReactivating(false)
+    }
+  }
+
   if (loading && enrollments.length === 0) {
     return <StudentsListSkeleton />
   }
@@ -155,7 +195,7 @@ export default function EnrollmentsPage() {
           isSearching={isSearching}
           onSearchChange={handleSearch}
           includeInactive={includeInactive}
-          onIncludeInactiveChange={handleIncludeInactiveChange}
+          onIncludeInactiveChange={handleToggleInactive}
           onAddEnrollment={handleAddEnrollment}
           totalEnrollments={pagination.total}
           pagination={pagination}
@@ -169,6 +209,7 @@ export default function EnrollmentsPage() {
           onEnrollmentClick={(enrollmentId) => navigateTo(`/enrollments/${enrollmentId}`)}
           onEdit={handleEdit}
           onDelete={handleDelete}
+          onReactivate={handleReactivate}
         />
       </div>
 
@@ -180,6 +221,15 @@ export default function EnrollmentsPage() {
         enrollment={enrollmentToDelete}
         onConfirm={handleConfirmDelete}
         loading={deleting}
+      />
+
+      {/* Reactivate Student Dialog */}
+      <ReactivateStudentDialog
+        open={reactivateDialogOpen}
+        onOpenChange={setReactivateDialogOpen}
+        enrollment={enrollmentToReactivate}
+        onConfirm={handleConfirmReactivate}
+        loading={reactivating}
       />
     </main>
   )

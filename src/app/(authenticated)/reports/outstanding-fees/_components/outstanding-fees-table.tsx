@@ -1,6 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
+import { formatCurrency } from "@/lib/format"
 import { 
   Table, 
   TableBody, 
@@ -141,7 +142,7 @@ export default function OutstandingFeesTable({
                             .map((fee: any, index: number) => (
                               <div key={index} className="flex items-center gap-1">
                                 <span className="text-gray-600 font-medium">{fee.name}:</span>
-                                <span className="text-orange-600 font-medium">₹{fee.outstandingAmount.toLocaleString()}</span>
+                                <span className="text-orange-600 font-medium">{formatCurrency(fee.outstandingAmount)}</span>
                               </div>
                             ))
                         )}
@@ -151,7 +152,7 @@ export default function OutstandingFeesTable({
                     {/* Outstanding Amount */}
                     <TableCell className="py-2 px-3 text-right">
                       <div className="text-lg font-bold text-orange-600">
-                        ₹{student.outstanding.toLocaleString()}
+                        {formatCurrency(student.outstanding)}
                       </div>
                     </TableCell>
 

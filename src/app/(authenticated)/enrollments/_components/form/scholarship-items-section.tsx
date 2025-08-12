@@ -15,8 +15,6 @@ interface ScholarshipItemsSectionProps {
   scholarshipItems: ScholarshipItem[]
   customScholarships: Record<string, number>
   onCustomScholarshipsChange: (customScholarships: Record<string, number>) => void
-  selectedScholarships?: string[]
-  onScholarshipToggle?: (scholarshipId: string, checked: boolean) => void
   disabled?: boolean
   autoSave?: boolean
 }
@@ -25,8 +23,6 @@ export default function ScholarshipItemsSection({
   scholarshipItems,
   customScholarships,
   onCustomScholarshipsChange,
-  selectedScholarships = [],
-  onScholarshipToggle,
   disabled = false,
   autoSave = false
 }: ScholarshipItemsSectionProps) {
@@ -116,8 +112,6 @@ export default function ScholarshipItemsSection({
               item={item}
               customAmount={customScholarships[item.templateId]}
               onAmountChange={handleAmountChange}
-              isSelected={selectedScholarships.includes(item.id!)}
-              onToggle={onScholarshipToggle}
               disabled={disabled}
             />
           ))}

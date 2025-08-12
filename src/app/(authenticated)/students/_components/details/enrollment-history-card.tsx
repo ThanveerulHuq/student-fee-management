@@ -13,6 +13,7 @@ import {
 import { GraduationCap, UserPlus, CreditCard } from "lucide-react"
 import { StudentEnrollment } from "@/types/enrollment"
 
+import { formatCurrency } from "@/lib/format"
 interface EnrollmentHistoryCardProps {
   enrollments: StudentEnrollment[]
   onEnrollClick: () => void
@@ -89,11 +90,11 @@ export default function EnrollmentHistoryCard({
                     </TableCell>
                     <TableCell className="py-4 font-medium">{enrollment.class.className}</TableCell>
                     <TableCell className="py-4">{enrollment.section}</TableCell>
-                    <TableCell className="py-4 font-mono">₹{totalFee.toLocaleString()}</TableCell>
-                    <TableCell className="py-4 font-mono">₹{paid.toLocaleString()}</TableCell>
+                    <TableCell className="py-4 font-mono">{formatCurrency(totalFee)}</TableCell>
+                    <TableCell className="py-4 font-mono">{formatCurrency(paid)}</TableCell>
                     <TableCell className="py-4">
                       <span className={`font-semibold font-mono ${outstanding > 0 ? "text-red-600" : "text-green-600"}`}>
-                        ₹{outstanding.toLocaleString()}
+                        {formatCurrency(outstanding)}
                       </span>
                     </TableCell>
                     <TableCell className="py-4">

@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { Switch } from "@/components/ui/switch"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import { Plus, Search, GraduationCap } from "lucide-react"
 import LoaderOne from "@/components/ui/loader-one"
@@ -51,7 +51,7 @@ export default function EnrollmentsSearch({
             </div>
             <div>
               <h1 className="text-xl font-bold text-gray-900 tracking-tight">
-                Student Enrollments
+                {includeInactive ? "All Enrollments" : "Active Enrollments"}
               </h1>
               <p className="text-xs text-gray-600 font-medium">
                 {totalEnrollments} {totalEnrollments === 1 ? 'enrollment' : 'enrollments'}
@@ -66,7 +66,21 @@ export default function EnrollmentsSearch({
               </p>
             </div>
           </div>
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-2 px-3 py-2 bg-white/80 backdrop-blur-sm rounded-lg border border-gray-200/50 shadow-sm">
+              <Checkbox
+                id="include-inactive"
+                checked={includeInactive}
+                onCheckedChange={(checked) => onIncludeInactiveChange(checked === true)}
+                className="data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600 border-gray-300"
+              />
+              <Label 
+                htmlFor="include-inactive" 
+                className="text-xs font-medium text-gray-700 cursor-pointer select-none"
+              >
+                Include inactive
+              </Label>
+            </div>
             <Button 
               onClick={onAddEnrollment}
               className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow-sm transition-colors"
@@ -102,18 +116,6 @@ export default function EnrollmentsSearch({
                 <LoaderOne />
               </div>
             )}
-          </div>
-
-          {/* Include Inactive Toggle */}
-          <div className="flex items-center space-x-2">
-            <Switch
-              id="include-inactive"
-              checked={includeInactive}
-              onCheckedChange={onIncludeInactiveChange}
-            />
-            <Label htmlFor="include-inactive" className="text-sm font-medium text-gray-700">
-              Include Inactive
-            </Label>
           </div>
           
           {/* Pagination */}

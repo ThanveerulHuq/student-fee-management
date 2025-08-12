@@ -148,6 +148,8 @@ async function createDefaultScholarshipTemplates() {
 
 async function migrateStudents(data: any[]) {
   console.log('🔄 Migrating Students...');
+  const duplicateStudents = [];
+
 
   console.log(`input data count: ${data.length}`);
   
@@ -169,6 +171,23 @@ async function migrateStudents(data: any[]) {
         isPrimary: false,
         isWhatsApp: false,
         label: 'Secondary'
+      });
+    }
+
+    const existingStudent = await prisma.student.findFirst({
+      where: {
+        admissionNo: row.admission_no.toString()
+      }
+    });
+
+    if (existingStudent) {  
+      console.log(`student already exists: ${row.name} ${row.admission_no}`);
+      duplicateStudents.push({
+        name: row.name,
+        admissionNo: row.admission_no,
+        fatherName: row.father_name,
+        id: row.student_id,
+        existingStudentId: (existingStudent.migrationData as any).sourceId,
       });
     }
     
@@ -209,6 +228,10 @@ async function migrateStudents(data: any[]) {
   }
   
   console.log('✅ Students migrated');
+  console.log(`duplicate students: ${duplicateStudents.length}`);
+  duplicateStudents.forEach(student => {
+    console.log(`duplicate student: name: ${student.name} admissionNo: ${student.admissionNo} id: ${student.id} existingStudentId: ${student.existingStudentId}`);
+  });
 }
 
 async function createFeeStructures(csvData: CSVData) {
@@ -342,7 +365,6 @@ async function createFeeStructures(csvData: CSVData) {
         },
         class: {
           className: classObj.className,
-          order: classObj.order,
           isActive: classObj.isActive
         },
         feeItems,
@@ -531,7 +553,6 @@ async function migrateStudentEnrollments(csvData: CSVData): Promise<Map<string, 
           name: student.name,
           fatherName: student.fatherName,
           mobileNo: student.mobileNumbers[0]?.number || '',
-          class: classInfo.className,
           status: 'ACTIVE'
         },
         academicYear: {
@@ -542,7 +563,6 @@ async function migrateStudentEnrollments(csvData: CSVData): Promise<Map<string, 
         },
         class: {
           className: classInfo.className,
-          order: classInfo.order,
           isActive: classInfo.isActive
         },
         fees: studentFees,
@@ -826,10 +846,6 @@ async function main() {
     console.log(`   Students: ${csvData.studentsInfo.length}`);
     console.log(`   Student Enrollments: ${csvData.studentYear.length}`);
     console.log(`   Fee Transactions: ${csvData.feeTxn.length}`);
-    console.log('\n🔐 Default admin user created:');
-    console.log('   Username: admin');
-    console.log('   Password: admin123');
-    console.log('   Please change the password after first login!');
     
   } catch (error) {
     console.error('❌ Migration failed:', error);
@@ -844,4 +860,4 @@ if (require.main === module) {
   main();
 }
 
-export { main as migrate };
+export { main as migrate };``

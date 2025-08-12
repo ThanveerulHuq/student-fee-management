@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, use } from 'react'
+import { useState, useEffect, use, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
@@ -24,6 +24,7 @@ export default function FeePaymentPage({ params }: { params: Promise<{ id: strin
   const [enrollment, setEnrollment] = useState<StudentEnrollment | null>(null)
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
+  const requestIdRef = useRef<string | null>(null)
   
   const [paymentForm, setPaymentForm] = useState<PaymentFormData>({
     paymentMethod: 'CASH',
@@ -73,6 +74,11 @@ export default function FeePaymentPage({ params }: { params: Promise<{ id: strin
   const handlePayment = async (e: React.FormEvent) => {
     e.preventDefault()
     
+    // Prevent double submission immediately
+    if (submitting) {
+      return
+    }
+    
     if (!enrollment) {
       toast.error('No student selected')
       return
@@ -90,10 +96,19 @@ export default function FeePaymentPage({ params }: { params: Promise<{ id: strin
     const totalAmount = getTotalPaymentAmount()
 
     try {
+      // Set submitting state immediately
       setSubmitting(true)
+      
+      // Generate unique request ID for idempotency
+      const requestId = `${enrollment.id}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+      requestIdRef.current = requestId
+      
       const response = await fetch('/api/fees/collect', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Idempotency-Key': requestId
+        },
         body: JSON.stringify({
           studentEnrollmentId: enrollment.id,
           totalAmount,
@@ -112,18 +127,19 @@ export default function FeePaymentPage({ params }: { params: Promise<{ id: strin
         
         toast.success('Payment recorded successfully')
         
-        // Navigate to receipt page
+        // Navigate to receipt page - don't reset submitting state to prevent navigation spam
         router.push(`/receipts/${data.id}`)
       } else {
         const error = await response.json()
         toast.error(error.error || 'Failed to record payment')
+        setSubmitting(false) // Only reset on error
       }
     } catch (error) {
       console.error('Error recording payment:', error)
       toast.error('Error recording payment')
-    } finally {
-      setSubmitting(false)
+      setSubmitting(false) // Only reset on error
     }
+    // Note: Don't reset submitting on success to prevent multiple navigations
   }
 
   const validatePaymentAmount = (feeId: string, amount: number): string | null => {

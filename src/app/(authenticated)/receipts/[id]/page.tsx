@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 
 import { 
-  Download,
   Printer,
   ArrowLeft
 } from "lucide-react"

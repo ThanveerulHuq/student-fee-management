@@ -14,6 +14,7 @@ import {
   Unlock,
   RotateCcw
 } from "lucide-react"
+import { formatCurrency } from "@/lib/format"
 import { cn } from "@/lib/utils"
 import { FeeItem } from "@/types/fee"
 
@@ -141,7 +142,7 @@ export default function FeeItemCard({
             {/* Progressive disclosure - show details only when editing or modified */}
             {(isEditing || hasChanges) && (
               <div className="text-xs text-gray-500 mb-1">
-                Default: ₹{item.amount.toLocaleString()}
+                Default: {formatCurrency(item.amount)}
               </div>
             )}
 
@@ -187,7 +188,7 @@ export default function FeeItemCard({
                     "text-sm font-semibold ml-1",
                     hasChanges ? "text-amber-700" : "text-gray-900"
                   )}>
-                    {finalAmount.toLocaleString()}
+                    {formatCurrency(finalAmount)}
                   </span>
                 </div>
               )}

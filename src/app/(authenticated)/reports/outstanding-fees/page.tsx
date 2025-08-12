@@ -8,7 +8,9 @@ import { trackReportGenerated, trackOutstandingFeesViewed, trackPageView } from 
 import OutstandingFeesSearch from "./_components/outstanding-fees-search"
 import OutstandingFeesTable from "./_components/outstanding-fees-table"
 import LoaderWrapper from "@/components/ui/loader-wrapper"
+import { formatCurrency } from "@/lib/format"
 import { StudentsListSkeleton } from "../../students/_components/common/loading-skeletons"
+import { createFeeReminderMessage, openWhatsApp } from "@/lib/utils/whatsapp"
 
 interface OutstandingFeesPageProps {
   params: Promise<Record<string, never>>
@@ -333,11 +335,18 @@ export default function OutstandingFeesReportPage({}: OutstandingFeesPageProps) 
   }
 
   const sendWhatsAppReminder = (student: OutstandingStudent) => {
-    const message = `Dear ${student.student.fatherName},\n\nThis is a fee reminder for ${student.student.name} for academic year ${student.academicYear.year}.\n\nOutstanding Amount: ₹${student.outstanding.toLocaleString()}\n\nFee Details:\n${student.fees.filter(fee => fee.outstandingAmount > 0).map(fee => `• ${fee.name}: ₹${fee.outstandingAmount.toLocaleString()}`).join('\n')}\n\nPlease pay at your earliest convenience.\n\nThank you,\nBlueMoon School`
+    const message = createFeeReminderMessage({
+      studentName: student.student.name,
+      fatherName: student.student.fatherName,
+      academicYear: student.academicYear.year,
+      outstandingAmount: student.outstanding,
+      feeDetails: student.fees.filter(fee => fee.outstandingAmount > 0).map(fee => ({
+        name: fee.name,
+        outstandingAmount: fee.outstandingAmount
+      }))
+    })
     
-    const encodedMessage = encodeURIComponent(message)
-    const whatsappUrl = `https://wa.me/${student.student.mobileNo.replace(/[^0-9]/g, '')}?text=${encodedMessage}`
-    window.open(whatsappUrl, '_blank')
+    openWhatsApp(message, student.student.mobileNo)
   }
 
 

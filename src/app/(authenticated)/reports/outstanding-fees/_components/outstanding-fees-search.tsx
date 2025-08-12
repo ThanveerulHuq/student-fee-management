@@ -14,6 +14,7 @@ import {
   DollarSign
 } from "lucide-react"
 import LoaderOne from "@/components/ui/loader-one"
+import { formatCurrency, formatNumber } from "@/lib/format"
 
 interface ReportData {
   students: any[]
@@ -101,7 +102,7 @@ export default function OutstandingFeesSearch({
                 <div className="w-px h-4 bg-gray-300"></div>
                 <div className="flex items-center space-x-1 text-gray-600">
                   <DollarSign className="h-4 w-4" />
-                  <span>₹{reportData.summary.totalOutstandingAmount.toLocaleString()} total</span>
+                  <span>{formatCurrency(reportData.summary.totalOutstandingAmount)} total</span>
                 </div>
               </div>
             )}

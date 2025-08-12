@@ -168,7 +168,6 @@ export function MultiSelectStudents({
                   </div>
                 ) : (
                   <>
-                    <CommandEmpty>No students found.</CommandEmpty>
                     <CommandGroup>
                       {students.map((student) => (
                         <CommandItem
