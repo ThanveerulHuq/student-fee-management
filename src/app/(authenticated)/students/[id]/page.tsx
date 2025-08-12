@@ -25,7 +25,7 @@ interface Student {
   name: string
   gender: string
   dateOfBirth: string
-  age: number
+  age?: number // Make age optional since it's calculated dynamically
   community: string
   motherTongue: string
   mobileNo: string

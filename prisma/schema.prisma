@@ -32,7 +32,6 @@ model Student {
   name          String
   gender        Gender
   dateOfBirth   DateTime
-  age           Int
   community     String
   motherTongue  String
   mobileNumbers MobileNumber[]
@@ -200,7 +199,6 @@ type StudentInfo {
   name            String
   fatherName      String
   mobileNo        String 
-  class           String
   status          StudentStatus
 }
 

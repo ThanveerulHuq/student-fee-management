@@ -59,11 +59,6 @@ export default function FeeDetailsCard({ enrollment }: FeeDetailsCardProps) {
                 )}
                 <div className="min-w-0">
                   <h4 className="font-medium text-gray-900 text-sm">{fee.templateName}</h4>
-                  {fee.isWaived && (
-                    <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200 text-xs mt-1">
-                      Waived
-                    </Badge>
-                  )}
                 </div>
               </div>
               

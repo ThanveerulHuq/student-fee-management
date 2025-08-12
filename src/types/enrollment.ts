@@ -80,10 +80,6 @@ export interface StudentFee {
   amountPaid: number
   amountDue: number
   isCompulsory: boolean
-  isWaived: boolean
-  waivedReason?: string
-  waivedBy?: string
-  waivedDate?: Date
   order: number
 }
 

@@ -13,13 +13,14 @@ import { Users } from "lucide-react"
 import { StudentStatusBadge } from "@/components/students/student-status-badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { MobileNumber } from "@/generated/prisma"
+import { calculateAge } from "@/lib/utils/age"
 
 interface Student {
   id: string
   admissionNo: string
   name: string
   gender: string
-  age: number
+  dateOfBirth: string | Date
   fatherName: string
   mobileNumbers: MobileNumber[]
   isActive: boolean
@@ -155,7 +156,7 @@ export default function StudentsTable({
                         >
                           {student.gender}
                         </Badge>
-                        <span className="text-xs text-gray-600 font-medium">Age {student.age}</span>
+                        <span className="text-xs text-gray-600 font-medium">Age {calculateAge(student.dateOfBirth)}</span>
                       </div>
                     </TableCell>
                     <TableCell className="py-3 px-4">

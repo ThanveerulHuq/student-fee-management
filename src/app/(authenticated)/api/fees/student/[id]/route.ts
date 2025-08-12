@@ -86,9 +86,6 @@ export async function GET(
           paid: fee.amountPaid,
           outstanding: fee.amountDue,
           isCompulsory: fee.isCompulsory,
-          isWaived: fee.isWaived,
-          waivedReason: fee.waivedReason,
-          recentPayments: fee.recentPayments
         })),
         scholarships: enrollment.scholarships.map(scholarship => ({
           id: scholarship.id,

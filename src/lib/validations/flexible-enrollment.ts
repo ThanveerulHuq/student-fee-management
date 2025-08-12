@@ -34,9 +34,6 @@ export const feeStructureQuerySchema = z.object({
 export const studentFeeUpdateSchema = z.object({
   feeId: z.string().min(1, 'Fee ID is required'),
   amount: z.number().min(0, 'Amount must be non-negative'),
-  isWaived: z.boolean().optional(),
-  waivedReason: z.string().optional(),
-  waivedBy: z.string().optional()
 })
 
 // Student Scholarship Schema

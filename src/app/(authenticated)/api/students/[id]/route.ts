@@ -95,7 +95,6 @@ export async function PUT(
     
     if (validatedData.dateOfBirth) {
       updateData.dateOfBirth = new Date(validatedData.dateOfBirth)
-      updateData.age = new Date().getFullYear() - new Date(validatedData.dateOfBirth).getFullYear()
     }
     if (validatedData.admissionDate) {
       updateData.admissionDate = new Date(validatedData.admissionDate)

@@ -22,6 +22,7 @@ import {
 } from "lucide-react"
 import { StudentFormData } from "@/lib/validations/student"
 import { MobileNumber } from "@/generated/prisma"
+import { calculateAge } from "@/lib/utils/age"
 
 interface SiblingInfo {
   id: string
@@ -80,15 +81,9 @@ export default function ReviewStep({ loading = false }: ReviewStepProps) {
     })
   }
 
-  const calculateAge = (dateOfBirth: string) => {
+  const getFormattedAge = (dateOfBirth: string) => {
     if (!dateOfBirth) return "Not provided"
-    const today = new Date()
-    const birthDate = new Date(dateOfBirth)
-    let age = today.getFullYear() - birthDate.getFullYear()
-    const monthDiff = today.getMonth() - birthDate.getMonth()
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-      age--
-    }
+    const age = calculateAge(dateOfBirth)
     return `${age} years`
   }
 
@@ -194,7 +189,7 @@ export default function ReviewStep({ loading = false }: ReviewStepProps) {
                 />
                 <InfoItem 
                   label="Age" 
-                  value={calculateAge(values.dateOfBirth)} 
+                  value={getFormattedAge(values.dateOfBirth)} 
                   icon={Calendar} 
                 />
                 {values.aadharNo && (

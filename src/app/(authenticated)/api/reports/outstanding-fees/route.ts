@@ -16,14 +16,12 @@ export async function GET(request: NextRequest) {
     const classId = searchParams.get("classId")
     const section = searchParams.get("section")
     const minOutstanding = parseFloat(searchParams.get("minOutstanding") || "1")
+    
+    // Search parameter
+    const search = searchParams.get("search")
 
     // Build where conditions for student enrollments
-    const enrollmentWhere: {
-      academicYearId?: string
-      classId?: string
-      section?: string
-      isActive?: boolean
-    } = {
+    const enrollmentWhere: any = {
       isActive: true // Only active enrollments
     }
 
@@ -31,12 +29,21 @@ export async function GET(request: NextRequest) {
     if (classId) enrollmentWhere.classId = classId
     if (section) enrollmentWhere.section = section
 
+    // Add search filter using OR conditions across multiple fields
+    if (search) {
+      enrollmentWhere.OR = [
+        { student: { name: { contains: search, mode: 'insensitive' } } },
+        { student: { fatherName: { contains: search, mode: 'insensitive' } } },
+        { student: { admissionNumber: { contains: search, mode: 'insensitive' } } },
+        { class: { className: { contains: search, mode: 'insensitive' } } },
+        { section: { contains: search, mode: 'insensitive' } }
+      ]
+    }
+
     // Get all student enrollments with fee data
     const enrollments = await prisma.studentEnrollment.findMany({
       where: enrollmentWhere,
       orderBy: [
-        { class: { order: "asc" } },
-        { section: "asc" },
         { student: { name: "asc" } }
       ]
     })
@@ -112,7 +119,8 @@ export async function GET(request: NextRequest) {
         academicYearId,
         classId,
         section,
-        minOutstanding
+        minOutstanding,
+        search
       },
       generatedAt: new Date(),
       generatedBy: session.user.username

@@ -182,7 +182,6 @@ async function migrateStudents(data: any[]) {
         name: row.name,
         gender: row.gender === 'M' ? 'MALE' : 'FEMALE',
         dateOfBirth: new Date(row.dob),
-        age: parseInt(row.age),
         community: row.community.toString(),
         motherTongue: row.mother_tongue.toString(),
         mobileNumbers,

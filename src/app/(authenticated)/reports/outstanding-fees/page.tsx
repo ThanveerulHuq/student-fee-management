@@ -4,7 +4,6 @@ import { useEffect, useState, useCallback } from "react"
 import { useSession } from "next-auth/react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useAcademicYear } from "@/contexts/academic-year-context"
-import SecondaryHeader from "@/components/ui/secondary-header"
 import { trackReportGenerated, trackOutstandingFeesViewed, trackPageView } from "@/lib/analytics"
 
 interface OutstandingFeesPageProps {
@@ -15,17 +14,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Badge } from "@/components/ui/badge"
 import { 
   Download,
   Search,
-  Filter,
   AlertTriangle,
   FileText,
   RefreshCw,
   Users,
   DollarSign,
-  Phone
+  Phone,
+  MessageCircle
 } from "lucide-react"
 import LoaderWrapper from "@/components/ui/loader-wrapper"
 import { MobileNumber } from "@/generated/prisma"
@@ -50,6 +48,12 @@ interface OutstandingStudent {
   totalFee: number
   totalPaid: number
   outstanding: number
+  fees: Array<{
+    name: string
+    amount: number
+    paid: number
+    outstandingAmount: number
+  }>
   feeBreakdown: {
     schoolFee: number
     bookFee: number
@@ -94,9 +98,10 @@ export default function OutstandingFeesReportPage({}: OutstandingFeesPageProps) 
   // Filter states
   const [classes, setClasses] = useState<{ id: string; className: string }[]>([])
   const [filters, setFilters] = useState({
-    classId: searchParams.get("classId") || "",
+    classId: searchParams.get("classId") || "-1",
     section: searchParams.get("section") || "",
     minOutstanding: searchParams.get("minOutstanding") || "1",
+    search: searchParams.get("search") || "",
   })
 
   useEffect(() => {
@@ -117,10 +122,13 @@ export default function OutstandingFeesReportPage({}: OutstandingFeesPageProps) 
     try {
       // Use the outstanding fees API with filtering
       const queryParams = new URLSearchParams()
+      const classId = filters.classId === "-1" ? "" : filters.classId
       if (academicYear?.id) queryParams.append("academicYearId", academicYear.id)
-      if (filters.classId) queryParams.append("classId", filters.classId)
+      if (classId) queryParams.append("classId", classId)
       if (filters.section) queryParams.append("section", filters.section)
       if (filters.minOutstanding) queryParams.append("minOutstanding", filters.minOutstanding)
+      // Search parameter
+      if (filters.search) queryParams.append("search", filters.search)
 
       const response = await fetch(`/api/reports/outstanding-fees?${queryParams}`)
       if (!response.ok) {
@@ -150,6 +158,12 @@ export default function OutstandingFeesReportPage({}: OutstandingFeesPageProps) 
         totalFee: student.totalFees,
         totalPaid: student.paidAmount,
         outstanding: student.outstandingAmount,
+        fees: student.fees.filter((fee: any) => fee.outstanding > 0).map((fee: any) => ({
+          name: fee.templateName,
+          amount: fee.amount,
+          paid: fee.paid,
+          outstandingAmount: fee.outstanding
+        })),
         feeBreakdown: {
           schoolFee: 0, // Will calculate from fees array
           bookFee: 0,
@@ -269,269 +283,290 @@ export default function OutstandingFeesReportPage({}: OutstandingFeesPageProps) 
 
   const resetFilters = () => {
     setFilters({
-      classId: "",
+      classId: "-1",
       section: "",
       minOutstanding: "1",
+      search: "",
     })
   }
 
-  const getOutstandingSeverity = (amount: number) => {
-    if (amount <= 5000) return { color: "bg-yellow-100 text-yellow-800", label: "Low" }
-    if (amount <= 15000) return { color: "bg-orange-100 text-orange-800", label: "Medium" }
-    return { color: "bg-red-100 text-red-800", label: "High" }
+  const sendWhatsAppReminder = (student: OutstandingStudent) => {
+    const message = `Dear ${student.student.fatherName},\n\nThis is a fee reminder for ${student.student.name} for academic year ${student.academicYear.year}.\n\nOutstanding Amount: ₹${student.outstanding.toLocaleString()}\n\nFee Details:\n${student.fees.filter(fee => fee.outstandingAmount > 0).map(fee => `• ${fee.name}: ₹${fee.outstandingAmount.toLocaleString()}`).join('\n')}\n\nPlease pay at your earliest convenience.\n\nThank you,\nBlueMoon School`
+    
+    const encodedMessage = encodeURIComponent(message)
+    const whatsappUrl = `https://wa.me/${student.student.mobileNo.replace(/[^0-9]/g, '')}?text=${encodedMessage}`
+    window.open(whatsappUrl, '_blank')
   }
+
+
 
   if (status === "loading" || !session) {
     return <LoaderWrapper fullScreen label="Loading outstanding fees report..." />
   }
 
   return (
-    <>
-      <SecondaryHeader 
-        title="Outstanding Fees Report"
-        showBackButton={true}
-        backPath="/reports"
-      >
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={exportToCSV}
-          disabled={!reportData || loading}
-        >
-          <Download className="h-4 w-4 mr-2" />
-          Export CSV
-        </Button>
-      </SecondaryHeader>
-
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-        {/* Filters */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <Filter className="h-5 w-5 mr-2" />
-              Filters
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <main className="w-full py-6 px-4 sm:px-6 lg:px-8">
+      <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+        {/* Header with Filters and Actions */}
+        <div className="px-6 py-4 border-b border-gray-200">
+          <div className="flex flex-col space-y-4">
+            {/* Title and Export */}
+            <div className="flex items-center justify-between">
               <div>
-                <Label htmlFor="class">Class</Label>
-                <Select
-                  value={filters.classId}
-                  onValueChange={(value) => handleFilterChange("classId", value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select class" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Classes</SelectItem>
-                    {classes.map((cls) => (
-                      <SelectItem key={cls.id} value={cls.id}>
-                        {cls.className}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <h1 className="text-xl font-semibold text-gray-900">Outstanding Fees Report</h1>
+                <p className="text-sm text-gray-500 mt-1">
+                  {academicYear ? `Academic Year: ${academicYear.year}` : 'Loading...'}
+                </p>
               </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={exportToCSV}
+                disabled={!reportData || loading}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Export CSV
+              </Button>
+            </div>
 
-              <div>
-                <Label htmlFor="section">Section</Label>
+            {/* Search and Filters */}
+            <div className="space-y-4">
+              {/* Search Bar */}
+              <div className="relative max-w-md">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <Input
-                  id="section"
-                  placeholder="Enter section"
-                  value={filters.section}
-                  onChange={(e) => handleFilterChange("section", e.target.value)}
+                  placeholder="Search by student name, admission number, father name..."
+                  value={filters.search}
+                  onChange={(e) => handleFilterChange("search", e.target.value)}
+                  className="pl-10 h-10 border-gray-200 focus:border-blue-500 focus:ring-blue-500/20 text-sm bg-gray-50/50 focus:bg-white transition-colors"
                 />
               </div>
 
-              <div>
-                <Label htmlFor="minOutstanding">Min Outstanding (₹)</Label>
-                <Input
-                  id="minOutstanding"
-                  type="number"
-                  placeholder="Minimum amount"
-                  value={filters.minOutstanding}
-                  onChange={(e) => handleFilterChange("minOutstanding", e.target.value)}
-                />
+              {/* Basic Filters */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <Label className="text-sm font-medium text-gray-700">Class</Label>
+                  <Select
+                    value={filters.classId}
+                    onValueChange={(value) => handleFilterChange("classId", value)}
+                  >
+                    <SelectTrigger className="mt-1 h-9">
+                      <SelectValue placeholder="Select class" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="-1">All Classes</SelectItem>
+                      {classes.map((cls) => (
+                        <SelectItem key={cls.id} value={cls.id}>
+                          {cls.className}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label className="text-sm font-medium text-gray-700">Section</Label>
+                  <Input
+                    className="mt-1 h-9"
+                    placeholder="Enter section"
+                    value={filters.section}
+                    onChange={(e) => handleFilterChange("section", e.target.value)}
+                  />
+                </div>
+
+                <div>
+                  <Label className="text-sm font-medium text-gray-700">Min Total Outstanding (₹)</Label>
+                  <Input
+                    type="number"
+                    className="mt-1 h-9"
+                    placeholder="Min amount"
+                    value={filters.minOutstanding}
+                    onChange={(e) => handleFilterChange("minOutstanding", e.target.value)}
+                  />
+                </div>
+              </div>
+
+
+              {/* Action Buttons */}
+              <div className="flex items-center justify-end space-x-2 pt-2">
+                <Button variant="outline" size="sm" onClick={resetFilters}>
+                  Reset All
+                </Button>
+                <Button onClick={generateReport} disabled={loading} size="sm">
+                  {loading ? (
+                    <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Search className="h-4 w-4 mr-2" />
+                  )}
+                  Search & Generate
+                </Button>
               </div>
             </div>
-
-            <div className="flex justify-between items-center mt-4">
-              <Button variant="outline" onClick={resetFilters}>
-                Reset Filters
-              </Button>
-              <Button onClick={generateReport} disabled={loading}>
-                {loading ? (
-                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  <Search className="h-4 w-4 mr-2" />
-                )}
-                Generate Report
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Error */}
         {error && (
-          <Card className="mb-6 border-red-200 bg-red-50">
-            <CardContent className="p-4">
-              <p className="text-red-600">{error}</p>
-            </CardContent>
-          </Card>
+          <div className="px-6 py-4 bg-red-50 border-l-4 border-red-400">
+            <p className="text-red-700">{error}</p>
+          </div>
         )}
 
         {/* Summary Cards */}
         {reportData && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center">
-                  <Users className="h-8 w-8 text-red-600" />
-                  <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-600">Students with Outstanding</p>
-                    <p className="text-2xl font-bold text-gray-900">{reportData.summary.studentsWithOutstanding}</p>
-                  </div>
+          <div className="px-6 py-4 border-b border-gray-200">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="flex items-center p-4 bg-red-50 rounded-lg">
+                <Users className="h-8 w-8 text-red-600" />
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">Students with Outstanding</p>
+                  <p className="text-2xl font-bold text-gray-900">{reportData.summary.studentsWithOutstanding}</p>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
 
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center">
-                  <DollarSign className="h-8 w-8 text-red-600" />
-                  <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-600">Total Outstanding</p>
-                    <p className="text-2xl font-bold text-gray-900">
-                      ₹{reportData.summary.totalOutstandingAmount.toLocaleString()}
-                    </p>
-                  </div>
+              <div className="flex items-center p-4 bg-red-50 rounded-lg">
+                <DollarSign className="h-8 w-8 text-red-600" />
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">Total Outstanding</p>
+                  <p className="text-2xl font-bold text-gray-900">
+                    ₹{reportData.summary.totalOutstandingAmount.toLocaleString()}
+                  </p>
                 </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center">
-                  <AlertTriangle className="h-8 w-8 text-yellow-600" />
-                  <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-600">Average Outstanding</p>
-                    <p className="text-2xl font-bold text-gray-900">
-                      ₹{reportData.summary.studentsWithOutstanding > 0 ? Math.round(reportData.summary.totalOutstandingAmount / reportData.summary.studentsWithOutstanding).toLocaleString() : 0}
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           </div>
         )}
 
         {/* Outstanding Students Table */}
-        {reportData && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <FileText className="h-5 w-5 mr-2" />
-                Outstanding Fees Details ({reportData.students.length} students)
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Student Details
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Class & Academic Year
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Fee Summary
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Outstanding Amount
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Contact
-                      </th>
+        {reportData && reportData.students.length > 0 && (
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Student Details
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Class & Academic Year
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Fee Balance Breakdown
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Total Outstanding
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Contact
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {reportData.students.map((student) => {
+                  return (
+                    <tr 
+                      key={student.id} 
+                      className="hover:bg-gray-50 cursor-pointer"
+                      onClick={() => router.push(`/enrollments/${student.id}`)}
+                      title="Click to view complete fee details"
+                    >
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">{student.student.name}</p>
+                          <p className="text-sm text-gray-500">Adm: {student.student.admissionNo}</p>
+                          <p className="text-sm text-gray-500">Father: {student.student.fatherName}</p>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">
+                            {student.class.className} - {student.section}
+                          </p>
+                          <p className="text-sm text-gray-500">{student.academicYear.year}</p>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-sm">
+                        <div className="space-y-1">
+                          {student.fees && student.fees.length > 0 ? (
+                            student.fees
+                              .filter((fee: any) => fee.outstandingAmount > 0)
+                              .map((fee: any, index: number) => (
+                                <div key={index} className="flex justify-between">
+                                  <span className="text-gray-700">{fee.name}:</span>
+                                  <span className="text-red-600 font-medium">₹{fee.outstandingAmount.toLocaleString()}</span>
+                                </div>
+                              ))
+                          ) : (
+                            <div className="flex justify-between">
+                              <span className="text-gray-700">Outstanding:</span>
+                              <span className="text-red-600 font-medium">₹{student.outstanding.toLocaleString()}</span>
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <p className="text-lg font-bold text-red-600">
+                          ₹{student.outstanding.toLocaleString()}
+                        </p>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            window.location.href = `tel:${student.student.mobileNo}`
+                          }}
+                          className="h-auto p-2 hover:bg-blue-50 text-left justify-start"
+                          title="Call this number"
+                        >
+                          <Phone className="h-4 w-4 mr-2 text-blue-600" />
+                          <span className="text-sm text-gray-700">{student.student.mobileNo}</span>
+                        </Button>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            sendWhatsAppReminder(student)
+                          }}
+                          className="hover:bg-green-50 hover:border-green-300 text-green-700"
+                          title="Send WhatsApp Reminder"
+                        >
+                          <MessageCircle className="h-4 w-4 mr-2" />
+                          Send Reminder
+                        </Button>
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {reportData.students.map((student) => {
-                      const severity = getOutstandingSeverity(student.outstanding)
-                      return (
-                        <tr key={student.id} className="hover:bg-gray-50">
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div>
-                              <p className="text-sm font-medium text-gray-900">{student.student.name}</p>
-                              <p className="text-sm text-gray-500">Adm: {student.student.admissionNo}</p>
-                              <p className="text-sm text-gray-500">Father: {student.student.fatherName}</p>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div>
-                              <p className="text-sm font-medium text-gray-900">
-                                {student.class.className} - {student.section}
-                              </p>
-                              <p className="text-sm text-gray-500">{student.academicYear.year}</p>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm">
-                            <div>
-                              <p className="text-gray-900">Total: ₹{student.totalFee.toLocaleString()}</p>
-                              <p className="text-green-600">Paid: ₹{student.totalPaid.toLocaleString()}</p>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div>
-                              <p className="text-lg font-bold text-red-600">
-                                ₹{student.outstanding.toLocaleString()}
-                              </p>
-                              <Badge className={severity.color}>
-                                {severity.label}
-                              </Badge>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="flex items-center text-sm text-gray-500">
-                              <Phone className="h-4 w-4 mr-1" />
-                              {student.student.mobileNo}
-                            </div>
-                          </td>
-                        </tr>
-                      )
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </CardContent>
-          </Card>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
         )}
 
         {/* Loading */}
         {loading && (
-          <Card>
-            <CardContent className="p-8">
-              <LoaderWrapper center label="Generating report..." />
-            </CardContent>
-          </Card>
+          <div className="px-6 py-12">
+            <LoaderWrapper center label="Generating report..." />
+          </div>
         )}
 
         {/* No Data */}
         {reportData && reportData.students.length === 0 && !loading && (
-          <Card>
-            <CardContent className="p-8">
-              <div className="text-center">
-                <AlertTriangle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No Outstanding Fees Found</h3>
-                <p className="text-gray-600">All students have paid their fees or no students match the current filters.</p>
-              </div>
-            </CardContent>
-          </Card>
+          <div className="px-6 py-12">
+            <div className="text-center">
+              <AlertTriangle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No Outstanding Fees Found</h3>
+              <p className="text-gray-600">All students have paid their fees or no students match the current filters.</p>
+            </div>
+          </div>
         )}
-      </main>
-    </>
+      </div>
+    </main>
   )
 }

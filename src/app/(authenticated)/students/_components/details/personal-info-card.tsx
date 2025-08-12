@@ -1,6 +1,7 @@
 "use client"
 
 import { Badge } from "@/components/ui/badge"
+import { calculateAge } from "@/lib/utils/age"
 
 interface Student {
   id: string
@@ -12,7 +13,7 @@ interface Student {
   name: string
   gender: string
   dateOfBirth: string
-  age: number
+  age?: number // Make age optional since it's calculated dynamically
   community: string
   motherTongue: string
   religion: string
@@ -31,6 +32,9 @@ export default function PersonalInfoCard({ student }: PersonalInfoCardProps) {
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-IN")
   }
+
+  // Calculate age dynamically from date of birth
+  const currentAge = calculateAge(student.dateOfBirth)
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -55,7 +59,7 @@ export default function PersonalInfoCard({ student }: PersonalInfoCardProps) {
             </div>
             <div>
               <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Date of Birth</label>
-              <p className="text-sm font-medium text-gray-900 mt-1">{formatDate(student.dateOfBirth)} ({student.age} years)</p>
+              <p className="text-sm font-medium text-gray-900 mt-1">{formatDate(student.dateOfBirth)} ({currentAge} years)</p>
             </div>
             <div>
               <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Admission Date</label>

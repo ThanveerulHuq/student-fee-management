@@ -13,7 +13,7 @@ interface Student {
   admissionNo: string
   name: string
   gender: string
-  age: number
+  dateOfBirth: string | Date
   fatherName: string
   mobileNumbers: MobileNumber[]
   isActive: boolean
