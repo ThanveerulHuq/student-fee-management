@@ -9,6 +9,9 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert } from "@/components/ui/alert"
 import { trackLogin, trackLoginFailed } from "@/lib/analytics"
+import { getSchoolConfigFromEnv } from "@/lib/schools/config"
+
+const schoolConfig = getSchoolConfigFromEnv()
 
 export default function LoginPage() {
   const [username, setUsername] = useState("")
@@ -47,7 +50,7 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold">BlueMoon SDMS</CardTitle>
+          <CardTitle className="text-2xl font-bold">{schoolConfig.shortName}</CardTitle>
           <CardDescription>
             School Data Management System
           </CardDescription>
