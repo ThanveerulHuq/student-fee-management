@@ -124,10 +124,10 @@ interface FeeStructure {
 
 export default function FeeStructuresPage() {
   const [structures, setStructures] = useState<FeeStructure[]>([])
-  const [academicYears, setAcademicYears] = useState<AcademicYear[]>([])
-  const [classes, setClasses] = useState<Class[]>([])
-  const [feeTemplates, setFeeTemplates] = useState<FeeTemplate[]>([])
-  const [scholarshipTemplates, setScholarshipTemplates] = useState<ScholarshipTemplate[]>([])
+  const [academicYears] = useState<AcademicYear[]>([])
+  const [classes] = useState<Class[]>([])
+  const [feeTemplates] = useState<FeeTemplate[]>([])
+  const [scholarshipTemplates] = useState<ScholarshipTemplate[]>([])
   const [loading, setLoading] = useState(true)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingStructure, setEditingStructure] = useState<FeeStructure | null>(null)

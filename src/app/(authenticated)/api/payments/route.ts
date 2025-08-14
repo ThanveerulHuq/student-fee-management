@@ -199,7 +199,7 @@ export async function POST(request: NextRequest) {
 
     const updatedFeeStatus = {
       ...enrollment.feeStatus,
-      status: feeStatus as any,
+      status: feeStatus,
       lastPaymentDate: new Date(),
       overdueAmount: Math.max(0, netAmountDue)
     }

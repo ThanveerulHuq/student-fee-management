@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
-import { prisma } from "@/lib/prisma"
-import { generateReceiptNumber, getNextReceiptSequence } from "@/lib/utils/receipt"
+import { db } from "@/lib/database"
+import { generateReceiptNumber, getNextReceiptSequence } from "@/lib/utils/receipt-server"
 import type { Session } from "next-auth"
 import { z } from "zod"
 import { ObjectId } from "mongodb"
 import { FeeStatus, FeeStatusType } from "@/types/enrollment"
 import { PaymentItem } from "@/types/payment"
+import { IStudentEnrollment } from "@/lib/database"
 
 const feePaymentSchema = z.object({
   studentEnrollmentId: z.string(),
@@ -35,10 +36,10 @@ export async function POST(request: NextRequest) {
       createdBy: session?.user?.username,
     })
 
+    await db.connect()
+
     // Get the student enrollment details
-    const enrollment = await prisma.studentEnrollment.findUnique({
-      where: { id: validatedData.studentEnrollmentId }
-    })
+    const enrollment = await db.studentEnrollment.findById(validatedData.studentEnrollmentId).lean();
 
     if (!enrollment) {
       return NextResponse.json(
@@ -52,7 +53,7 @@ export async function POST(request: NextRequest) {
     const paymentItems: PaymentItem[] = []
 
     for (const item of validatedData.paymentItems) {
-      const fee = enrollment.fees.find(f => f.id === item.feeId)
+      const fee = enrollment.fees.find(f: => f.id === item.feeId)
       if (!fee) {
         return NextResponse.json(
           { error: `Fee with id ${item.feeId} not found` },
@@ -91,80 +92,76 @@ export async function POST(request: NextRequest) {
     const sequenceNumber = await getNextReceiptSequence(enrollment.academicYear.year)
     const receiptNo = generateReceiptNumber(enrollment.academicYear.year, sequenceNumber)
 
-    // Update in a transaction
-    const result = await prisma.$transaction(async (tx) => {
-      // Create payment record
-      const payment = await tx.payment.create({
-        data: {
-          receiptNo,
-          studentEnrollmentId: validatedData.studentEnrollmentId,
-          totalAmount: validatedData.totalAmount,
-          paymentDate: validatedData.paymentDate,
-          paymentMethod: validatedData.paymentMethod,
-          remarks: validatedData.remarks,
-          createdBy: validatedData.createdBy,
-          student: enrollment.student,
-          academicYear: enrollment.academicYear,
-          paymentItems
-        }
-      })
-
-      // Update student enrollment fees
-      const updatedFees = enrollment.fees.map(fee => {
-        const paymentItem = validatedData.paymentItems.find(p => p.feeId === fee.id)
-        if (paymentItem) {
-          const newAmountPaid = fee.amountPaid + paymentItem.amount
-          return {
-            ...fee,
-            amountPaid: newAmountPaid,
-            amountDue: fee.amount - newAmountPaid
-          }
-        }
-        return fee
-      })
-
-      // Recalculate totals
-      const feeTotals = {
-        total: updatedFees.reduce((sum, f) => sum + f.amount, 0),
-        paid: updatedFees.reduce((sum, f) => sum + f.amountPaid, 0),
-        due: updatedFees.reduce((sum, f) => sum + f.amountDue, 0)
-      }
-
-      const scholarshipTotals = {
-        applied: enrollment.scholarships.reduce((sum, s) => sum + s.amount, 0),
-      }
-
-      const netTotals = {
-        total: feeTotals.total - scholarshipTotals.applied,
-        paid: feeTotals.paid,
-        due: feeTotals.total - scholarshipTotals.applied - feeTotals.paid
-      }
-
-      const feeStatus: FeeStatus = {
-        status: netTotals.due <= 0 ? FeeStatusType.PAID : netTotals.paid > 0 ? FeeStatusType.PARTIAL : FeeStatusType.OVERDUE,
-        lastPaymentDate: validatedData.paymentDate || new Date(),
-        nextDueDate: enrollment.feeStatus.nextDueDate ?? undefined,
-        overdueAmount: Math.max(0, netTotals.due)
-      }
-
-      // Update student enrollment
-      await tx.studentEnrollment.update({
-        where: { id: validatedData.studentEnrollmentId },
-        data: {
-          fees: updatedFees,
-          totals: {
-            fees: feeTotals,
-            scholarships: scholarshipTotals,
-            netAmount: netTotals
-          },
-          feeStatus
-        }
-      })
-
-      return payment
+    // Create payment record
+    const payment = await db.payment.create({
+      receiptNo,
+      studentEnrollmentId: validatedData.studentEnrollmentId,
+      totalAmount: validatedData.totalAmount,
+      paymentDate: validatedData.paymentDate,
+      paymentMethod: validatedData.paymentMethod,
+      remarks: validatedData.remarks,
+      createdBy: validatedData.createdBy,
+      student: enrollment.student,
+      academicYear: enrollment.academicYear,
+      paymentItems
     })
 
-    return NextResponse.json(result, { status: 201 })
+    // Update student enrollment fees
+    const updatedFees = enrollment.fees.map(fee => {
+      const paymentItem = validatedData.paymentItems.find(p => p.feeId === fee.id)
+      if (paymentItem) {
+        const newAmountPaid = fee.amountPaid + paymentItem.amount
+        return {
+          ...fee,
+          amountPaid: newAmountPaid,
+          amountDue: fee.amount - newAmountPaid
+        }
+      }
+      return fee
+    })
+
+    // Recalculate totals
+    const feeTotals = {
+      total: updatedFees.reduce((sum, f) => sum + f.amount, 0),
+      paid: updatedFees.reduce((sum, f) => sum + f.amountPaid, 0),
+      due: updatedFees.reduce((sum, f) => sum + f.amountDue, 0)
+    }
+
+    const scholarshipTotals = {
+      applied: enrollment.scholarships.reduce((sum, s) => sum + s.amount, 0),
+    }
+
+    const netTotals = {
+      total: feeTotals.total - scholarshipTotals.applied,
+      paid: feeTotals.paid,
+      due: feeTotals.total - scholarshipTotals.applied - feeTotals.paid
+    }
+
+    const feeStatus: FeeStatus = {
+      status: netTotals.due <= 0 ? FeeStatusType.PAID : netTotals.paid > 0 ? FeeStatusType.PARTIAL : FeeStatusType.OVERDUE,
+      lastPaymentDate: validatedData.paymentDate || new Date(),
+      nextDueDate: enrollment.feeStatus.nextDueDate ?? undefined,
+      overdueAmount: Math.max(0, netTotals.due)
+    }
+
+    // Update student enrollment
+    await db.studentEnrollment.findByIdAndUpdate(
+      validatedData.studentEnrollmentId,
+      {
+        fees: updatedFees,
+        totals: {
+          fees: feeTotals,
+          scholarships: scholarshipTotals,
+          netAmount: netTotals
+        },
+        feeStatus
+      },
+      { new: true }
+    )
+
+    const result = payment
+
+    return NextResponse.json(result.toObject(), { status: 201 })
   } catch (error) {
     if (error instanceof Error) {
       return NextResponse.json({ error: error.message }, { status: 400 })

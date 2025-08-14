@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
-import { prisma } from "@/lib/prisma"
+import { db } from "@/lib/database"
 import { z } from "zod"
 
 const reactivateSchema = z.object({
@@ -27,10 +27,10 @@ export async function POST(
     const body = await request.json()
     const { academicYearId, classId } = reactivateSchema.parse(body)
 
+    await db.connect()
+    
     // Check if student exists
-    const existingStudent = await prisma.student.findUnique({
-      where: { id: studentId }
-    })
+    const existingStudent = await db.student.findById(studentId)
 
     if (!existingStudent) {
       return NextResponse.json({ error: "Student not found" }, { status: 404 })
@@ -41,12 +41,10 @@ export async function POST(
     }
 
     // Check for admission number conflicts with other active students
-    const conflictStudent = await prisma.student.findFirst({
-      where: {
-        admissionNo: existingStudent.admissionNo,
-        isActive: true,
-        id: { not: studentId }
-      }
+    const conflictStudent = await db.student.findOne({
+      admissionNo: existingStudent.admissionNo,
+      isActive: true,
+      _id: { $ne: studentId }
     })
 
     if (conflictStudent) {
@@ -62,8 +60,8 @@ export async function POST(
     if (academicYearId && classId) {
       // Check if academic year and class exist
       const [academicYear, classData] = await Promise.all([
-        prisma.academicYear.findUnique({ where: { id: academicYearId } }),
-        prisma.class.findUnique({ where: { id: classId } })
+        db.academicYear.findById(academicYearId),
+        db.class.findById(classId)
       ])
 
       if (!academicYear || !classData) {
@@ -77,13 +75,14 @@ export async function POST(
     }
 
     // Reactivate student
-    const updatedStudent = await prisma.student.update({
-      where: { id: studentId },
-      data: {
+    const updatedStudent = await db.student.findByIdAndUpdate(
+      studentId,
+      {
         isActive: true,
         updatedAt: new Date()
-      }
-    })
+      },
+      { new: true, lean: true }
+    )
 
     return NextResponse.json({
       success: true,

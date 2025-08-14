@@ -9,45 +9,45 @@ import {
   Shield,
   Calendar
 } from "lucide-react"
-import { useAcademicYearNavigation } from "@/contexts/academic-year-context"
+import { useRouter } from "next/navigation"
 
 export default function AdminDashboard() {
-  const { navigateTo } = useAcademicYearNavigation();
+  const router = useRouter();
 
   const adminMenuItems = [
     {
       title: "User Management",
       description: "Manage system users and their roles",
       icon: UserCog,
-      action: () => navigateTo("/admin/users"),
+      action: () => router.push("/admin/users"),
       color: "bg-red-500",
     },
     {
       title: "Academic Years",
       description: "Manage academic year periods and settings",
       icon: Calendar,
-      action: () => navigateTo("/admin/academic-years"),
+      action: () => router.push("/admin/academic-years"),
       color: "bg-blue-500",
     },
     {
       title: "Fee Templates",
       description: "Manage fee types and categories",
       icon: Layers,
-      action: () => navigateTo("/admin/fee-templates"),
+      action: () => router.push("/admin/fee-templates"),
       color: "bg-teal-500",
     },
     {
       title: "Scholarship Templates",
       description: "Manage scholarship types and categories",
       icon: Award,
-      action: () => navigateTo("/admin/scholarship-templates"),
+      action: () => router.push("/admin/scholarship-templates"),
       color: "bg-yellow-500",
     },
     {
       title: "Fee Structures",
       description: "Configure fee structures per class and year",
       icon: Settings,
-      action: () => navigateTo("/admin/fee-structures"),
+      action: () => router.push("/admin/fee-structures"),
       color: "bg-slate-500",
     }
   ]

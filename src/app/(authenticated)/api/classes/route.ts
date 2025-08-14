@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
-import { prisma } from "@/lib/prisma"
+import { db } from "@/lib/database"
 
 export async function GET(request: NextRequest) {
   try {
@@ -10,15 +10,17 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
+    await db.connect()
+
     const { searchParams } = new URL(request.url)
     const activeOnly = searchParams.get("active") === "true"
 
-    const where = activeOnly ? { isActive: true } : {}
+    const filter = activeOnly ? { isActive: true } : {}
 
-    const classes = await prisma.class.findMany({
-      where,
-      orderBy: { order: "asc" },
-    })
+    const classes = await db.class
+      .find(filter)
+      .sort({ order: 1 })
+      .lean()
 
     return NextResponse.json(classes)
   } catch (error) {
@@ -37,6 +39,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
+    await db.connect()
+
     const body = await request.json()
     const { className, order, isActive } = body
 
@@ -49,9 +53,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if class name already exists
-    const existingClass = await prisma.class.findUnique({
-      where: { className },
-    })
+    const existingClass = await db.class.findOne({ className })
 
     if (existingClass) {
       return NextResponse.json(
@@ -61,9 +63,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if order already exists
-    const existingOrder = await prisma.class.findUnique({
-      where: { order },
-    })
+    const existingOrder = await db.class.findOne({ order })
 
     if (existingOrder) {
       return NextResponse.json(
@@ -72,12 +72,10 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const classRecord = await prisma.class.create({
-      data: {
-        className,
-        order,
-        isActive: isActive !== false, // Default to true
-      },
+    const classRecord = await db.class.create({
+      className,
+      order,
+      isActive: isActive !== false, // Default to true
     })
 
     return NextResponse.json(classRecord, { status: 201 })

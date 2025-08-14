@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
-import { prisma } from '@/lib/prisma'
+import { db } from '@/lib/database'
 import { authOptions } from '@/lib/auth'
 
 // GET /api/payments/[id] - Get specific payment
@@ -15,9 +15,7 @@ export async function GET(
     }
 
     const resolvedParams = await params
-    const payment = await prisma.payment.findUnique({
-      where: { id: resolvedParams.id }
-    })
+    const payment = await db.payment.findById(resolvedParams.id).lean()
 
     if (!payment) {
       return NextResponse.json(
@@ -48,9 +46,7 @@ export async function DELETE(
     }
 
     const resolvedParams = await params
-    const payment = await prisma.payment.findUnique({
-      where: { id: resolvedParams.id }
-    })
+    const payment = await db.payment.findById(resolvedParams.id).lean()
 
     if (!payment) {
       return NextResponse.json(
@@ -67,9 +63,7 @@ export async function DELETE(
     }
 
     // Get student enrollment to reverse payment effects
-    const enrollment = await prisma.studentEnrollment.findUnique({
-      where: { id: payment.studentEnrollmentId }
-    })
+    const enrollment = await db.studentEnrollment.findById(payment.studentEnrollmentId)
 
     if (!enrollment) {
       return NextResponse.json(
@@ -131,11 +125,11 @@ export async function DELETE(
 
     // Update payment status and student enrollment
     await Promise.all([
-      prisma.payment.update({
+      db.payment.update({
         where: { id: resolvedParams.id },
         data: { status: 'CANCELLED' }
       }),
-      prisma.studentEnrollment.update({
+      db.studentEnrollment.update({
         where: { id: payment.studentEnrollmentId },
         data: {
           fees: updatedFees,

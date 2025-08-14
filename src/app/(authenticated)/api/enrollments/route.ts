@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
-import { prisma } from '@/lib/prisma'
+import { db } from '@/lib/database'
 import { authOptions } from '@/lib/auth'
 import { ObjectId } from 'mongodb'
+import type { FeeItem as FeeItemType, MobileNumber } from '@/lib/types'
 
 // GET /api/enrollments - List enrollments with fee structure
 export async function GET(request: NextRequest) {
@@ -11,6 +12,8 @@ export async function GET(request: NextRequest) {
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+
+    await db.connect()
 
     const { searchParams } = new URL(request.url)
     const academicYearId = searchParams.get('academicYearId')
@@ -24,34 +27,39 @@ export async function GET(request: NextRequest) {
 
     const skip = limit ? (page - 1) * limit : 0
 
-    const whereClause: Record<string, unknown> = {}
+    const filter: {
+      isActive?: boolean;
+      academicYearId?: string;
+      classId?: string;
+      studentId?: string;
+      $or?: Array<Record<string, unknown>>;
+    } = {}
     
     // Only filter by active status if includeInactive is false
     if (!includeInactive) {
-      whereClause.isActive = true
+      filter.isActive = true
     }
-    if (academicYearId) whereClause.academicYearId = academicYearId
-    if (classId) whereClause.classId = classId
-    if (studentId) whereClause.studentId = studentId
+    if (academicYearId) filter.academicYearId = academicYearId
+    if (classId) filter.classId = classId
+    if (studentId) filter.studentId = studentId
     
     // Add search functionality
     if (search) {
-      whereClause.OR = [
-        { student: { is: { name: { contains: search, mode: 'insensitive' } } } },
-        { student: { is: { admissionNumber: { contains: search, mode: 'insensitive' } } } },
-        { class: { is: { className: { contains: search, mode: 'insensitive' } } } },
-        { section: { contains: search, mode: 'insensitive' } }
+      filter.$or = [
+        { 'student.name': { $regex: search, $options: 'i' } },
+        { 'student.admissionNumber': { $regex: search, $options: 'i' } },
+        { 'class.className': { $regex: search, $options: 'i' } },
+        { section: { $regex: search, $options: 'i' } }
       ]
     }
 
+    const query = db.studentEnrollment.find(filter).sort({ createdAt: -1 })
+    if (skip) query.skip(skip)
+    if (limit) query.limit(limit)
+
     const [enrollments, total] = await Promise.all([
-      prisma.studentEnrollment.findMany({
-        where: whereClause,
-        skip,
-        ...(limit ? { take: limit } : {}),
-        orderBy: { createdAt: 'desc' }
-      }),
-      prisma.studentEnrollment.count({ where: whereClause })
+      query.lean(),
+      db.studentEnrollment.countDocuments(filter)
     ])
 
     return NextResponse.json({
@@ -80,6 +88,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    await db.connect()
+
     const body = await request.json()
     const { 
       studentId, 
@@ -99,13 +109,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if student is already enrolled for this academic year
-    const existingEnrollment = await prisma.studentEnrollment.findUnique({
-      where: {
-        studentId_academicYearId: {
-          studentId,
-          academicYearId
-        }
-      }
+    const existingEnrollment = await db.studentEnrollment.findOne({
+      studentId,
+      academicYearId
     })
 
     if (existingEnrollment) {
@@ -116,13 +122,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Get fee structure for the academic year and class
-    const feeStructure = await prisma.feeStructure.findUnique({
-      where: {
-        academicYearId_classId: {
-          academicYearId,
-          classId
-        }
-      }
+    const feeStructure = await db.feeStructure.findOne({
+      academicYearId,
+      classId
     })
 
     if (!feeStructure || !feeStructure.isActive) {
@@ -134,9 +136,9 @@ export async function POST(request: NextRequest) {
 
     // Get student, academic year, and class info for denormalization
     const [student, academicYear, classInfo] = await Promise.all([
-      prisma.student.findUnique({ where: { id: studentId } }),
-      prisma.academicYear.findUnique({ where: { id: academicYearId } }),
-      prisma.class.findUnique({ where: { id: classId } })
+      db.student.findById(studentId),
+      db.academicYear.findById(academicYearId),
+      db.class.findById(classId)
     ])
 
     if (!student || !academicYear || !classInfo) {
@@ -147,18 +149,18 @@ export async function POST(request: NextRequest) {
     }
 
     // Create student fees from fee structure
-    const studentFees = feeStructure.feeItems.map((feeItem, _) => {
+    const studentFees = feeStructure.feeItems.map((feeItem: FeeItemType, _index: number) => {
       const customAmount = customFees[feeItem.templateId]
       const finalAmount = (customAmount !== undefined && feeItem.isEditableDuringEnrollment) 
         ? customAmount 
         : feeItem.amount
 
       return {
-        id: new ObjectId().toString(),
-        feeItemId: feeItem.id,
+        _id: new ObjectId().toString(),
+        feeItemId: feeItem._id || feeItem.templateId,
         templateId: feeItem.templateId,
         templateName: feeItem.templateName,
-        templateCategory: feeItem.templateCategory as any,
+        templateCategory: feeItem.templateCategory,
         amount: finalAmount,
         originalAmount: feeItem.amount,
         amountPaid: 0,
@@ -182,11 +184,11 @@ export async function POST(request: NextRequest) {
         // Only add the scholarship if the final amount is greater than 0
         if (finalAmount > 0) {
           studentScholarships.push({
-            id: new ObjectId().toString(),
-            scholarshipItemId: scholarshipItem.id,
+            _id: new ObjectId().toString(),
+            scholarshipItemId: scholarshipItem._id || scholarshipItem.templateId,
             templateId: scholarshipItem.templateId,
             templateName: scholarshipItem.templateName,
-            templateType: scholarshipItem.templateType as any,
+            templateType: scholarshipItem.templateType,
             amount: finalAmount,
             originalAmount: scholarshipItem.amount,
             appliedDate: new Date(),
@@ -200,9 +202,9 @@ export async function POST(request: NextRequest) {
 
     // Calculate totals
     const feeTotals = {
-      total: studentFees.reduce((sum, f) => sum + f.amount, 0),
+      total: studentFees.reduce((sum: number, f: { amount: number }) => sum + f.amount, 0),
       paid: 0,
-      due: studentFees.reduce((sum, f) => sum + f.amount, 0)
+      due: studentFees.reduce((sum: number, f: { amount: number }) => sum + f.amount, 0)
     }
 
     const scholarshipTotals = {
@@ -216,56 +218,54 @@ export async function POST(request: NextRequest) {
     }
 
     // Create student enrollment
-    const enrollment = await prisma.studentEnrollment.create({
-      data: {
-        studentId,
-        academicYearId,
-        classId,
-        section,
-        enrollmentDate: new Date(),
-        isActive: true,
-        
-        // Embedded student info
-        student: {
-          admissionNumber: student.admissionNo,
-          name: student.name,
-          fatherName: student.fatherName,
-          mobileNo: student.mobileNumbers?.find(m => m.isPrimary)?.number || student.mobileNumbers?.[0]?.number || '',
-          status: 'ACTIVE'
-        },
-        
-        // Embedded academic year info
-        academicYear: {
-          year: academicYear.year,
-          startDate: academicYear.startDate,
-          endDate: academicYear.endDate,
-          isActive: academicYear.isActive
-        },
-        
-        // Embedded class info
-        class: {
-          className: classInfo.className,
-          isActive: classInfo.isActive
-        },
-        
-        // Student fees
-        fees: studentFees,
-        
-        // Student scholarships
-        scholarships: studentScholarships,
-        
-        // Pre-computed totals
-        totals: {
-          fees: feeTotals,
-          scholarships: scholarshipTotals,
-          netAmount: netTotals
-        },
-        
-        // Fee status
-        feeStatus: {
-          status: (netTotals.due > 0 ? 'PARTIAL' : 'PAID') as any,
-          overdueAmount: 0
-        }
+    const enrollment = await db.studentEnrollment.create({
+      studentId,
+      academicYearId,
+      classId,
+      section,
+      enrollmentDate: new Date(),
+      isActive: true,
+      
+      // Embedded student info
+      student: {
+        admissionNumber: student.admissionNo,
+        name: student.name,
+        fatherName: student.fatherName,
+        mobileNo: student.mobileNumbers?.find((m: MobileNumber) => m.isPrimary)?.number || student.mobileNumbers?.[0]?.number || '',
+        status: 'ACTIVE'
+      },
+      
+      // Embedded academic year info
+      academicYear: {
+        year: academicYear.year,
+        startDate: academicYear.startDate,
+        endDate: academicYear.endDate,
+        isActive: academicYear.isActive
+      },
+      
+      // Embedded class info
+      class: {
+        className: classInfo.className,
+        isActive: classInfo.isActive
+      },
+      
+      // Student fees
+      fees: studentFees,
+      
+      // Student scholarships
+      scholarships: studentScholarships,
+      
+      // Pre-computed totals
+      totals: {
+        fees: feeTotals,
+        scholarships: scholarshipTotals,
+        netAmount: netTotals
+      },
+      
+      // Fee status
+      feeStatus: {
+        status: (netTotals.due > 0 ? 'PARTIAL' : 'PAID'),
+        overdueAmount: 0
       }
     })
 

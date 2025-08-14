@@ -1,25 +1,24 @@
 // Utility functions for receipt generation and fee calculations
-import { prisma } from "@/lib/prisma"
+import { db } from "@/lib/database"
 
 export function generateReceiptNumber(academicYear: string, sequenceNumber: number): string {
   return `${academicYear}-${sequenceNumber}`
 }
 
 export async function getNextReceiptSequence(academicYear: string): Promise<number> {
-  const result = await prisma.receiptSequence.upsert({
-    where: { academicYear },
-    create: {
-      academicYear,
-      lastSequence: 1
-    },
-    update: {
-      lastSequence: {
-        increment: 1
-      }
-    }
-  })
+  await db.connect()
   
-  return result.lastSequence
+  const result = await db.receiptSequence.findOneAndUpdate(
+    { academicYear },
+    { $inc: { lastSequence: 1 } },
+    { 
+      new: true, 
+      upsert: true,
+      setDefaultsOnInsert: true
+    }
+  )
+  
+  return result?.lastSequence || 1
 }
 
 

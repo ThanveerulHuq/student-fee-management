@@ -17,12 +17,12 @@ interface EnrollmentHeaderProps {
   onBack: () => void
 }
 
-const statusColors = {
-  PAID: 'bg-green-100 text-green-800 border-green-200',
-  PARTIAL: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-  OVERDUE: 'bg-red-100 text-red-800 border-red-200',
-  WAIVED: 'bg-gray-100 text-gray-800 border-gray-200'
-}
+// const statusColors = {
+//   PAID: 'bg-green-100 text-green-800 border-green-200',
+//   PARTIAL: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+//   OVERDUE: 'bg-red-100 text-red-800 border-red-200',
+//   WAIVED: 'bg-gray-100 text-gray-800 border-gray-200'
+// }
 
 export default function EnrollmentHeader({
   enrollment,

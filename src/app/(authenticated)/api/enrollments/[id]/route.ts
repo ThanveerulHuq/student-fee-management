@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
-import { prisma } from '@/lib/prisma'
+import { db } from '@/lib/database'
 import { authOptions } from '@/lib/auth'
 import { ObjectId } from 'mongodb'
 
@@ -16,9 +16,10 @@ export async function GET(
     }
 
     const resolvedParams = await params
-    const enrollment = await prisma.studentEnrollment.findUnique({
-      where: { id: resolvedParams.id },
-    })
+    
+    await db.connect()
+    
+    const enrollment = await db.studentEnrollment.findById(resolvedParams.id).lean()
 
 
 
@@ -30,11 +31,9 @@ export async function GET(
       )
     }
 
-    const payments = await prisma.payment.findMany({
-      where: {
-        studentEnrollmentId: resolvedParams.id
-      }
-    })
+    const payments = await db.payment.find({
+      studentEnrollmentId: resolvedParams.id
+    }).lean()
 
 
     return NextResponse.json({
@@ -80,10 +79,10 @@ export async function PUT(
       )
     }
 
+    await db.connect()
+
     // Check if enrollment exists
-    const existingEnrollment = await prisma.studentEnrollment.findUnique({
-      where: { id: resolvedParams.id }
-    })
+    const existingEnrollment = await db.studentEnrollment.findById(resolvedParams.id).lean()
 
     if (!existingEnrollment) {
       return NextResponse.json(
@@ -93,14 +92,10 @@ export async function PUT(
     }
 
     // Get fee structure for the academic year and class
-    const feeStructure = await prisma.feeStructure.findUnique({
-      where: {
-        academicYearId_classId: {
-          academicYearId: existingEnrollment.academicYearId,
-          classId: classId
-        }
-      }
-    })
+    const feeStructure = await db.feeStructure.findOne({
+      academicYearId: existingEnrollment.academicYearId,
+      classId: classId
+    }).lean()
 
     if (!feeStructure || !feeStructure.isActive) {
       return NextResponse.json(
@@ -112,7 +107,7 @@ export async function PUT(
     // Get class info for denormalization (if class changed)
     let classInfo = existingEnrollment.class
     if (classId !== existingEnrollment.classId) {
-      const newClassInfo = await prisma.class.findUnique({ where: { id: classId } })
+      const newClassInfo = await db.class.findById(classId).lean()
       if (!newClassInfo) {
         return NextResponse.json(
           { error: 'Invalid class' },
@@ -142,7 +137,7 @@ export async function PUT(
         feeItemId: feeItem.id,
         templateId: feeItem.templateId,
         templateName: feeItem.templateName,
-        templateCategory: feeItem.templateCategory as any,
+        templateCategory: feeItem.templateCategory,
         amount: finalAmount,
         originalAmount: feeItem.amount,
         amountPaid,
@@ -176,7 +171,7 @@ export async function PUT(
           scholarshipItemId: scholarshipItem.id,
           templateId: scholarshipItem.templateId,
           templateName: scholarshipItem.templateName,
-          templateType: scholarshipItem.templateType as any,
+          templateType: scholarshipItem.templateType,
           amount: finalAmount,
           originalAmount: scholarshipItem.amount,
           appliedDate: existingScholarship?.appliedDate || new Date(),
@@ -213,9 +208,9 @@ export async function PUT(
     }
 
     // Update enrollment with rebuilt data
-    const updatedEnrollment = await prisma.studentEnrollment.update({
-      where: { id: resolvedParams.id },
-      data: {
+    const updatedEnrollment = await db.studentEnrollment.findByIdAndUpdate(
+      resolvedParams.id,
+      {
         classId,
         class: classInfo,
         section,
@@ -229,8 +224,9 @@ export async function PUT(
         feeStatus,
         isActive,
         updatedAt: new Date()
-      }
-    })
+      },
+      { new: true, lean: true }
+    )
 
     return NextResponse.json(updatedEnrollment)
   } catch (error) {
@@ -255,10 +251,10 @@ export async function DELETE(
 
     const resolvedParams = await params
     
+    await db.connect()
+
     // Check if enrollment exists
-    const existingEnrollment = await prisma.studentEnrollment.findUnique({
-      where: { id: resolvedParams.id }
-    })
+    const existingEnrollment = await db.studentEnrollment.findById(resolvedParams.id).lean()
 
     if (!existingEnrollment) {
       return NextResponse.json(
@@ -268,16 +264,14 @@ export async function DELETE(
     }
 
     // Mark as inactive instead of hard delete
-    const updatedEnrollment = await prisma.studentEnrollment.update({
-      where: { id: resolvedParams.id },
-      data: { 
+    const updatedEnrollment = await db.studentEnrollment.findByIdAndUpdate(
+      resolvedParams.id,
+      { 
         isActive: false,
-        student: {
-          ...existingEnrollment.student,
-          status: 'INACTIVE'
-        }
-      }
-    })
+        'student.status': 'INACTIVE'
+      },
+      { new: true, lean: true }
+    )
 
     return NextResponse.json({
       message: 'Enrollment deactivated successfully',
@@ -305,10 +299,10 @@ export async function POST(
 
     const resolvedParams = await params
     
+    await db.connect()
+
     // Check if enrollment exists
-    const existingEnrollment = await prisma.studentEnrollment.findUnique({
-      where: { id: resolvedParams.id }
-    })
+    const existingEnrollment = await db.studentEnrollment.findById(resolvedParams.id).lean()
 
     if (!existingEnrollment) {
       return NextResponse.json(
@@ -318,16 +312,14 @@ export async function POST(
     }
 
     // Reactivate enrollment and update student status
-    const updatedEnrollment = await prisma.studentEnrollment.update({
-      where: { id: resolvedParams.id },
-      data: { 
+    const updatedEnrollment = await db.studentEnrollment.findByIdAndUpdate(
+      resolvedParams.id,
+      { 
         isActive: true,
-        student: {
-          ...existingEnrollment.student,
-          status: 'ACTIVE'
-        }
-      }
-    })
+        'student.status': 'ACTIVE'
+      },
+      { new: true, lean: true }
+    )
 
     return NextResponse.json({
       message: 'Enrollment reactivated successfully',

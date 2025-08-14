@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { prisma } from "@/lib/prisma"
+import { db } from "@/lib/database"
 
 export async function GET(
   request: NextRequest,
@@ -9,33 +9,31 @@ export async function GET(
     const params = await context.params
     const paymentId = params.id
 
+    await db.connect()
+    
     // Get payment record with minimal data
-    const payment = await prisma.payment.findUnique({
-      where: { id: paymentId }
-    })
+    const payment = await db.payment.findById(paymentId).lean()
 
     if (!payment) {
       return NextResponse.json({ error: "Receipt not found" }, { status: 404 })
     }
 
     // Get student enrollment for basic info
-    const enrollment = await prisma.studentEnrollment.findUnique({
-      where: { id: payment.studentEnrollmentId }
-    })
+    const enrollment = await db.studentEnrollment.findById(payment.studentEnrollmentId).lean()
 
     if (!enrollment) {
       return NextResponse.json({ error: "Student enrollment not found" }, { status: 404 })
     }
 
     // get recent payments before this payment
-    const recentPayments = await prisma.payment.findMany({
-      where: {
+    const recentPayments = await db.payment
+      .find({
         studentEnrollmentId: payment.studentEnrollmentId,
-        paymentDate: { lt: payment.paymentDate }
-      },
-      orderBy: { paymentDate: 'desc' },
-      take: 5
-    })
+        paymentDate: { $lt: payment.paymentDate }
+      })
+      .sort({ paymentDate: -1 })
+      .limit(5)
+      .lean()
 
     // Prepare complete receipt data (same as authenticated API)
     const receiptData = {

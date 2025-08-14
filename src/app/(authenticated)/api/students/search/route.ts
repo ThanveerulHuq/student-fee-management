@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
-import { prisma } from "@/lib/prisma"
+import { db } from "@/lib/database"
 
 export async function GET(request: NextRequest) {
   try {
@@ -9,6 +9,8 @@ export async function GET(request: NextRequest) {
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
+
+    await db.connect()
 
     const { searchParams } = new URL(request.url)
     const query = searchParams.get("q") || ""
@@ -21,28 +23,28 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    const students = await prisma.student.findMany({
-      where: {
-        AND: [
+    const students = await db.student
+      .find({
+        $and: [
           { isActive: true },
           {
-            OR: [
-              { name: { contains: query, mode: "insensitive" } },
-              { admissionNo: { contains: query, mode: "insensitive" } },
-              { fatherName: { contains: query, mode: "insensitive" } },
+            $or: [
+              { name: { $regex: query, $options: "i" } },
+              { admissionNo: { $regex: query, $options: "i" } },
+              { fatherName: { $regex: query, $options: "i" } },
             ]
           }
         ]
-      },
-      select: {
-        id: true,
-        name: true,
-        admissionNo: true,
-        fatherName: true,
-      },
-      take: limit,
-      orderBy: { name: "asc" },
-    })
+      })
+      .select({
+        _id: 1,
+        name: 1,
+        admissionNo: 1,
+        fatherName: 1,
+      })
+      .limit(limit)
+      .sort({ name: 1 })
+      .lean()
 
     return NextResponse.json({
       students,

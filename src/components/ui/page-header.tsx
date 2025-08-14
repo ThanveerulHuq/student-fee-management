@@ -77,7 +77,7 @@ export default function PageHeader({
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => router.push('/select-academic-year')}
+                onClick={() => router.push('/dashboard')}
                 className="text-sm"
               >
                 Change Year

@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
 import { DateRangePicker } from "@/components/ui/date-range-picker"
-import { BarChart, Table, Calendar, TrendingUp, DollarSign, CreditCard, BarChart3, Download } from "lucide-react"
+import { BarChart, Table, DollarSign, CreditCard, BarChart3, Download } from "lucide-react"
 import { useAcademicYear } from "@/contexts/academic-year-context"
 import { formatCurrency, formatNumber } from "@/lib/format"
 import {
@@ -98,11 +98,11 @@ export default function TransactionAnalytics() {
     return colors[method] || "#6b7280"
   }
 
-  const resetFilters = () => {
-    setDateRange(undefined)
-    setGroupBy("month")
-    setViewMode("chart")
-  }
+  // const resetFilters = () => {
+  //   setDateRange(undefined)
+  //   setGroupBy("month")
+  //   setViewMode("chart")
+  // }
 
   const exportToCSV = async () => {
     if (!data) return

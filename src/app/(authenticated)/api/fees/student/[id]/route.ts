@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
-import { prisma } from "@/lib/prisma"
+import { db } from "@/lib/database"
 
 export async function GET(
   request: NextRequest,
@@ -16,11 +16,13 @@ export async function GET(
     const params = await context.params
     const studentId = params.id
 
+    await db.connect()
+    
     // Get all enrollments for the student using the new StudentEnrollment model
-    const enrollments = await prisma.studentEnrollment.findMany({
-      where: { studentId },
-      orderBy: { enrollmentDate: "desc" }
-    })
+    const enrollments = await db.studentEnrollment
+      .find({ studentId })
+      .sort({ enrollmentDate: -1 })
+      .lean()
 
     if (enrollments.length === 0) {
       return NextResponse.json(
@@ -30,13 +32,13 @@ export async function GET(
     }
 
     // Get recent payments for this student
-    const recentPayments = await prisma.payment.findMany({
-      where: {
-        studentEnrollmentId: { in: enrollments.map(e => e.id) }
-      },
-      orderBy: { paymentDate: "desc" },
-      take: 10
-    })
+    const recentPayments = await db.payment
+      .find({
+        studentEnrollmentId: { $in: enrollments.map(e => e.id) }
+      })
+      .sort({ paymentDate: -1 })
+      .limit(10)
+      .lean()
 
     // Transform enrollments to match expected response format
     const enrollmentsWithSummary = enrollments.map((enrollment) => ({

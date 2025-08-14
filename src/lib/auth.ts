@@ -1,9 +1,7 @@
 import CredentialsProvider from "next-auth/providers/credentials"
 import bcrypt from "bcryptjs"
-import { PrismaClient } from "../generated/prisma"
+import { db } from "./database"
 import { NextAuthOptions } from "next-auth"
-
-const prisma = new PrismaClient()
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -19,10 +17,10 @@ export const authOptions: NextAuthOptions = {
         }
 
         try {
-          const user = await prisma.user.findUnique({
-            where: {
-              username: credentials.username
-            }
+          await db.connect()
+          
+          const user = await db.user.findOne({
+            username: credentials.username
           })
 
           if (!user || !user.isActive) {
@@ -36,13 +34,12 @@ export const authOptions: NextAuthOptions = {
           }
 
           // Update last login
-          await prisma.user.update({
-            where: { id: user.id },
-            data: { lastLogin: new Date() }
+          await db.user.findByIdAndUpdate(user._id, {
+            lastLogin: new Date()
           })
 
           return {
-            id: user.id,
+            id: user._id.toString(),
             username: user.username,
             email: user.email,
             role: user.role,

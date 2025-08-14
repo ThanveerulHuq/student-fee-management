@@ -1,7 +1,8 @@
 "use client"
 
 import { useState, useEffect, Suspense } from "react"
-import { useAcademicYear, useAcademicYearNavigation } from "@/contexts/academic-year-context"
+import { useRouter } from "next/navigation"
+import { useAcademicYear } from "@/contexts/academic-year-context"
 
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -23,8 +24,8 @@ interface Student {
 }
 
 function EnrollSearchContent() {
+  const router = useRouter()
   const { academicYear } = useAcademicYear()
-  const { navigateTo } = useAcademicYearNavigation()
   
   // Student search state
   const [students, setStudents] = useState<Student[]>([])
@@ -73,7 +74,7 @@ function EnrollSearchContent() {
   }
 
   const handleStudentSelect = (student: Student) => {
-    navigateTo(`/enrollments/enroll/${student.id}`)
+    router.push(`/enrollments/enroll/${student.id}`)
   }
 
   if (!academicYear) {

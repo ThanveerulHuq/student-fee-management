@@ -20,7 +20,6 @@ import {
 } from "lucide-react"
 import { StudentEnrollment } from '@/types/enrollment'
 
-import { formatCurrency } from "@/lib/format"
 interface EnrollmentOverviewCardProps {
   enrollment: StudentEnrollment
   onEdit?: () => void
@@ -31,9 +30,9 @@ export default function EnrollmentOverviewCard({ enrollment, onEdit }: Enrollmen
     return new Date(date).toLocaleDateString("en-IN")
   }
 
-  const formatDateTime = (date: Date) => {
-    return new Date(date).toLocaleString("en-IN")
-  }
+  // const formatDateTime = (date: Date) => {
+  //   return new Date(date).toLocaleString("en-IN")
+  // }
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">

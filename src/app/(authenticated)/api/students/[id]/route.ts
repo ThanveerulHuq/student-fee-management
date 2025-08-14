@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
-import { prisma } from "@/lib/prisma"
+import { db } from "@/lib/database"
 import { studentUpdateSchema } from "@/lib/validations/student"
-import { Gender } from "@/generated/prisma"
+import { Gender } from "@/lib/types"
 
 export async function GET(
   request: NextRequest,
@@ -15,27 +15,28 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
+    await db.connect()
+
     const params = await context.params
-    const student = await prisma.student.findUnique({
-      where: { id: params.id },
-      include: {
-        documents: true,
-      },
-    })
+    const student = await db.student.findById(params.id).lean()
 
     if (!student) {
       return NextResponse.json({ error: "Student not found" }, { status: 404 })
     }
 
+    // Get documents
+    const documents = await db.document.find({ studentId: params.id }).lean()
+
     // Get enrollments using the new StudentEnrollment schema
-    const enrollments = await prisma.studentEnrollment.findMany({
-      where: { studentId: params.id },
-      orderBy: { enrollmentDate: 'desc' },
-    })
+    const enrollments = await db.studentEnrollment
+      .find({ studentId: params.id })
+      .sort({ enrollmentDate: -1 })
+      .lean()
 
     // Combine student data with enrollments
     const studentWithEnrollments = {
       ...student,
+      documents,
       enrollments,
     }
 
@@ -59,14 +60,14 @@ export async function PUT(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
+    await db.connect()
+
     const body = await request.json()
     const validatedData = studentUpdateSchema.parse(body)
 
     const params = await context.params
     // Check if student exists
-    const existingStudent = await prisma.student.findUnique({
-      where: { id: params.id },
-    })
+    const existingStudent = await db.student.findById(params.id)
 
     if (!existingStudent) {
       return NextResponse.json({ error: "Student not found" }, { status: 404 })
@@ -74,8 +75,8 @@ export async function PUT(
 
     // If admission number is being updated, check for duplicates
     if (validatedData.admissionNo && validatedData.admissionNo !== existingStudent.admissionNo) {
-      const duplicateStudent = await prisma.student.findUnique({
-        where: { admissionNo: validatedData.admissionNo },
+      const duplicateStudent = await db.student.findOne({
+        admissionNo: validatedData.admissionNo,
       })
 
       if (duplicateStudent) {
@@ -86,8 +87,7 @@ export async function PUT(
       }
     }
 
-
-    // Calculate age if date of birth is updated and convert date strings to Date objects
+    // Convert date strings to Date objects
     const updateData: Record<string, unknown> = { 
       ...validatedData,
       ...(validatedData.gender && { gender: validatedData.gender as Gender })
@@ -99,12 +99,12 @@ export async function PUT(
     if (validatedData.admissionDate) {
       updateData.admissionDate = new Date(validatedData.admissionDate)
     }
-    
 
-    const student = await prisma.student.update({
-      where: { id: params.id },
-      data: updateData,
-    })
+    const student = await db.student.findByIdAndUpdate(
+      params.id,
+      updateData,
+      { new: true, lean: true }
+    )
 
     return NextResponse.json(student)
   } catch (error) {
@@ -129,12 +129,15 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
+    await db.connect()
+
     const params = await context.params
     // Soft delete by setting isActive to false
-    const student = await prisma.student.update({
-      where: { id: params.id },
-      data: { isActive: false },
-    })
+    const student = await db.student.findByIdAndUpdate(
+      params.id,
+      { isActive: false },
+      { new: true, lean: true }
+    )
 
     return NextResponse.json(student)
   } catch (error) {

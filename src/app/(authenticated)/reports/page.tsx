@@ -9,11 +9,11 @@ import {
   Download,
   Calendar
 } from "lucide-react"
-import { useAcademicYearNavigation } from "@/contexts/academic-year-context"
+import { useRouter } from "next/navigation"
 import SecondaryHeader from "@/components/ui/secondary-header"
 
 export default function ReportsPage() {
-  const { navigateTo } = useAcademicYearNavigation()
+  const router = useRouter()
 
   const reportTypes = [
     {
@@ -71,7 +71,7 @@ export default function ReportsPage() {
                 <Card 
                   key={report.title}
                   className="cursor-pointer hover:shadow-lg transition-shadow duration-200"
-                  onClick={() => navigateTo(report.href)}
+                  onClick={() => router.push(report.href)}
                 >
                   <CardHeader>
                     <div className="flex items-center space-x-3 mb-3">

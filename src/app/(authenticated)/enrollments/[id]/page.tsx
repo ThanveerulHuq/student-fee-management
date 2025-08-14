@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
-import { useAcademicYearNavigation } from "@/contexts/academic-year-context"
 import LoaderWrapper from "@/components/ui/loader-wrapper"
 import { toast } from "sonner"
 import EnrollmentHeader from "../_components/details/enrollment-header"
@@ -21,7 +20,6 @@ interface EnrollmentDetailPageProps {
 export default function EnrollmentDetailPage({ params }: EnrollmentDetailPageProps) {
   const { data: session, status } = useSession()
   const router = useRouter()
-  const { navigateTo } = useAcademicYearNavigation()
   const [enrollmentId, setEnrollmentId] = useState<string | null>(null)
 
   useEffect(() => {
@@ -79,8 +77,8 @@ export default function EnrollmentDetailPage({ params }: EnrollmentDetailPagePro
     <div className="min-h-screen bg-gray-50/30">
       <EnrollmentHeader
         enrollment={enrollment}
-        onEdit={() => navigateTo(`/enrollments/edit/${enrollmentId}`)}
-        onCollectFees={() => navigateTo(`/fees/collect/${enrollmentId}`)}
+        onEdit={() => router.push(`/enrollments/edit/${enrollmentId}`)}
+        onCollectFees={() => router.push(`/fees/collect/${enrollmentId}`)}
         onBack={() => router.back()}
       />
         <EnrollmentDetailsSection enrollment={enrollment} />

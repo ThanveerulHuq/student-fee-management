@@ -20,7 +20,7 @@ import { Calendar as CalendarComponent } from '@/components/ui/calendar'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { format } from 'date-fns'
 import { cn } from '@/lib/utils'
-import { createAcademicYearSchema, updateAcademicYearSchema, CreateAcademicYearFormData, UpdateAcademicYearFormData } from '@/lib/validations/academic-year'
+import { createAcademicYearSchema, updateAcademicYearSchema } from '@/lib/validations/academic-year'
 
 interface AcademicYear {
   id: string
@@ -101,7 +101,7 @@ export default function AcademicYearsPage() {
     } catch (err) {
       console.error(err)
       if (err instanceof Error && 'issues' in err) {
-        const zodError = err as any
+        const zodError = err as { issues: Array<{ message: string }> }
         toast.error(zodError.issues[0]?.message || 'Validation error')
       } else {
         toast.error('Error saving academic year')

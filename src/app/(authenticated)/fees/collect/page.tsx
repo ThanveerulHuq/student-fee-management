@@ -4,7 +4,8 @@ import { useState, useEffect, useCallback } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { AlertTriangle, CreditCard } from 'lucide-react'
-import { useAcademicYear, useAcademicYearNavigation } from '@/contexts/academic-year-context'
+import { useRouter } from 'next/navigation'
+import { useAcademicYear } from '@/contexts/academic-year-context'
 import LoaderWrapper from '@/components/ui/loader-wrapper'
 import { StudentEnrollmentBasic } from '@/types/enrollment'
 import StudentSearch from '../_components/student-search'
@@ -12,8 +13,8 @@ import StudentEnrollmentCard from '../_components/student-enrollment-card'
 import EmptyState from '../_components/empty-states'
 
 export default function CollectFeePage() {
+  const router = useRouter()
   const { academicYear } = useAcademicYear()
-  const { navigateTo } = useAcademicYearNavigation()
   const [enrollments, setEnrollments] = useState<StudentEnrollmentBasic[]>([])
   const [filteredEnrollments, setFilteredEnrollments] = useState<StudentEnrollmentBasic[]>([])
   const [searchTerm, setSearchTerm] = useState('')
@@ -113,7 +114,7 @@ export default function CollectFeePage() {
                     <StudentEnrollmentCard
                       key={enrollment.id}
                       enrollment={enrollment}
-                      onClick={() => navigateTo(`/fees/collect/${enrollment.id}`)}
+                      onClick={() => router.push(`/fees/collect/${enrollment.id}`)}
                     />
                   ))}
                 </div>

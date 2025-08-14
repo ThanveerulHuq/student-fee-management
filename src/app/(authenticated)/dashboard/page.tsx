@@ -10,8 +10,8 @@ import {
   GraduationCap,
   Settings
 } from "lucide-react"
-import { useAcademicYearNavigation } from "@/contexts/academic-year-context"
 import { useAcademicYear } from "@/contexts/academic-year-context"
+import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { trackDashboardVisit, trackPageView } from "@/lib/analytics"
 import { formatCurrency } from "@/lib/format"
@@ -23,7 +23,7 @@ interface DashboardStats {
 }
 
 export default function DashboardPage() {
-  const { goToStudents, goToFeeCollection, goToReports, navigateTo } = useAcademicYearNavigation();
+  const router = useRouter()
   const { academicYear } = useAcademicYear();
   const { data: session } = useSession();
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -63,42 +63,42 @@ export default function DashboardPage() {
       title: "Student Management",
       description: "Add, edit, and manage student information",
       icon: Users,
-      action: goToStudents,
+      action: () => router.push("/students"),
       color: "bg-blue-500",
     },
     {
       title: "Student Enrollments", 
       description: "Manage student class enrollments and assignments",
       icon: GraduationCap,
-      action: () => navigateTo("/enrollments"),
+      action: () => router.push("/enrollments"),
       color: "bg-indigo-500",
     },
     {
       title: "Fee Collection",
       description: "Collect fees and print receipts",
       icon: CreditCard,
-      action: goToFeeCollection,
+      action: () => router.push("/fees/collect"),
       color: "bg-green-500",
     },
     {
       title: "Reports",
       description: "Generate student and fee collection reports",
       icon: FileText,
-      action: goToReports,
+      action: () => router.push("/reports"),
       color: "bg-purple-500",
     },
     {
       title: "Analytics",
       description: "View payment analytics and statistics",
       icon: BarChart3,
-      action: () => navigateTo("/analytics"),
+      action: () => router.push("/analytics"),
       color: "bg-orange-500",
     },
     ...(isAdmin ? [{
       title: "Settings",
       description: "System settings and administration",
       icon: Settings,
-      action: () => navigateTo("/admin"),
+      action: () => router.push("/admin"),
       color: "bg-gray-600",
     }] : [])
   ]

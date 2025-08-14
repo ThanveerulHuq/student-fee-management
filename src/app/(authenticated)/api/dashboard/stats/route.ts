@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
-import { prisma } from "@/lib/prisma"
+import { db } from "@/lib/database"
 
 export async function GET(request: NextRequest) {
   try {
@@ -9,6 +9,8 @@ export async function GET(request: NextRequest) {
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
+
+    await db.connect()
 
     const { searchParams } = new URL(request.url)
     const academicYearId = searchParams.get('academicYear')
@@ -18,50 +20,54 @@ export async function GET(request: NextRequest) {
     }
 
     // Get total students enrolled in the current academic year
-    const totalStudents = await prisma.studentEnrollment.count({
-      where: {
-        academicYearId: academicYearId,
-        isActive: true
-      }
+    const totalStudents = await db.studentEnrollment.countDocuments({
+      academicYearId: academicYearId,
+      isActive: true
     })
 
-    // Get monthly collections for current month
+    // Get monthly collections for current month using aggregation
     const now = new Date()
     const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
     const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59)
 
-    const monthlyCollections = await prisma.payment.aggregate({
-      where: {
-        paymentDate: {
-          gte: firstDayOfMonth,
-          lte: lastDayOfMonth
-        },
-        status: "COMPLETED"
+    const monthlyCollectionsResult = await db.payment.aggregate([
+      {
+        $match: {
+          paymentDate: {
+            $gte: firstDayOfMonth,
+            $lte: lastDayOfMonth
+          },
+          status: "COMPLETED"
+        }
       },
-      _sum: {
-        totalAmount: true
+      {
+        $group: {
+          _id: null,
+          totalAmount: { $sum: '$totalAmount' }
+        }
       }
-    })
+    ])
 
-    // Get total pending fees for current academic year
-    const enrollments = await prisma.studentEnrollment.findMany({
-      where: {
-        academicYearId: academicYearId,
-        isActive: true
+    // Get total pending fees for current academic year using aggregation
+    const pendingFeesResult = await db.studentEnrollment.aggregate([
+      {
+        $match: {
+          academicYearId: academicYearId,
+          isActive: true
+        }
       },
-      select: {
-        totals: true
+      {
+        $group: {
+          _id: null,
+          totalPending: { $sum: '$totals.netAmount.due' }
+        }
       }
-    })
-
-    const pendingFees = enrollments.reduce((total, enrollment) => {
-      return total + (enrollment.totals.netAmount.due || 0)
-    }, 0)
+    ])
 
     const stats = {
       totalStudents,
-      monthlyCollections: monthlyCollections._sum.totalAmount || 0,
-      pendingFees
+      monthlyCollections: monthlyCollectionsResult[0]?.totalAmount || 0,
+      pendingFees: pendingFeesResult[0]?.totalPending || 0
     }
 
     return NextResponse.json(stats)

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { useAcademicYear, useAcademicYearNavigation } from "@/contexts/academic-year-context"
+import { useAcademicYear } from "@/contexts/academic-year-context"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -14,8 +14,9 @@ import LoaderWrapper from "@/components/ui/loader-wrapper"
 import FeeItemsSection from "../../_components/form/fee-items-section"
 import ScholarshipItemsSection from "../../_components/form/scholarship-items-section"
 import { toast } from "sonner"
-import type { StudentInfo, Class } from "@/generated/prisma"
-import type { FeeItem, ScholarshipItem } from "@/types/fee"
+import type { StudentInfo, ClassInfo } from "@/lib/types"
+import type { FeeItem, ScholarshipItem } from "@/lib/types"
+import type { ScholarshipItem as UIScholarshipItem } from "@/types/fee"
 
 import { formatCurrency } from "@/lib/format"
 
@@ -58,14 +59,14 @@ export default function EditEnrollmentPage() {
   const params = useParams()
   const enrollmentId = params.id as string
   const { academicYear } = useAcademicYear()
-  const { navigateTo } = useAcademicYearNavigation()
   
   const [loading, setLoading] = useState(false)
   const [fetchingData, setFetchingData] = useState(true)
   const [fetchingFeeStructure, setFetchingFeeStructure] = useState(false)
   const [error, setError] = useState("")
   const [enrollment, setEnrollment] = useState<Enrollment | null>(null)
-  const [classes, setClasses] = useState<Class[]>([])
+  type ClassOption = ClassInfo & { _id: string }
+  const [classes, setClasses] = useState<ClassOption[]>([])
   const [feeStructure, setFeeStructure] = useState<FeeStructure | null>(null)
 
   const [formData, setFormData] = useState({
@@ -217,9 +218,7 @@ export default function EditEnrollmentPage() {
     if (!feeStructure) return []
     
     return feeStructure.scholarshipItems
-      .filter(item => {
-        if (item.isAutoApplied) return false // Skip auto-applied scholarships
-        
+      .filter((item: ScholarshipItem) => {
         const customAmount = formData.customScholarships[item.templateId]
         const finalAmount = (customAmount !== undefined && item.isEditableDuringEnrollment) 
           ? customAmount 
@@ -227,7 +226,7 @@ export default function EditEnrollmentPage() {
           
         return finalAmount > 0 // Include if amount > 0
       })
-      .map(item => item.id!)
+      .map((item: ScholarshipItem) => item._id!)
   }
 
   const calculateTotals = () => {
@@ -241,18 +240,7 @@ export default function EditEnrollmentPage() {
       return sum + finalAmount
     }, 0)
 
-    const autoScholarships = feeStructure.scholarshipItems
-      .filter(item => item.isAutoApplied)
-      .reduce((sum, item) => {
-        const customAmount = formData.customScholarships[item.templateId]
-        const finalAmount = (customAmount !== undefined && item.isEditableDuringEnrollment) 
-          ? customAmount 
-          : item.amount
-        return sum + finalAmount
-      }, 0)
-
     const manualScholarships = feeStructure.scholarshipItems
-      .filter(item => !item.isAutoApplied)
       .reduce((sum, item) => {
         const customAmount = formData.customScholarships[item.templateId]
         const finalAmount = (customAmount !== undefined && item.isEditableDuringEnrollment) 
@@ -262,7 +250,7 @@ export default function EditEnrollmentPage() {
         return finalAmount > 0 ? sum + finalAmount : sum
       }, 0)
 
-    const totalScholarships = autoScholarships + manualScholarships
+    const totalScholarships = manualScholarships
 
     return {
       totalFees,
@@ -306,7 +294,7 @@ export default function EditEnrollmentPage() {
       if (response.ok) {
         const result = await response.json()
         toast.success("Enrollment updated successfully")
-        navigateTo(`/enrollments/${result.id}`)
+        router.push(`/enrollments/${result.id}`)
       } else {
         const errorData = await response.json()
         setError(errorData.error || "Failed to update enrollment")
@@ -432,7 +420,7 @@ export default function EditEnrollmentPage() {
                   >
                     <option value="">Select Class</option>
                     {classes.map((cls) => (
-                      <option key={cls.id} value={cls.id}>
+                      <option key={cls._id} value={cls._id}>
                         {cls.className}
                       </option>
                     ))}
@@ -501,7 +489,16 @@ export default function EditEnrollmentPage() {
                           Available Scholarships
                         </h4>
                         <ScholarshipItemsSection
-                          scholarshipItems={feeStructure.scholarshipItems}
+                          scholarshipItems={feeStructure.scholarshipItems.map<UIScholarshipItem>((item) => ({
+                            id: item._id ?? item.templateId,
+                            templateId: item.templateId,
+                            templateName: item.templateName,
+                            templateType: String(item.templateType),
+                            amount: item.amount,
+                            isAutoApplied: false,
+                            isEditableDuringEnrollment: item.isEditableDuringEnrollment,
+                            order: item.order,
+                          }))}
                           customScholarships={formData.customScholarships}
                           onCustomScholarshipsChange={handleCustomScholarshipsChange}
                           disabled={loading}

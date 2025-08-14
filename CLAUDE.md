@@ -8,7 +8,7 @@ This is a Next.js 15 student fee management system for "BlueMoon" school. The ap
 
 **Tech Stack**:
 - **Framework**: Next.js 15 with App Router, TypeScript, React 19
-- **Database**: MongoDB with Prisma ORM
+- **Database**: MongoDB with Mongoose ODM
 - **Authentication**: NextAuth.js with credentials provider
 - **Styling**: Tailwind CSS with shadcn/ui components
 - **State Management**: React Hook Form with Zod validation
@@ -22,9 +22,11 @@ This is a Next.js 15 student fee management system for "BlueMoon" school. The ap
 - **Middleware**: NextAuth.js authentication middleware protecting routes
 
 **Key Components**:
-- **Database Models** (`prisma/schema.prisma`): Student, User, AcademicYear, Class, FeeTemplate, ScholarshipTemplate, FeeStructure, StudentEnrollment, Payment
+- **Database Models** (`src/lib/models/`): Mongoose schemas for Student, User, AcademicYear, Class, FeeTemplate, ScholarshipTemplate, FeeStructure, StudentEnrollment, Payment
 - **Authentication** (`src/lib/auth.ts`): NextAuth configuration with bcrypt password hashing
-- **Database Client** (`src/lib/prisma.ts`): Prisma client with connection pooling
+- **Database Client** (`src/lib/mongoose.ts`): Mongoose connection singleton with connection pooling
+- **Database Service** (`src/lib/database.ts`): Type-safe database service layer
+- **Types** (`src/lib/types/`): TypeScript interfaces and enums
 - **Validations** (`src/lib/validations/`): Zod schemas for form validation
 - **UI Components** (`src/components/ui/`): Reusable shadcn/ui components
 - **Receipt System** (`src/components/receipts/`): Template-based receipt generation with multiple formats
@@ -63,10 +65,7 @@ npm run lint            # Run ESLint
 
 **Database**:
 ```bash
-npx prisma generate     # Generate Prisma client to src/generated/prisma/
-npx prisma db push      # Push schema changes to MongoDB
-npx prisma studio       # Open Prisma Studio
-npx prisma db seed      # Run seed script (prisma/seed.ts)
+npm run seed            # Run seed script (scripts/seed.ts)
 ```
 
 **Type Checking**:
@@ -77,10 +76,10 @@ npx tsc --noEmit       # Type check without emitting files
 ## Development Notes
 
 **Database Configuration**:
-- Uses MongoDB with Prisma ORM
-- Prisma client generated to `src/generated/prisma/` 
+- Uses MongoDB with Mongoose ODM
 - Connection configured via `DATABASE_URL` environment variable
-- Custom client output path configured in schema
+- Singleton connection pattern for optimal performance
+- Type-safe database service layer for all operations
 
 **Authentication**:
 - NextAuth.js with credentials provider
@@ -89,12 +88,12 @@ npx tsc --noEmit       # Type check without emitting files
 - User roles: ADMIN, STAFF
 - Admin-only routes: `/admin/*` (user management, academic years, templates, fee structures)
 
-**Code Generation**:
-- Prisma client auto-generated to `src/generated/prisma/`
-- ESLint ignores generated files
+**Code Organization**:
 - TypeScript paths configured for `@/*` imports
 - Components used only in specific pages should be created in `_components` folder in the same directory
 - Components reused across multiple pages should be put in `src/components/`
+- Database models in `src/lib/models/` with proper TypeScript interfaces
+- Type definitions in `src/lib/types/` for consistent typing
 - Do not auto build after changes, ask user to build the project
 
 **Payment System**:

@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
-import { useAcademicYearNavigation } from "@/contexts/academic-year-context"
 import LoaderWrapper from "@/components/ui/loader-wrapper"
 import { DeactivateStudentDialog } from "@/components/students/deactivate-student-dialog"
 import { ReactivateStudentDialog } from "@/components/students/reactivate-student-dialog"
@@ -53,7 +52,6 @@ interface StudentDetailPageProps {
 export default function StudentDetailPage({ params }: StudentDetailPageProps) {
   const { data: session, status } = useSession()
   const router = useRouter()
-  const { navigateTo } = useAcademicYearNavigation()
   const [studentId, setStudentId] = useState<string | null>(null)
 
   useEffect(() => {
@@ -197,8 +195,8 @@ export default function StudentDetailPage({ params }: StudentDetailPageProps) {
     <div className="min-h-screen bg-gray-50/30">
       <StudentHeader
         student={student}
-        onEdit={() => navigateTo(`/students/${studentId}/edit`)}
-        onEnroll={() => navigateTo(`/enrollments/enroll/${studentId}`)}
+        onEdit={() => router.push(`/students/${studentId}/edit`)}
+        onEnroll={() => router.push(`/enrollments/enroll/${studentId}`)}
         onDeactivate={handleDeactivateStudent}
         onReactivate={handleReactivateStudent}
         onBack={() => router.back()}
@@ -209,8 +207,8 @@ export default function StudentDetailPage({ params }: StudentDetailPageProps) {
         <FamilyContactCard student={student} />
         <EnrollmentHistoryCard 
           enrollments={student.enrollments}
-          onEnrollClick={() => navigateTo(`/enrollments/enroll/${studentId}`)}
-          onFeeCollectionClick={(enrollmentId) => navigateTo(`/fees/collect/${enrollmentId}`)}
+          onEnrollClick={() => router.push(`/enrollments/enroll/${studentId}`)}
+          onFeeCollectionClick={(enrollmentId) => router.push(`/fees/collect/${enrollmentId}`)}
         />
       </main>
 

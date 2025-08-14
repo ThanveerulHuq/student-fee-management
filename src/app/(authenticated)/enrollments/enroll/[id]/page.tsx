@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { useAcademicYear, useAcademicYearNavigation } from "@/contexts/academic-year-context"
+import { useAcademicYear } from "@/contexts/academic-year-context"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -13,7 +13,7 @@ import { Save, Award, AlertTriangle, Info, ArrowLeft, RotateCcw } from "lucide-r
 import LoaderWrapper from "@/components/ui/loader-wrapper"
 import FeeItemsSection from "../../_components/form/fee-items-section"
 import ScholarshipItemsSection from "../../_components/form/scholarship-items-section"
-import { MobileNumber } from "@/generated/prisma"
+import { MobileNumber } from "@/lib/types"
 
 import { formatCurrency } from "@/lib/format"
 interface Student {
@@ -80,7 +80,6 @@ export default function EnrollStudentPage() {
   const router = useRouter()
   const studentId = params.id as string
   const { academicYear } = useAcademicYear()
-  const { navigateTo } = useAcademicYearNavigation()
   
   const [loading, setLoading] = useState(false)
   const [fetchingFeeStructure, setFetchingFeeStructure] = useState(false)
@@ -269,7 +268,7 @@ export default function EnrollStudentPage() {
 
       if (response.ok) {
         const result = await response.json()
-        navigateTo(`/enrollments/${result.id}`)
+        router.push(`/enrollments/${result.id}`)
       } else {
         const errorData = await response.json()
         setError(errorData.error || "Failed to enroll student")
@@ -506,7 +505,7 @@ export default function EnrollStudentPage() {
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => navigateTo("/enroll")}
+                    onClick={() => router.push("/enrollments/enroll")}
                     disabled={loading}
                   >
                     Back to Search

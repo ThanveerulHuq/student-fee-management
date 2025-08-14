@@ -84,7 +84,12 @@ export async function PUT(
       );
     }
 
-    const updateData: any = {
+    const updateData: {
+      username: string;
+      email: string;
+      role: string;
+      password?: string;
+    } = {
       username: validatedData.username,
       email: validatedData.email,
       role: validatedData.role,

@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
-import { useAcademicYearNavigation } from "@/contexts/academic-year-context"
 import StudentForm from "@/app/(authenticated)/students/_components/student-form"
 import { type StudentFormData } from "@/lib/validations/student"
 import LoaderWrapper from "@/components/ui/loader-wrapper"
@@ -17,7 +16,6 @@ interface EditStudentPageProps {
 export default function EditStudentPage({ params }: EditStudentPageProps) {
   const { data: session, status } = useSession()
   const router = useRouter()
-  const { navigateTo } = useAcademicYearNavigation()
   const [studentId, setStudentId] = useState<string | null>(null)
   const [student, setStudent] = useState<StudentFormData | null>(null)
   const [loading, setLoading] = useState(true)
@@ -66,15 +64,15 @@ export default function EditStudentPage({ params }: EditStudentPageProps) {
         setStudent(formData)
       } else {
         console.error("Failed to fetch student")
-        navigateTo('/students')
+        router.push('/students')
       }
     } catch (error) {
       console.error("Error fetching student:", error)
-      navigateTo('/students')
+      router.push('/students')
     } finally {
       setLoading(false)
     }
-  }, [studentId, navigateTo])
+  }, [studentId, router])
 
   useEffect(() => {
     fetchStudent()
@@ -95,7 +93,7 @@ export default function EditStudentPage({ params }: EditStudentPageProps) {
     })
 
     if (response.ok) {
-      navigateTo(`/students/${studentId}`)
+      router.push(`/students/${studentId}`)
     } else {
       const errorData = await response.json()
       throw new Error(errorData.error || "Failed to update student")

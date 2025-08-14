@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
-import { prisma } from "@/lib/prisma"
+import { db } from "@/lib/database"
 import { studentSchema } from "@/lib/validations/student"
 
 export async function GET(request: NextRequest) {
@@ -11,6 +11,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
+    await db.connect()
+
     const { searchParams } = new URL(request.url)
     const page = parseInt(searchParams.get("page") || "1")
     const limit = parseInt(searchParams.get("limit") || "10")
@@ -19,41 +21,36 @@ export async function GET(request: NextRequest) {
 
     const skip = (page - 1) * limit
 
-    // Build where clause with search and status filtering
-    const where: {
-      isActive?: boolean
-      OR?: Array<{
-        name?: { contains: string; mode: "insensitive" }
-        admissionNo?: { contains: string; mode: "insensitive" }
-        fatherName?: { contains: string; mode: "insensitive" }
-      }>
+    // Build filter object for Mongoose
+    const filter: {
+      isActive?: boolean;
+      $or?: Array<Record<string, { $regex: string; $options: string }>>;
     } = {}
 
     // Add status filtering
     if (status === "active") {
-      where.isActive = true
+      filter.isActive = true
     } else if (status === "inactive") {
-      where.isActive = false
+      filter.isActive = false
     }
-    // If status is "all", don't filter by isActive
 
     // Add search filtering
     if (search) {
-      where.OR = [
-        { name: { contains: search, mode: "insensitive" as const } },
-        { admissionNo: { contains: search, mode: "insensitive" as const } },
-        { fatherName: { contains: search, mode: "insensitive" as const } },
+      filter.$or = [
+        { name: { $regex: search, $options: "i" } },
+        { admissionNo: { $regex: search, $options: "i" } },
+        { fatherName: { $regex: search, $options: "i" } },
       ]
     }
 
     const [students, total] = await Promise.all([
-      prisma.student.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy: { createdAt: "desc" },
-      }),
-      prisma.student.count({ where }),
+      db.student
+        .find(filter)
+        .skip(skip)
+        .limit(limit)
+        .sort({ createdAt: -1 })
+        .lean(),
+      db.student.countDocuments(filter),
     ])
 
     return NextResponse.json({
@@ -81,13 +78,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
+    await db.connect()
+
     const body = await request.json()
     const validatedData = studentSchema.parse(body)
 
-
     // Check if admission number already exists
-    const existingStudent = await prisma.student.findUnique({
-      where: { admissionNo: validatedData.admissionNo },
+    const existingStudent = await db.student.findOne({
+      admissionNo: validatedData.admissionNo,
     })
 
     if (existingStudent) {
@@ -97,12 +95,10 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const student = await prisma.student.create({
-      data: {
-        ...validatedData,
-        dateOfBirth: new Date(validatedData.dateOfBirth),
-        admissionDate: new Date(validatedData.admissionDate),
-      },
+    const student = await db.student.create({
+      ...validatedData,
+      dateOfBirth: new Date(validatedData.dateOfBirth),
+      admissionDate: new Date(validatedData.admissionDate),
     })
 
     return NextResponse.json(student, { status: 201 })

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
-import { prisma } from '@/lib/prisma'
+import { db } from '@/lib/database'
 import { authOptions } from '@/lib/auth'
 import { ObjectId } from 'mongodb'
 import { FeeItem, ScholarshipItem } from '@/types/fee'
@@ -23,12 +23,12 @@ export async function GET(request: NextRequest) {
     if (classId) whereClause.classId = classId
     if (isActive !== null) whereClause.isActive = isActive === 'true'
 
-    const feeStructures = await prisma.feeStructure.findMany({
-      where: whereClause,
-      orderBy: [
-        { createdAt: 'desc' }
-      ]
-    })
+    await db.connect()
+    
+    const feeStructures = await db.feeStructure
+      .find(whereClause)
+      .sort({ createdAt: -1 })
+      .lean()
     
     return NextResponse.json(feeStructures)
   } catch (error) {
@@ -66,14 +66,12 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    await db.connect()
+
     // Check if fee structure already exists for this academic year and class
-    const existingStructure = await prisma.feeStructure.findUnique({
-      where: {
-        academicYearId_classId: {
-          academicYearId,
-          classId
-        }
-      }
+    const existingStructure = await db.feeStructure.findOne({
+      academicYearId,
+      classId
     })
 
     if (existingStructure) {
@@ -85,8 +83,8 @@ export async function POST(request: NextRequest) {
 
     // Fetch academic year and class info for denormalization
     const [academicYear, classInfo] = await Promise.all([
-      prisma.academicYear.findUnique({ where: { id: academicYearId } }),
-      prisma.class.findUnique({ where: { id: classId } })
+      db.academicYear.findById(academicYearId).lean(),
+      db.class.findById(classId).lean()
     ])
 
     if (!academicYear || !classInfo) {
@@ -99,9 +97,7 @@ export async function POST(request: NextRequest) {
     // Process fee items with template data
     const processedFeeItems = await Promise.all(
       (feeItems || []).map(async (item: FeeItem) => {
-        const template = await prisma.feeTemplate.findUnique({
-          where: { id: item.templateId }
-        })
+        const template = await db.feeTemplate.findById(item.templateId).lean()
         
         if (!template) {
           throw new Error(`Fee template not found: ${item.templateId}`)
@@ -123,9 +119,7 @@ export async function POST(request: NextRequest) {
     // Process scholarship items with template data
     const processedScholarshipItems = await Promise.all(
       (scholarshipItems || []).map(async (item: ScholarshipItem) => {
-        const template = await prisma.scholarshipTemplate.findUnique({
-          where: { id: item.templateId }
-        })
+        const template = await db.scholarshipTemplate.findById(item.templateId).lean()
         
         if (!template) {
           throw new Error(`Scholarship template not found: ${item.templateId}`)
@@ -161,50 +155,48 @@ export async function POST(request: NextRequest) {
       .filter(item => !item.isAutoApplied)
       .reduce((sum, item) => sum + item.amount, 0)
 
-    const feeStructure = await prisma.feeStructure.create({
-      data: {
-        academicYearId,
-        classId,
-        name,
-        description,
-        isActive: true,
-        
-        // Embedded academic year data
-        academicYear: {
-          year: academicYear.year,
-          startDate: academicYear.startDate,
-          endDate: academicYear.endDate,
-          isActive: academicYear.isActive
-        },
-        
-        // Embedded class data
-        class: {
-          className: classInfo.className,
-          isActive: classInfo.isActive
-        },
-        
-        // Fee items
-        feeItems: processedFeeItems,
-        
-        // Scholarship items
-        scholarshipItems: processedScholarshipItems,
-        
-        // Computed totals
-        totalFees: {
-          compulsory: compulsoryTotal,
-          optional: optionalTotal,
-          total: compulsoryTotal + optionalTotal
-        },
-        
-        totalScholarships: {
-          autoApplied: autoAppliedScholarships,
-          manual: manualScholarships,
-          total: autoAppliedScholarships + manualScholarships
-        }
+    const feeStructure = await db.feeStructure.create({
+      academicYearId,
+      classId,
+      name,
+      description,
+      isActive: true,
+      
+      // Embedded academic year data
+      academicYear: {
+        year: academicYear.year,
+        startDate: academicYear.startDate,
+        endDate: academicYear.endDate,
+        isActive: academicYear.isActive
+      },
+      
+      // Embedded class data
+      class: {
+        className: classInfo.className,
+        isActive: classInfo.isActive
+      },
+      
+      // Fee items
+      feeItems: processedFeeItems,
+      
+      // Scholarship items
+      scholarshipItems: processedScholarshipItems,
+      
+      // Computed totals
+      totalFees: {
+        compulsory: compulsoryTotal,
+        optional: optionalTotal,
+        total: compulsoryTotal + optionalTotal
+      },
+      
+      totalScholarships: {
+        autoApplied: autoAppliedScholarships,
+        manual: manualScholarships,
+        total: autoAppliedScholarships + manualScholarships
       }
     })
 
-    return NextResponse.json(feeStructure, { status: 201 })
+    return NextResponse.json(feeStructure.toObject(), { status: 201 })
   } catch (error) {
     console.error('Error creating fee structure:', error)
     return NextResponse.json(

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
-import { prisma } from "@/lib/prisma"
+import { db } from "@/lib/database"
 
 export async function GET(request: NextRequest) {
   try {
@@ -16,12 +16,15 @@ export async function GET(request: NextRequest) {
 
     const skip = (page - 1) * limit
 
+    await db.connect()
+    
     // Get all enrollments using the denormalized model
-    const enrollments = await prisma.studentEnrollment.findMany({
-      skip,
-      take: limit,
-      orderBy: { createdAt: "desc" }
-    })
+    const enrollments = await db.studentEnrollment
+      .find()
+      .skip(skip)
+      .limit(limit)
+      .sort({ createdAt: -1 })
+      .lean()
 
     // Transform to match expected response format
     const enrollmentsWithOutstanding = enrollments.map((enrollment) => ({
@@ -87,7 +90,7 @@ export async function GET(request: NextRequest) {
     const totalStudents = enrollments.length
 
     // Get total count for pagination
-    const totalCount = await prisma.studentEnrollment.count()
+    const totalCount = await db.studentEnrollment.countDocuments()
 
     return NextResponse.json({
       enrollments: enrollmentsWithOutstanding,

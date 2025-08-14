@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { toast } from 'sonner'
-import { useAcademicYear, useAcademicYearNavigation } from '@/contexts/academic-year-context'
+import { useRouter } from 'next/navigation'
+import { useAcademicYear } from '@/contexts/academic-year-context'
 import { DeleteEnrollmentDialog } from './_components/delete-enrollment-dialog'
 import { ReactivateStudentDialog } from './_components/reactivate-student-dialog'
 import { StudentEnrollmentWithTotals } from '@/types/enrollment'
@@ -21,8 +22,8 @@ interface EnrollmentsResponse {
 }
 
 export default function EnrollmentsPage() {
+  const router = useRouter()
   const { academicYear } = useAcademicYear()
-  const { navigateTo } = useAcademicYearNavigation()
   const [enrollments, setEnrollments] = useState<StudentEnrollmentWithTotals[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -79,6 +80,14 @@ export default function EnrollmentsPage() {
         ...(includeInactive && { includeInactive: 'true' }),
       })
 
+      console.log({
+        page: page.toString(),
+        limit: "10",
+        academicYearId: academicYear.id,
+        ...(debouncedSearch && { search: debouncedSearch }),
+        ...(includeInactive && { includeInactive: 'true' }),
+      })
+
       const response = await fetch(`/api/enrollments?${params}`)
       if (response.ok) {
         const data: EnrollmentsResponse = await response.json()
@@ -109,11 +118,11 @@ export default function EnrollmentsPage() {
   }
 
   const handleAddEnrollment = () => {
-    navigateTo('/enrollments/enroll')
+    router.push('/enrollments/enroll')
   }
 
   const handleEdit = (enrollment: StudentEnrollmentWithTotals) => {
-    navigateTo(`/enrollments/edit/${enrollment.id}`)
+    router.push(`/enrollments/edit/${enrollment.id}`)
   }
 
   const handleDelete = (enrollment: StudentEnrollmentWithTotals) => {
@@ -206,7 +215,7 @@ export default function EnrollmentsPage() {
         <EnrollmentsTable
           enrollments={enrollments}
           loading={loading}
-          onEnrollmentClick={(enrollmentId) => navigateTo(`/enrollments/${enrollmentId}`)}
+          onEnrollmentClick={(enrollmentId) => router.push(`/enrollments/${enrollmentId}`)}
           onEdit={handleEdit}
           onDelete={handleDelete}
           onReactivate={handleReactivate}

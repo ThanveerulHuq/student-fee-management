@@ -1,4 +1,4 @@
-import { MobileNumber } from "@/generated/prisma"
+import { MobileNumber } from "@/lib/types"
 
 export interface WhereCondition {
   [key: string]: unknown
@@ -40,7 +40,7 @@ export interface StudentWhereCondition {
   }
 }
 
-export interface PrismaStudentUpdate {
+export interface StudentUpdate {
   [key: string]: unknown
   name?: string
   gender?: string

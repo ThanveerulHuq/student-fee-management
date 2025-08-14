@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
-import { prisma } from "@/lib/prisma"
+import { db } from "@/lib/database"
 import type { Session } from "next-auth"
+import { StudentFee } from "@/lib/types"
 
 export async function GET(request: NextRequest) {
   try {
@@ -10,6 +11,8 @@ export async function GET(request: NextRequest) {
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
+
+    await db.connect()
 
     const { searchParams } = new URL(request.url)
     const academicYearId = searchParams.get("academicYearId")
@@ -28,101 +31,66 @@ export async function GET(request: NextRequest) {
     const sortBy = searchParams.get("sortBy") || "name"
     const sortOrder = searchParams.get("sortOrder") || "asc"
 
-    // Build comprehensive where conditions for Prisma
-    // Note: For MongoDB composite types, we need to use a different approach
-    const enrollmentWhere: any = {
-      isActive: true
+    // Build MongoDB filter
+    const filter: any = {
+      isActive: true,
+      'totals.netAmount.due': { $gte: minOutstanding }
     }
 
-    if (academicYearId) enrollmentWhere.academicYearId = academicYearId
-    if (classId) enrollmentWhere.classId = classId
-    if (section) enrollmentWhere.section = section
+    if (academicYearId) filter.academicYearId = academicYearId
+    if (classId) filter.classId = classId
+    if (section) filter.section = section
 
-    // Add search filter using Prisma OR conditions
+    // Add search filter
     if (search) {
-      enrollmentWhere.OR = [
-        { student: { is: { name: { contains: search, mode: 'insensitive' } } } },
-        { student: { is: { fatherName: { contains: search, mode: 'insensitive' } } } },
-        { student: { is: { admissionNumber: { contains: search, mode: 'insensitive' } } } },
-        { class: { is: { className: { contains: search, mode: 'insensitive' } } } },
-        { section: { contains: search, mode: 'insensitive' } }
+      filter.$or = [
+        { 'student.name': { $regex: search, $options: 'i' } },
+        { 'student.fatherName': { $regex: search, $options: 'i' } },
+        { 'student.admissionNumber': { $regex: search, $options: 'i' } },
+        { 'class.className': { $regex: search, $options: 'i' } },
+        { section: { $regex: search, $options: 'i' } }
       ]
     }
 
-    // Build order by for Prisma
-    let orderBy: any = [{ student: { name: sortOrder as any } }]
+    // Build sort object
+    let sort: any = { 'student.name': sortOrder === 'desc' ? -1 : 1 }
     
     switch (sortBy) {
       case "name":
-        orderBy = [{ student: { name: sortOrder as any } }]
+        sort = { 'student.name': sortOrder === 'desc' ? -1 : 1 }
         break
       case "class":
-        orderBy = [{ class: { className: sortOrder as any } }]
+        sort = { 'class.className': sortOrder === 'desc' ? -1 : 1 }
         break
       case "outstanding":
-        // For outstanding amount sorting, we need to use raw query or handle in memory
-        // Since Prisma doesn't support sorting by nested embedded fields easily
-        orderBy = [{ student: { name: "asc" } }] // Will sort manually after
+        sort = { 'totals.netAmount.due': sortOrder === 'desc' ? -1 : 1 }
         break
     }
 
-    // Get all enrollments first (we need to filter by minOutstanding after fetching)
-    const allEnrollments = await prisma.studentEnrollment.findMany({
-      where: enrollmentWhere,
-      orderBy,
-      select: {
-        id: true,
-        section: true,
-        student: true, 
-        class: true,   
-        totals: true,
-        fees: {
-          select: {
-            templateName: true,
-            amount: true,
-            amountPaid: true,
-            amountDue: true
-          }
-        }
-      }
-    })
+    // Get all enrollments with filtering and sorting
+    const query = db.studentEnrollment
+      .find(filter)
+      .sort(sort)
+      .select({
+        _id: 1,
+        section: 1,
+        student: 1,
+        class: 1,
+        totals: 1,
+        'fees.templateName': 1,
+        'fees.amount': 1,
+        'fees.amountPaid': 1,
+        'fees.amountDue': 1
+      })
 
-    // Filter by minOutstanding and apply sorting
-    const filteredEnrollments = allEnrollments
-      .filter(enrollment => enrollment.totals.netAmount.due >= minOutstanding)
-
-    // Apply sorting
-    let sortedEnrollments = filteredEnrollments
-    switch (sortBy) {
-      case "name":
-        sortedEnrollments = filteredEnrollments.sort((a, b) => {
-          const comparison = a.student.name.localeCompare(b.student.name)
-          return sortOrder === "desc" ? -comparison : comparison
-        })
-        break
-      case "class":
-        sortedEnrollments = filteredEnrollments.sort((a, b) => {
-          const comparison = a.class.className.localeCompare(b.class.className)
-          return sortOrder === "desc" ? -comparison : comparison
-        })
-        break
-      case "outstanding":
-        sortedEnrollments = filteredEnrollments.sort((a, b) => {
-          const comparison = a.totals.netAmount.due - b.totals.netAmount.due
-          return sortOrder === "desc" ? -comparison : comparison
-        })
-        break
-    }
-
-    // Get total count after filtering
-    const totalCount = sortedEnrollments.length
-
-    // Apply pagination
-    const processedEnrollments = limit ? sortedEnrollments.slice(skip, skip + limit) : sortedEnrollments
+    const [allEnrollments, totalCount] = await Promise.all([
+      limit ? query.skip(skip).limit(limit).lean() : query.lean(),
+      db.studentEnrollment.countDocuments(filter)
+    ])
 
     // Transform data in one pass
-    const studentsWithOutstanding = processedEnrollments.map(enrollment => ({
-      id: enrollment.id,
+    const studentsWithOutstanding = allEnrollments.map(enrollment => ({
+      id: enrollment._id,
       name: enrollment.student.name,
       fatherName: enrollment.student.fatherName,
       mobileNo: enrollment.student.mobileNo,
@@ -133,8 +101,8 @@ export async function GET(request: NextRequest) {
       paidAmount: enrollment.totals.netAmount.paid,
       outstandingAmount: enrollment.totals.netAmount.due,
       fees: enrollment.fees
-        .filter(fee => fee.amountDue > 0)
-        .map(fee => ({
+        .filter((fee: StudentFee) => fee.amountDue > 0)
+        .map((fee: StudentFee) => ({
           templateName: fee.templateName,
           amount: fee.amount,
           paid: fee.amountPaid,
@@ -142,31 +110,45 @@ export async function GET(request: NextRequest) {
         }))
     }))
 
-    // Calculate summary statistics efficiently using filtered enrollments
-    const classTotals = sortedEnrollments.reduce((acc, enrollment) => {
-      const className = enrollment.class.className
-      const existing = acc.find(item => item.class === className)
-      if (existing) {
-        existing.studentsCount += 1
-        existing.outstandingAmount += enrollment.totals.netAmount.due
-      } else {
-        acc.push({
-          class: className,
-          studentsCount: 1,
-          outstandingAmount: enrollment.totals.netAmount.due
-        })
-      }
-      return acc
-    }, [] as Array<{ class: string; studentsCount: number; outstandingAmount: number }>)
+    // Calculate summary statistics using aggregation pipeline for better performance
+    const summaryPipeline = [
+      { $match: filter },
+      {
+        $group: {
+          _id: '$class.className',
+          studentsCount: { $sum: 1 },
+          outstandingAmount: { $sum: '$totals.netAmount.due' }
+        }
+      },
+      { $sort: { _id: 1 } }
+    ]
 
-    const totalOutstandingAmount = sortedEnrollments.reduce((sum, enrollment) => 
-      sum + enrollment.totals.netAmount.due, 0)
+    const [classTotalsResult, totalOutstandingResult] = await Promise.all([
+      db.studentEnrollment.aggregate(summaryPipeline as any),
+      db.studentEnrollment.aggregate([
+        { $match: filter },
+        {
+          $group: {
+            _id: null,
+            totalOutstanding: { $sum: '$totals.netAmount.due' }
+          }
+        }
+      ])
+    ])
+
+    const classTotals = classTotalsResult.map(item => ({
+      class: item._id,
+      studentsCount: item.studentsCount,
+      outstandingAmount: item.outstandingAmount
+    }))
+
+    const totalOutstandingAmount = totalOutstandingResult[0]?.totalOutstanding || 0
 
     const summary = {
       totalStudents: totalCount,
       studentsWithOutstanding: totalCount,
       totalOutstandingAmount,
-      classTotals: classTotals.sort((a, b) => a.class.localeCompare(b.class))
+      classTotals
     }
 
     const pagination = {

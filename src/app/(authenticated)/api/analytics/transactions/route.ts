@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
-import { prisma } from "@/lib/prisma"
+import { db } from "@/lib/database"
 
 export async function GET(request: NextRequest) {
   try {
@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Build date filter
-    const dateFilter: any = {}
+    const dateFilter: { gte?: Date; lte?: Date } = {}
     if (startDate) {
       dateFilter.gte = new Date(startDate)
     }
@@ -34,37 +34,39 @@ export async function GET(request: NextRequest) {
       dateFilter.lte = new Date(endDate)
     }
 
+    await db.connect()
+    
     // First get the academic year details
-    const academicYear = await prisma.academicYear.findUnique({
-      where: { id: academicYearId }
-    })
+    const academicYear = await db.academicYear.findById(academicYearId).lean()
 
     if (!academicYear) {
       return NextResponse.json({ error: "Academic year not found" }, { status: 404 })
     }
 
+    // Build payment filter
+    const paymentFilter: {
+      'academicYear.year': string;
+      paymentDate?: { gte?: Date; lte?: Date };
+    } = {
+      'academicYear.year': academicYear.year
+    }
+    
+    if (Object.keys(dateFilter).length > 0) {
+      paymentFilter.paymentDate = dateFilter
+    }
+    
     // Get all payments for the academic year
-    const payments = await prisma.payment.findMany({
-      where: {
-        studentEnrollment: {
-          academicYearId: academicYearId
-        },
-        ...(Object.keys(dateFilter).length > 0 && {
-          paymentDate: dateFilter
-        })
-      },
-      select: {
-        id: true,
-        paymentDate: true,
-        totalAmount: true,
-        paymentMethod: true,
-        paymentItems: true,
-        academicYear: true
-      },
-      orderBy: {
-        paymentDate: 'asc'
-      }
-    })
+    const payments = await db.payment
+      .find(paymentFilter, {
+        id: 1,
+        paymentDate: 1,
+        totalAmount: 1,
+        paymentMethod: 1,
+        paymentItems: 1,
+        academicYear: 1
+      })
+      .sort({ paymentDate: 1 })
+      .lean()
 
     // Group payments by the specified period
     const groupedData = new Map<string, {
@@ -117,7 +119,7 @@ export async function GET(request: NextRequest) {
       group.methods[payment.paymentMethod] = (group.methods[payment.paymentMethod] || 0) + 1
 
       // Track fee types from payment items
-      payment.paymentItems.forEach((paymentItem: any) => {
+      payment.paymentItems.forEach((paymentItem: { feeTemplateName: string; amount: number }) => {
         group.feeTypes[paymentItem.feeTemplateName] = (group.feeTypes[paymentItem.feeTemplateName] || 0) + paymentItem.amount
       })
     })

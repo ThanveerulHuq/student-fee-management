@@ -5,8 +5,9 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { ArrowLeft, LogOut, UserCircle, CalendarDays } from "lucide-react"
-import { useAcademicYear, useAcademicYearNavigation } from "@/contexts/academic-year-context"
+import { Skeleton } from "@/components/ui/skeleton"
+import { ArrowLeft, LogOut, UserCircle, CalendarDays, ChevronDown } from "lucide-react"
+import { useAcademicYear } from "@/contexts/academic-year-context"
 import Image from "next/image"
 
 interface EnhancedPageHeaderProps {
@@ -22,8 +23,7 @@ export default function EnhancedPageHeader({
 }: EnhancedPageHeaderProps) {
   const { data: session } = useSession()
   const router = useRouter()
-  const { academicYear, academicYears, switchAcademicYear } = useAcademicYear()
-  const { navigateTo } = useAcademicYearNavigation()
+  const { academicYear, academicYears, switchAcademicYear, loading } = useAcademicYear()
 
   const handleBack = () => {
     router.back()
@@ -49,7 +49,7 @@ export default function EnhancedPageHeader({
             )}
             <div 
               className="flex items-center space-x-3 cursor-pointer hover:opacity-80 transition-opacity"
-              onClick={() => navigateTo("/dashboard")}
+              onClick={() => router.push("/dashboard")}
             >
               <Image
                 src="/education.png"
@@ -73,27 +73,49 @@ export default function EnhancedPageHeader({
           
           <div className="flex items-center space-x-4">
             {/* Academic Year Selector */}
-            {academicYear && academicYears.length > 0 && (
-              <div className="flex items-center space-x-2">
-                <CalendarDays className="h-4 w-4 text-gray-500" />
+            <div className="flex items-center space-x-2">
+              <CalendarDays className="h-4 w-4 text-gray-500" />
+              {loading ? (
+                <div className="flex items-center space-x-2">
+                  <Skeleton className="h-9 w-[180px]" />
+                </div>
+              ) : academicYear && academicYears.length > 0 ? (
                 <Select value={academicYear.id} onValueChange={handleAcademicYearChange}>
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue>
-                      <Badge variant="outline" className="text-sm">
+                  <SelectTrigger className="w-[180px] bg-blue-50 border-blue-200 hover:bg-blue-100 transition-colors">
+                    <div className="flex items-center gap-2">
+                      <Badge 
+                        variant="secondary" 
+                        className="bg-blue-100 text-blue-800 border-blue-300 text-sm font-medium"
+                      >
                         {academicYear.year}
                       </Badge>
-                    </SelectValue>
+                      {academicYear.isActive && (
+                        <span className="text-xs text-green-600 font-medium">Active</span>
+                      )}
+                    </div>
+                    <ChevronDown className="h-4 w-4 opacity-50" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="w-[200px]">
                     {academicYears.map((year) => (
                       <SelectItem key={year.id} value={year.id}>
-                        {year.year} {year.isActive && "(Active)"}
+                        <div className="flex items-center justify-between w-full">
+                          <span className="font-medium">{year.year}</span>
+                          {year.isActive && (
+                            <Badge variant="outline" className="ml-2 text-xs bg-green-50 text-green-600 border-green-300">
+                              Active
+                            </Badge>
+                          )}
+                        </div>
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-              </div>
-            )}
+              ) : (
+                <div className="flex items-center space-x-2 text-sm text-gray-500">
+                  <span>No academic years available</span>
+                </div>
+              )}
+            </div>
             
             {children}
             

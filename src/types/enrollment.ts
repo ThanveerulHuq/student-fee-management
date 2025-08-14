@@ -1,4 +1,4 @@
-import { Payment } from "@/generated/prisma/client"
+import { IPayment } from "@/lib/database"
 
 // Enums
 export enum FeeCategory {
@@ -152,7 +152,7 @@ export interface StudentEnrollment {
   // Pre-computed totals
   totals: StudentTotals
   feeStatus: FeeStatus
-  payments: Payment[]
+  payments: IPayment[]
   
   createdAt: Date
   updatedAt: Date

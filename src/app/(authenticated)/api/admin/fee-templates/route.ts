@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
-import { prisma } from '@/lib/prisma'
+import { db } from '@/lib/database'
 import { authOptions } from '@/lib/auth'
 
 // GET /api/admin/fee-templates - List all fee templates
@@ -11,12 +11,12 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const templates = await prisma.feeTemplate.findMany({
-      orderBy: [
-        { order: 'asc' },
-        { name: 'asc' }
-      ]
-    })
+    await db.connect()
+
+    const templates = await db.feeTemplate
+      .find({})
+      .sort({ order: 1, name: 1 })
+      .lean()
 
     return NextResponse.json(templates)
   } catch (error) {
@@ -36,6 +36,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    await db.connect()
+
     const body = await request.json()
     const { name, description, category, order } = body
 
@@ -48,9 +50,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if template with same name exists
-    const existingTemplate = await prisma.feeTemplate.findUnique({
-      where: { name }
-    })
+    const existingTemplate = await db.feeTemplate.findOne({ name })
 
     if (existingTemplate) {
       return NextResponse.json(
@@ -62,20 +62,19 @@ export async function POST(request: NextRequest) {
     // Auto-assign order if not provided
     let templateOrder = order
     if (!templateOrder) {
-      const lastTemplate = await prisma.feeTemplate.findFirst({
-        orderBy: { order: 'desc' }
-      })
+      const lastTemplate = await db.feeTemplate
+        .findOne({})
+        .sort({ order: -1 })
+        .lean()
       templateOrder = (lastTemplate?.order || 0) + 1
     }
 
-    const template = await prisma.feeTemplate.create({
-      data: {
-        name,
-        description,
-        category,
-        order: templateOrder,
-        isActive: true
-      }
+    const template = await db.feeTemplate.create({
+      name,
+      description,
+      category,
+      order: templateOrder,
+      isActive: true
     })
 
     return NextResponse.json(template, { status: 201 })

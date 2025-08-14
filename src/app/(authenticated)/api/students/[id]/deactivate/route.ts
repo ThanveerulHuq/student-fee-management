@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
-import { prisma } from "@/lib/prisma"
+import { db } from "@/lib/database"
 import { z } from "zod"
 
 const deactivateSchema = z.object({
@@ -25,10 +25,10 @@ export async function POST(
     const body = await request.json()
     deactivateSchema.parse(body)
 
+    await db.connect()
+    
     // Check if student exists
-    const existingStudent = await prisma.student.findUnique({
-      where: { id: studentId },
-    })
+    const existingStudent = await db.student.findById(studentId)
 
     if (!existingStudent) {
       return NextResponse.json({ error: "Student not found" }, { status: 404 })
@@ -39,13 +39,14 @@ export async function POST(
     }
 
     // Deactivate student (keep enrollments active)
-    const updatedStudent = await prisma.student.update({
-      where: { id: studentId },
-      data: {
+    const updatedStudent = await db.student.findByIdAndUpdate(
+      studentId,
+      {
         isActive: false,
         updatedAt: new Date()
-      }
-    })
+      },
+      { new: true, lean: true }
+    )
 
     return NextResponse.json({
       success: true,

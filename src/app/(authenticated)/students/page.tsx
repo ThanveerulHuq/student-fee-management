@@ -1,7 +1,8 @@
 "use client"
 
 import { useEffect, useState, useCallback } from "react"
-import { useAcademicYear, useAcademicYearNavigation } from "@/contexts/academic-year-context"
+import { useRouter } from "next/navigation"
+import { useAcademicYear } from "@/contexts/academic-year-context"
 import StudentsSearch from "./_components/lists/students-search"
 import StudentsTable from "./_components/lists/students-table"
 import { StudentsListSkeleton } from "./_components/common/loading-skeletons"
@@ -35,8 +36,8 @@ interface StudentsResponse {
 }
 
 export default function StudentsPage() {
+  const router = useRouter()
   const { academicYear } = useAcademicYear()
-  const { navigateTo, goToStudent } = useAcademicYearNavigation()
   const [students, setStudents] = useState<Student[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
@@ -124,7 +125,7 @@ export default function StudentsPage() {
   }
 
   const handleAddStudent = () => {
-    navigateTo("/students/add")
+    router.push("/students/add")
   }
 
 
@@ -157,7 +158,7 @@ export default function StudentsPage() {
         <StudentsTable
           students={students}
           loading={loading}
-          onStudentClick={goToStudent}
+          onStudentClick={(id) => router.push(`/students/${id}`)}
           academicYear={academicYear ?? undefined}
         />
       </div>

@@ -37,7 +37,7 @@ export default function LoginPage() {
         trackLoginFailed("invalid_credentials")
       } else {
         trackLogin("credentials")
-        router.push("/select-academic-year")
+        router.push("/dashboard")
       }
     } catch {
       setErrorMessage("An error occurred. Please try again.")

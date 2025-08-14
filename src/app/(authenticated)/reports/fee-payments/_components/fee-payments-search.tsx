@@ -1,5 +1,6 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -14,6 +15,7 @@ import {
   DollarSign
 } from "lucide-react"
 import { formatCurrency, formatNumber } from "@/lib/format"
+import { useDebounce } from "@/hooks/use-debounce"
 
 interface ReportSummary {
   totalPayments: number
@@ -74,6 +76,23 @@ export default function FeePaymentsSearch({
   recordsPerPage = 20,
   onRecordsPerPageChange
 }: FeePaymentsSearchProps) {
+  // Local state for search input (for immediate UI feedback)
+  const [searchInput, setSearchInput] = useState(filters.studentId)
+  
+  // Debounced search value (for API calls)
+  const debouncedSearchValue = useDebounce(searchInput, 500)
+  
+  // Update local state when filters change (from parent)
+  useEffect(() => {
+    setSearchInput(filters.studentId)
+  }, [filters.studentId])
+  
+  // Trigger filter change when debounced value changes
+  useEffect(() => {
+    if (debouncedSearchValue !== filters.studentId) {
+      onFilterChange("studentId", debouncedSearchValue)
+    }
+  }, [debouncedSearchValue, filters.studentId, onFilterChange])
   return (
     <>
       {/* Header Section with Summary */}
@@ -128,9 +147,9 @@ export default function FeePaymentsSearch({
               <div className="relative mt-1">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <Input
-                  placeholder="Name or admission no..."
-                  value={filters.studentId}
-                  onChange={(e) => onFilterChange("studentId", e.target.value)}
+                  placeholder="Name, father name, or admission no..."
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
                   className="pl-10 h-9 border-gray-200 focus:border-blue-500 focus:ring-blue-500/20 text-sm bg-gray-50/50 focus:bg-white transition-colors"
                 />
               </div>

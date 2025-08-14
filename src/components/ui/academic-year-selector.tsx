@@ -36,6 +36,7 @@ export default function AcademicYearSelector({
           
           // Auto-select active academic year if no value is set
           if (!value) {
+            console.log("data", data)
             const activeYear = data.find((year: AcademicYear) => year.isActive)
             if (activeYear) {
               onValueChange(activeYear.id)
@@ -50,7 +51,7 @@ export default function AcademicYearSelector({
     }
 
     fetchAcademicYears()
-  }, [value, onValueChange])
+  }, []) // Only run once on mount
 
   if (loading) {
     return (
