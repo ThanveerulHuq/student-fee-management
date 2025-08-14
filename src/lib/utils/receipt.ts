@@ -2,7 +2,7 @@
 import { prisma } from "@/lib/prisma"
 
 export function generateReceiptNumber(academicYear: string, sequenceNumber: number): string {
-  return `${sequenceNumber}`
+  return `${academicYear}-${sequenceNumber}`
 }
 
 export async function getNextReceiptSequence(academicYear: string): Promise<number> {
