@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
-import { DateRangePicker } from "@/components/ui/date-range-picker"
+import { DateRangePickerAdvanced } from "@/components/ui/date-range-picker/date-range-picker-advanced"
 import { BarChart, Table, Calendar, TrendingUp, DollarSign, CreditCard, BarChart3, Download } from "lucide-react"
 import { useAcademicYear } from "@/contexts/academic-year-context"
 import { formatCurrency, formatNumber } from "@/lib/format"
@@ -266,7 +266,7 @@ export default function TransactionAnalytics() {
               <div>
                 <Label className="text-sm font-medium text-gray-700">Date Range</Label>
                 <div className="mt-1">
-                  <DateRangePicker
+                  <DateRangePickerAdvanced
                     date={dateRange}
                     onDateChange={setDateRange}
                     placeholder="Select date range"

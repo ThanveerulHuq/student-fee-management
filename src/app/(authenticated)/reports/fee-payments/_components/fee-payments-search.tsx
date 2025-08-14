@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { DateRangePicker } from "@/components/ui/date-range-picker"
+import { DateRangePickerAdvanced } from "@/components/ui/date-range-picker/date-range-picker-advanced"
 import { DateRange } from "react-day-picker"
 import { 
   Download,
@@ -229,7 +229,7 @@ export default function FeePaymentsSearch({
             {/* Date Range - Right */}
             <div className="flex items-center space-x-2">
               <Label className="text-sm font-medium text-gray-700">Date Range:</Label>
-              <DateRangePicker
+              <DateRangePickerAdvanced
                 date={dateRange}
                 onDateChange={onDateChange}
                 placeholder="Select date range"

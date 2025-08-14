@@ -1,6 +1,6 @@
 #!/usr/bin/env tsx
 
-import { PrismaClient } from '../src/generated/prisma';
+import { PrismaClient } from '@/generated/prisma';
 import * as fs from 'fs';
 import * as path from 'path';
 import { parse } from 'csv-parse/sync';
@@ -41,7 +41,7 @@ function createMigrationData(sourceTable: string, sourceId: string | number, add
 
 // Load all CSV data
 function loadCSVData(): CSVData {
-  const dataDir = path.join(__dirname, '../data/2025');
+  const dataDir = path.join(__dirname, '../data/2023');
   
   return {
     academicYear: readCSV(path.join(dataDir, 'academic_year.csv')),
@@ -237,7 +237,7 @@ async function migrateStudents(data: any[]) {
 async function createFeeStructures(csvData: CSVData) {
   console.log('🔄 Creating Fee Structures using common_fee data...');
   
-  const academicYear = await prisma.academicYear.findFirst({ where: { isActive: true } });
+  const academicYear = await prisma.academicYear.findFirst({ where: { id: '689e3e022b18673ac584f759' } });
   const classes = await prisma.class.findMany();
   const feeTemplates = await prisma.feeTemplate.findMany();
   const scholarshipTemplates = await prisma.scholarshipTemplate.findMany();
@@ -398,11 +398,13 @@ function getStudentFeeAmount(templateName: string, row: any): number {
 
 async function migrateStudentEnrollments(csvData: CSVData): Promise<Map<string, string>> {
   console.log('🔄 Migrating Student Enrollments...');
+
+  const unfoundStudents = [];
   
-  const academicYear = await prisma.academicYear.findFirst({ where: { isActive: true } });
+  const academicYear = await prisma.academicYear.findFirst({ where: { id: '689e3e022b18673ac584f759' } });
   const students = await prisma.student.findMany();
   const classes = await prisma.class.findMany();
-  const feeStructures = await prisma.feeStructure.findMany();
+  const feeStructures = await prisma.feeStructure.findMany({ where: { academicYearId: academicYear?.id } });
 
 
   // Create maps for efficient lookups
@@ -411,6 +413,8 @@ async function migrateStudentEnrollments(csvData: CSVData): Promise<Map<string, 
     const classObj = classes.find(c => c.className === classRow.class_name.toString());
     if (classObj) {
       classIdToClassMap.set(classRow.class_id.toString(), classObj);
+    } else {
+      console.warn(`Class not found for class_id: ${classRow.class_id}`);
     }
   }
 
@@ -437,9 +441,11 @@ async function migrateStudentEnrollments(csvData: CSVData): Promise<Map<string, 
   const studentYearToEnrollmentMap = new Map<string, string>();
   
   for (const row of csvData.studentYear) {
+    console.log(`processing row: ${row.student_id}`);
     const student = studentMap.get(row.student_id.toString());
     if (!student) {
       console.warn(`Student not found for student_id: ${row.student_id}`);
+      unfoundStudents.push(row.student_id);
       continue;
     }
     
@@ -594,7 +600,8 @@ async function migrateStudentEnrollments(csvData: CSVData): Promise<Map<string, 
     // Map student_year.id to enrollment.id for payment migration
     studentYearToEnrollmentMap.set(row.id.toString(), enrollment.id);
   }
-  
+  console.log(`unfound students: ${unfoundStudents.length}`);
+  console.log(`unfound students: ${unfoundStudents.join(', ')}`);
   console.log('✅ Student Enrollments migrated');
   return studentYearToEnrollmentMap;
 }
@@ -606,11 +613,11 @@ async function migratePayments(csvData: CSVData) {
   console.log(`input data count: ${csvData.feeTxn.length}`);
   
   // Create a map from enrollment ID to enrollment object for quick lookup
-  const enrollments = await prisma.studentEnrollment.findMany();
+  const enrollments = await prisma.studentEnrollment.findMany({ where: { academicYearId: '689e3e022b18673ac584f759' } });
   const enrollmentByIdMap = new Map(enrollments.map(e => [(e.migrationData as any)?.sourceId, e]));
   
   // Initialize receipt sequence
-  const academicYear = await prisma.academicYear.findFirst({ where: { isActive: true } });
+  const academicYear = await prisma.academicYear.findFirst({ where: { id: '689e3e022b18673ac584f759' } });
   if (academicYear) {
     await prisma.receiptSequence.upsert({
       where: { academicYear: academicYear.year },
@@ -622,15 +629,19 @@ async function migratePayments(csvData: CSVData) {
     });
   }
   
+  let migratedCount = 0;
+  let errorCount = 0;
+  
   for (const row of csvData.feeTxn) {
-    console.log(`processing row: ${row.student_id}`);
-    const enrollment = enrollmentByIdMap.get(row.student_id.toString());
-    if (!enrollment) {
+    try {
+      console.log(`processing row: ${row.student_id}`);
+      const enrollment = enrollmentByIdMap.get(row.student_id.toString());
+      if (!enrollment) {
         console.warn(`Enrollment not found for enrollment_id: ${row.student_id}`);
+        errorCount++;
         continue;
       }
-    
-    if (enrollment) {
+      
       // Create payment items based on the fee transaction
       const paymentItems = [];
       
@@ -689,12 +700,16 @@ async function migratePayments(csvData: CSVData) {
           });
         }
       }
-      
-      // const receiptNo = `${enrollment.academicYear.year.split('-')[0]}${String(newSequence).padStart(4, '0')}`;
+
+      const payment = await prisma.payment.findFirst({ where: { receiptNo: academicYear?.year + '-' + row.id.toString(), academicYearId: enrollment.academicYearId } });
+      if (payment) {
+        console.log(`Payment already exists for receiptNo: ${academicYear?.year + '-' + row.id.toString()}`);
+        continue;
+      }
       
       await prisma.payment.create({
         data: {
-          receiptNo: row.id.toString(),
+          receiptNo: academicYear?.year + '-' + row.id.toString(),
           studentEnrollmentId: enrollment.id,
           academicYearId: enrollment.academicYearId,
           totalAmount: parseFloat(row.amount_paid),
@@ -703,7 +718,10 @@ async function migratePayments(csvData: CSVData) {
           createdBy: 'system',
           status: 'COMPLETED',
           student: enrollment.student,
-          class: enrollment.class,
+          class: {
+            className: enrollment.class.className,
+            isActive: enrollment.class.isActive
+          },
           academicYear: enrollment.academicYear,
           section: enrollment.section,
           paymentItems,
@@ -719,27 +737,38 @@ async function migratePayments(csvData: CSVData) {
               vanFee: parseFloat(row.van_fee || 0)
             },
             paymentItemsCount: paymentItems.length,
-            generatedReceiptNo: row.id.toString()
+            generatedReceiptNo: academicYear?.year + '-' + row.id.toString()
           })
         }
       });
+      
+      migratedCount++;
+      if (migratedCount % 10 === 0) {
+        console.log(`Migrated ${migratedCount} payments...`);
+      }
+    } catch (error) {
+      console.error(`ERROR migrating payment ${row.id}:`, error);
+      errorCount++;
     }
   }
   
   console.log('✅ Payments migrated');
+  console.log(`Successfully migrated: ${migratedCount} payments`);
+  console.log(`Errors encountered: ${errorCount} payments`);
 }
 
 async function updateEnrollmentTotals() {
   console.log('🔄 Updating enrollment totals...');
   
   const enrollments = await prisma.studentEnrollment.findMany({
-    include: { payments: true }
+    include: { payments: true },
+    where: { academicYearId: '689e3e022b18673ac584f759' }
   });
   
   for (const enrollment of enrollments) {
     // Calculate total paid amounts
     const totalPaid = enrollment.payments.reduce((sum, payment) => sum + payment.totalAmount, 0);
-    
+    console.log(`totalPaid: ${totalPaid} for enrollment: ${enrollment.student.name}`);
     // Update fees with paid amounts
     const updatedFees = enrollment.fees.map(fee => {
       const paidAmount = enrollment.payments
@@ -836,8 +865,8 @@ async function main() {
     // await createDefaultScholarshipTemplates();
     // await migrateStudents(csvData.studentsInfo);
     // await createFeeStructures(csvData);
-    // const studentYearToEnrollmentMap = await migrateStudentEnrollments(csvData);
-    // await migratePayments(csvData);
+  //  await migrateStudentEnrollments(csvData);
+    await migratePayments(csvData);
     await updateEnrollmentTotals();
     // await validateMigrationTracking();
     // await createDefaultUser();

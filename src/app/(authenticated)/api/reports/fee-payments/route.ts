@@ -101,6 +101,9 @@ export async function GET(request: NextRequest) {
     // Get all payments for summary calculations
     const allPayments = await prisma.payment.findMany({
       where: paymentWhere,
+      select: {
+        totalAmount: true,
+      }
     })
 
     // Get paginated payments (no need to include enrollment - data is embedded)
@@ -138,63 +141,10 @@ export async function GET(request: NextRequest) {
     const totalPayments = allPayments.length
     const totalAmount = allPayments.reduce((sum, payment) => sum + payment.totalAmount, 0)
 
-    // Group by payment method using ALL payments
-    const paymentMethodBreakdown = allPayments.reduce((acc, payment) => {
-      const existing = acc.find(item => item.method === payment.paymentMethod)
-      if (existing) {
-        existing.count += 1
-        existing.amount += payment.totalAmount
-      } else {
-        acc.push({
-          method: payment.paymentMethod,
-          count: 1,
-          amount: payment.totalAmount
-        })
-      }
-      return acc
-    }, [] as Array<{ method: string; count: number; amount: number }>)
-
-    // Group by date for daily summary using ALL payments
-    const dailySummary = allPayments.reduce((acc, payment) => {
-      const date = payment.paymentDate.toISOString().split('T')[0] // Get date part only
-      const existing = acc.find(item => item.date === date)
-      if (existing) {
-        existing.count += 1
-        existing.amount += payment.totalAmount
-      } else {
-        acc.push({
-          date,
-          count: 1,
-          amount: payment.totalAmount
-        })
-      }
-      return acc
-    }, [] as Array<{ date: string; count: number; amount: number }>)
-    .sort((a, b) => b.date.localeCompare(a.date)) // Sort by date descending
-
-    // Group by collector using ALL payments
-    const collectorSummary = allPayments.reduce((acc, payment) => {
-      const existing = acc.find(item => item.collector === payment.createdBy)
-      if (existing) {
-        existing.count += 1
-        existing.amount += payment.totalAmount
-      } else {
-        acc.push({
-          collector: payment.createdBy,
-          count: 1,
-          amount: payment.totalAmount
-        })
-      }
-      return acc
-    }, [] as Array<{ collector: string; count: number; amount: number }>)
 
     const summary = {
       totalPayments,
-      totalAmount,
-      averagePayment: totalPayments > 0 ? totalAmount / totalPayments : 0,
-      paymentMethodBreakdown: paymentMethodBreakdown.sort((a, b) => b.amount - a.amount),
-      dailySummary: dailySummary.slice(0, 30), // Last 30 days
-      collectorSummary: collectorSummary.sort((a, b) => b.amount - a.amount)
+      totalAmount
     }
 
     // Calculate pagination metadata
