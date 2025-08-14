@@ -19,7 +19,7 @@ interface OutstandingFeesPageProps {
 export interface OutstandingStudent {
   id: string
   student: {
-    id: string
+    _id: string
     name: string
     admissionNo: string
     fatherName: string
@@ -171,7 +171,7 @@ export default function OutstandingFeesReportPage({}: OutstandingFeesPageProps) 
       const outstandingStudents: OutstandingStudent[] = data.students.map((student: any) => ({
         id: student.id,
         student: {
-          id: student.id,
+          _id: student.id,
           name: student.name,
           admissionNo: student.admissionNo,
           fatherName: student.fatherName,

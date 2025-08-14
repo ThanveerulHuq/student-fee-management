@@ -2,6 +2,7 @@
 
 import { Badge } from "@/components/ui/badge"
 import { calculateAge } from "@/lib/utils/age"
+import { IStudent } from "@/lib/models"
 
 interface Student {
   id: string
@@ -25,7 +26,7 @@ interface Student {
 }
 
 interface PersonalInfoCardProps {
-  student: Student
+  student: IStudent
 }
 
 export default function PersonalInfoCard({ student }: PersonalInfoCardProps) {

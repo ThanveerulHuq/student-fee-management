@@ -17,7 +17,7 @@ import { MobileNumber } from "@/lib/types"
 
 import { formatCurrency } from "@/lib/format"
 interface Student {
-  id: string
+  _id: string
   name: string
   admissionNo: string
   gender: string
@@ -28,7 +28,7 @@ interface Student {
 }
 
 interface Class {
-  id: string
+  _id: string
   className: string
   order: number
 }
@@ -246,7 +246,7 @@ export default function EnrollStudentPage() {
       setError("")
 
       const submitData = {
-        studentId: student.id,
+        studentId: student._id,
         academicYearId: academicYear.id,
         classId: formData.classId,
         section: formData.section,
@@ -381,7 +381,7 @@ export default function EnrollStudentPage() {
                   >
                     <option value="">Select Class</option>
                     {classes.map((cls) => (
-                      <option key={cls.id} value={cls.id}>
+                      <option key={cls._id} value={cls._id}>
                         {cls.className}
                       </option>
                     ))}

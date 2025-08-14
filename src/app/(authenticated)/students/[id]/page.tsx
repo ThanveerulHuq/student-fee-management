@@ -12,35 +12,11 @@ import PersonalInfoCard from "../_components/details/personal-info-card"
 import FamilyContactCard from "../_components/details/family-contact-card"
 import EnrollmentHistoryCard from "../_components/details/enrollment-history-card"
 import { StudentEnrollment } from "@/types/enrollment"
-import { MobileNumber } from "@/generated/prisma"
+import { IStudent } from "@/lib/models"
 
-interface Student {
-  id: string
-  admissionNo: string
-  aadharNo?: string
-  emisNo?: string
-  penNumber?: string
-  udiseNumber?: string
-  name: string
-  gender: string
-  dateOfBirth: string
-  age?: number // Make age optional since it's calculated dynamically
-  community: string
-  motherTongue: string
-  mobileNo: string
-  fatherName: string
-  motherName: string
-  address: string
-  previousSchool?: string
-  religion: string
-  caste: string
-  nationality: string
-  remarks?: string
-  siblingIds: string[]
-  isActive: boolean
-  admissionDate: string
+
+export interface StudentWithEnrollments extends IStudent {
   enrollments: Array<StudentEnrollment>
-  mobileNumbers: Array<MobileNumber>
 }
 
 interface StudentDetailPageProps {
@@ -58,7 +34,7 @@ export default function StudentDetailPage({ params }: StudentDetailPageProps) {
     params.then(p => setStudentId(p.id))
   }, [params])
 
-  const [student, setStudent] = useState<Student | null>(null)
+  const [student, setStudent] = useState<StudentWithEnrollments | null>(null)
   const [loading, setLoading] = useState(true)
   const [showDeactivateDialog, setShowDeactivateDialog] = useState(false)
   const [showReactivateDialog, setShowReactivateDialog] = useState(false)
@@ -104,7 +80,7 @@ export default function StudentDetailPage({ params }: StudentDetailPageProps) {
     if (!student) return
 
     try {
-      const response = await fetch(`/api/students/${student.id}/deactivate`, {
+      const response = await fetch(`/api/students/${student._id}/deactivate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -142,7 +118,7 @@ export default function StudentDetailPage({ params }: StudentDetailPageProps) {
     if (!student) return
 
     try {
-      const response = await fetch(`/api/students/${student.id}/reactivate`, {
+      const response = await fetch(`/api/students/${student._id}/reactivate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

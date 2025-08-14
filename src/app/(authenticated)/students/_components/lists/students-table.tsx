@@ -12,39 +12,20 @@ import {
 import { Users } from "lucide-react"
 import { StudentStatusBadge } from "@/components/students/student-status-badge"
 import { Skeleton } from "@/components/ui/skeleton"
-import { MobileNumber } from "@/generated/prisma"
+import { MobileNumber } from "@/lib/types"
 import { calculateAge } from "@/lib/utils/age"
-
-interface Student {
-  id: string
-  admissionNo: string
-  name: string
-  gender: string
-  dateOfBirth: string | Date
-  fatherName: string
-  mobileNumbers: MobileNumber[]
-  isActive: boolean
-  createdAt: string
-}
-
-interface AcademicYear {
-  id: string
-  year: string
-  isActive: boolean
-}
+import { Student } from "../../page"
 
 interface StudentsTableProps {
   students: Student[]
   loading: boolean
   onStudentClick: (studentId: string) => void
-  academicYear?: AcademicYear
 }
 
 export default function StudentsTable({ 
   students, 
   loading, 
   onStudentClick, 
-  academicYear 
 }: StudentsTableProps) {
   if (loading) {
     return (
@@ -120,9 +101,9 @@ export default function StudentsTable({
               students.map((student) => {
                 return (
                   <TableRow 
-                    key={student.id} 
+                    key={student._id} 
                     className="hover:bg-blue-50/30 transition-all duration-200 border-b border-gray-100 last:border-b-0 cursor-pointer group"
-                    onClick={() => onStudentClick(student.id)}
+                    onClick={() => onStudentClick(student._id)}
                   >
                     <TableCell className="py-3 px-4">
                       <div className="font-mono text-xs font-semibold text-gray-900 group-hover:text-blue-700 transition-colors">

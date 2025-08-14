@@ -12,7 +12,7 @@ import { Check, ChevronDown, X, Users, Search } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface Student {
-  id: string
+  _id: string
   name: string
   admissionNo: string
   fatherName: string
@@ -56,7 +56,7 @@ export function MultiSelectStudents({
           const data = await response.json()
           // Filter out current student if provided
           const filteredStudents = currentStudentId 
-            ? data.students.filter((s: Student) => s.id !== currentStudentId)
+            ? data.students.filter((s: Student) => s._id !== currentStudentId)
             : data.students
           setStudents(filteredStudents)
         }
@@ -84,7 +84,7 @@ export function MultiSelectStudents({
           if (response.ok) {
             const student = await response.json()
             return {
-              id: student.id,
+              _id: student._id,
               name: student.name,
               admissionNo: student.admissionNo,
               fatherName: student.fatherName
@@ -105,13 +105,13 @@ export function MultiSelectStudents({
   }, [value])
 
   const handleSelect = (student: Student) => {
-    if (value.includes(student.id)) {
+    if (value.includes(student._id)) {
       // Remove from selection
-      const newValue = value.filter(id => id !== student.id)
+      const newValue = value.filter(id => id !== student._id)
       onChange(newValue)
     } else {
       // Add to selection
-      const newValue = [...value, student.id]
+      const newValue = [...value, student._id]
       onChange(newValue)
     }
   }
@@ -171,14 +171,14 @@ export function MultiSelectStudents({
                     <CommandGroup>
                       {students.map((student) => (
                         <CommandItem
-                          key={student.id}
+                          key={student._id}
                           onSelect={() => handleSelect(student)}
                           className="cursor-pointer"
                         >
                           <Check
                             className={cn(
                               "mr-2 h-4 w-4",
-                              value.includes(student.id) ? "opacity-100" : "opacity-0"
+                              value.includes(student._id) ? "opacity-100" : "opacity-0"
                             )}
                           />
                           <div className="flex flex-col">
@@ -205,7 +205,7 @@ export function MultiSelectStudents({
           <div className="flex flex-wrap gap-2">
             {selectedStudents.map((student) => (
               <Badge
-                key={student.id}
+                key={student._id}
                 variant="outline"
                 className="flex items-center space-x-2 py-1 px-2"
               >
@@ -213,7 +213,7 @@ export function MultiSelectStudents({
                 {!disabled && (
                   <button
                     type="button"
-                    onClick={() => handleRemove(student.id)}
+                    onClick={() => handleRemove(student._id)}
                     className="ml-1 hover:bg-gray-100 rounded-full p-0.5"
                   >
                     <X className="h-3 w-3" />

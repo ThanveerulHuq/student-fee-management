@@ -13,7 +13,7 @@ import LoaderWrapper from "@/components/ui/loader-wrapper"
 import LoaderOne from "@/components/ui/loader-one"
 
 interface Student {
-  id: string
+  _id: string
   name: string
   admissionNo: string
   gender: string
@@ -74,7 +74,7 @@ function EnrollSearchContent() {
   }
 
   const handleStudentSelect = (student: Student) => {
-    router.push(`/enrollments/enroll/${student.id}`)
+    router.push(`/enrollments/enroll/${student._id}`)
   }
 
   if (!academicYear) {
@@ -137,7 +137,7 @@ function EnrollSearchContent() {
                   <div className="space-y-2">
                     {filteredStudents.map((student) => (
                       <Card 
-                        key={student.id} 
+                        key={student._id} 
                         className="cursor-pointer hover:bg-gray-50 transition-colors"
                         onClick={() => handleStudentSelect(student)}
                       >

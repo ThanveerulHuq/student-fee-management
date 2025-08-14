@@ -21,7 +21,7 @@ import type { ScholarshipItem as UIScholarshipItem } from "@/types/fee"
 import { formatCurrency } from "@/lib/format"
 
 interface FeeStructure {
-  id: string
+  _id: string
   name: string
   description?: string
   academicYearId: string
@@ -41,7 +41,7 @@ interface FeeStructure {
 }
 
 interface Enrollment {
-  id: string
+  _id: string
   studentId: string
   academicYearId: string
   classId: string

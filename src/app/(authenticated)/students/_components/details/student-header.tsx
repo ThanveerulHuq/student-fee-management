@@ -1,6 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
+import { IStudent } from "@/lib/models"
 import { 
   Edit, 
   UserPlus, 
@@ -8,15 +9,9 @@ import {
   ArrowLeft
 } from "lucide-react"
 
-interface Student {
-  id: string
-  name: string
-  admissionNo: string
-  isActive: boolean
-}
 
 interface StudentHeaderProps {
-  student: Student
+  student: IStudent
   onEdit: () => void
   onEnroll: () => void
   onDeactivate: () => void

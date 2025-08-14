@@ -103,9 +103,9 @@ export default function OutstandingFeesTable({
             ) : (
               students.map((student) => (
                   <TableRow 
-                    key={student.id} 
+                    key={student.student._id} 
                     className="hover:bg-blue-50/30 transition-colors border-b border-gray-100 last:border-b-0 cursor-pointer group"
-                    onClick={() => onStudentClick(student.id)}
+                    onClick={() => onStudentClick(student.student._id)}
                   >
                     {/* Student Details & Class Combined */}
                     <TableCell className="py-2 px-3">

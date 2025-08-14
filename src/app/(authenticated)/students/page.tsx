@@ -7,10 +7,10 @@ import StudentsSearch from "./_components/lists/students-search"
 import StudentsTable from "./_components/lists/students-table"
 import { StudentsListSkeleton } from "./_components/common/loading-skeletons"
 import { trackSearch, trackPageView } from "@/lib/analytics"
-import { MobileNumber } from "@/generated/prisma"
+import { MobileNumber } from "@/lib/types"
   
-interface Student {
-  id: string
+export interface Student {
+  _id: string
   admissionNo: string
   name: string
   gender: string
@@ -159,7 +159,6 @@ export default function StudentsPage() {
           students={students}
           loading={loading}
           onStudentClick={(id) => router.push(`/students/${id}`)}
-          academicYear={academicYear ?? undefined}
         />
       </div>
 

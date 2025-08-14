@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Search } from "lucide-react"
 
 interface Student {
-  id: string
+  _id: string
   name: string
   admissionNo: string
   fatherName: string
@@ -71,7 +71,7 @@ export default function StudentSelector({
     }
   }, [searchQuery, students])
 
-  const selectedStudent = students.find(student => student.id === value)
+  const selectedStudent = students.find(student => student._id === value)
 
   if (loading) {
     return (
@@ -122,7 +122,7 @@ export default function StudentSelector({
                 <>
                   <SelectItem value="ALL">All Students</SelectItem>
                   {filteredStudents.map((student) => (
-                    <SelectItem key={student.id} value={student.id}>
+                    <SelectItem key={student._id} value={student._id}>
                       <div className="flex flex-col items-start">
                         <div className="font-medium">{student.name}</div>
                         <div className="text-sm text-gray-500">
