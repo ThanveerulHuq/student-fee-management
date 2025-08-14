@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
         { createdAt: 'desc' }
       ]
     })
-
+    
     return NextResponse.json(feeStructures)
   } catch (error) {
     console.error('Error fetching fee structures:', error)
@@ -180,7 +180,6 @@ export async function POST(request: NextRequest) {
         // Embedded class data
         class: {
           className: classInfo.className,
-          order: classInfo.order,
           isActive: classInfo.isActive
         },
         

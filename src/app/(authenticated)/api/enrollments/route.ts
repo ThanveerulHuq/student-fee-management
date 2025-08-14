@@ -19,9 +19,10 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get('search')
     const includeInactive = searchParams.get('includeInactive') === 'true'
     const page = parseInt(searchParams.get('page') || '1')
-    const limit = parseInt(searchParams.get('limit') || '10')
+    const limitParam = searchParams.get('limit')
+    const limit = limitParam ? parseInt(limitParam) : null
 
-    const skip = (page - 1) * limit
+    const skip = limit ? (page - 1) * limit : 0
 
     const whereClause: Record<string, unknown> = {}
     
@@ -47,7 +48,7 @@ export async function GET(request: NextRequest) {
       prisma.studentEnrollment.findMany({
         where: whereClause,
         skip,
-        take: limit,
+        ...(limit ? { take: limit } : {}),
         orderBy: { createdAt: 'desc' }
       }),
       prisma.studentEnrollment.count({ where: whereClause })
@@ -59,7 +60,7 @@ export async function GET(request: NextRequest) {
         page,
         limit,
         total,
-        pages: Math.ceil(total / limit)
+        pages: limit ? Math.ceil(total / limit) : 1
       }
     })
   } catch (error) {

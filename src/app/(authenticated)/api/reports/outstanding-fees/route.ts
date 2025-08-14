@@ -20,8 +20,9 @@ export async function GET(request: NextRequest) {
     
     // Pagination parameters
     const page = parseInt(searchParams.get("page") || "1")
-    const limit = parseInt(searchParams.get("limit") || "10")
-    const skip = (page - 1) * limit
+    const limitParam = searchParams.get("limit")
+    const limit = limitParam ? parseInt(limitParam) : null
+    const skip = limit ? (page - 1) * limit : 0
     
     // Sorting parameters
     const sortBy = searchParams.get("sortBy") || "name"
@@ -40,10 +41,10 @@ export async function GET(request: NextRequest) {
     // Add search filter using Prisma OR conditions
     if (search) {
       enrollmentWhere.OR = [
-        { student: { name: { contains: search, mode: 'insensitive' } } },
-        { student: { fatherName: { contains: search, mode: 'insensitive' } } },
-        { student: { admissionNumber: { contains: search, mode: 'insensitive' } } },
-        { class: { className: { contains: search, mode: 'insensitive' } } },
+        { student: { is: { name: { contains: search, mode: 'insensitive' } } } },
+        { student: { is: { fatherName: { contains: search, mode: 'insensitive' } } } },
+        { student: { is: { admissionNumber: { contains: search, mode: 'insensitive' } } } },
+        { class: { is: { className: { contains: search, mode: 'insensitive' } } } },
         { section: { contains: search, mode: 'insensitive' } }
       ]
     }
@@ -68,23 +69,13 @@ export async function GET(request: NextRequest) {
     // Get all enrollments first (we need to filter by minOutstanding after fetching)
     const allEnrollments = await prisma.studentEnrollment.findMany({
       where: enrollmentWhere,
+      orderBy,
       select: {
         id: true,
         section: true,
-        student: {
-          select: {
-            name: true,
-            fatherName: true,
-            mobileNo: true,
-            admissionNumber: true
-          }
-        },
-        class: {
-          select: {
-            className: true
-          }
-        },
-        totals: true, // Get the entire totals object
+        student: true, 
+        class: true,   
+        totals: true,
         fees: {
           select: {
             templateName: true,
@@ -127,7 +118,7 @@ export async function GET(request: NextRequest) {
     const totalCount = sortedEnrollments.length
 
     // Apply pagination
-    const processedEnrollments = sortedEnrollments.slice(skip, skip + limit)
+    const processedEnrollments = limit ? sortedEnrollments.slice(skip, skip + limit) : sortedEnrollments
 
     // Transform data in one pass
     const studentsWithOutstanding = processedEnrollments.map(enrollment => ({
@@ -182,7 +173,7 @@ export async function GET(request: NextRequest) {
       page,
       limit,
       total: totalCount,
-      pages: Math.ceil(totalCount / limit)
+      pages: limit ? Math.ceil(totalCount / limit) : 1
     }
 
     return NextResponse.json({

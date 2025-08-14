@@ -33,6 +33,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu'
+import { useAcademicYear } from '@/contexts/academic-year-context'
 
 interface AcademicYear {
   id: string
@@ -130,7 +131,7 @@ export default function FeeStructuresPage() {
   const [loading, setLoading] = useState(true)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingStructure, setEditingStructure] = useState<FeeStructure | null>(null)
-  const [selectedAcademicYear, setSelectedAcademicYear] = useState('')
+  const { academicYear } = useAcademicYear()
   const [expandedStructures, setExpandedStructures] = useState<Set<string>>(new Set())
   
   const [formData, setFormData] = useState({
@@ -142,13 +143,10 @@ export default function FeeStructuresPage() {
     scholarshipItems: [] as ScholarshipItem[]
   })
 
-  useEffect(() => {
-    fetchData()
-  }, [])
 
   useEffect(() => {
     fetchStructures()
-  }, [selectedAcademicYear])
+  }, [academicYear])
 
   // Auto-generate structure name when class and academic year are selected
   useEffect(() => {
@@ -163,51 +161,13 @@ export default function FeeStructuresPage() {
     }
   }, [formData.classId, formData.academicYearId, classes, academicYears, editingStructure])
 
-  const fetchData = useCallback(async () => {
-    try {
-      const [academicYearsRes, classesRes, feeTemplatesRes, scholarshipTemplatesRes] = await Promise.all([
-        fetch('/api/academic-years'),
-        fetch('/api/classes'),
-        fetch('/api/admin/fee-templates'),
-        fetch('/api/admin/scholarship-templates')
-      ])
-
-      if (academicYearsRes.ok) {
-        const data = await academicYearsRes.json()
-        setAcademicYears(data)
-        if (data.length > 0 && !selectedAcademicYear) {
-          // Find active academic year first, fallback to first one
-          const activeYear = data.find((year: AcademicYear) => year.isActive) || data[0]
-          setSelectedAcademicYear(activeYear.id)
-        }
-      }
-
-      if (classesRes.ok) {
-        const data = await classesRes.json()
-        setClasses(data)
-      }
-
-      if (feeTemplatesRes.ok) {
-        const data = await feeTemplatesRes.json()
-        setFeeTemplates(data.filter((t: FeeTemplate) => t.isActive))
-      }
-
-      if (scholarshipTemplatesRes.ok) {
-        const data = await scholarshipTemplatesRes.json()
-        setScholarshipTemplates(data.filter((t: ScholarshipTemplate) => t.isActive))
-      }
-    } catch (err) {
-      console.error(err)
-      toast.error('Error fetching data')
-    }
-  }, [selectedAcademicYear])
 
   const fetchStructures = useCallback(async () => {
+    console.log(academicYear)
     try {
-      const url = selectedAcademicYear 
-        ? `/api/admin/fee-structures?academicYearId=${selectedAcademicYear}`
+      const url = academicYear 
+        ? `/api/admin/fee-structures?academicYearId=${academicYear.id}`
         : '/api/admin/fee-structures'
-      
       const response = await fetch(url)
       if (response.ok) {
         const data = await response.json()
@@ -221,7 +181,7 @@ export default function FeeStructuresPage() {
     } finally {
       setLoading(false)
     }
-  }, [selectedAcademicYear])
+  }, [academicYear])
 
   const addFeeItem = () => {
     setFormData({
