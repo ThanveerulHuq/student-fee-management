@@ -62,7 +62,7 @@ function EnrollSearchContent() {
 
   const fetchStudents = async () => {
     try {
-      const response = await fetch('/api/students')
+      const response = await fetch('/api/students?limit=all')
       if (response.ok) {
         const data = await response.json()
         setStudents(data.students || data)

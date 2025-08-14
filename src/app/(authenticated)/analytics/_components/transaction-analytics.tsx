@@ -54,16 +54,46 @@ export default function TransactionAnalytics() {
   const [viewMode, setViewMode] = useState<ViewMode>("chart")
   const [groupBy, setGroupBy] = useState<GroupBy>("month")
   const [dateRange, setDateRange] = useState<DateRange | undefined>()
+  const [selectedAcademicYear, setSelectedAcademicYear] = useState<string>("ALL")
+  const [academicYears, setAcademicYears] = useState<Array<{id: string, year: string}>>([])
+  const [loadingAcademicYears, setLoadingAcademicYears] = useState(true)
+
+  // Load academic years
+  useEffect(() => {
+    const loadAcademicYears = async () => {
+      try {
+        const response = await fetch('/api/academic-years')
+        if (response.ok) {
+          const data = await response.json()
+          setAcademicYears(data || [])
+        }
+      } catch (error) {
+        console.error('Error loading academic years:', error)
+      } finally {
+        setLoadingAcademicYears(false)
+      }
+    }
+
+    loadAcademicYears()
+  }, [])
+
+  // Set default academic year when academic years load
+  useEffect(() => {
+    if (academicYear?.id && selectedAcademicYear === "ALL") {
+      setSelectedAcademicYear(academicYear.id)
+    }
+  }, [academicYear?.id, selectedAcademicYear])
 
   useEffect(() => {
-    if (!academicYear?.id) return
+    const effectiveAcademicYear = selectedAcademicYear === "ALL" ? academicYear?.id : selectedAcademicYear
+    if (!effectiveAcademicYear) return
 
     const fetchData = async () => {
       try {
         setLoading(true)
         
         const queryParams = new URLSearchParams()
-        queryParams.append("academicYear", academicYear.id)
+        queryParams.append("academicYear", effectiveAcademicYear)
         queryParams.append("groupBy", groupBy)
         
         if (dateRange?.from) {
@@ -86,7 +116,7 @@ export default function TransactionAnalytics() {
     }
 
     fetchData()
-  }, [academicYear?.id, groupBy, dateRange])
+  }, [selectedAcademicYear, academicYear?.id, groupBy, dateRange])
 
 
   const getMethodColor = (method: string) => {
@@ -102,6 +132,7 @@ export default function TransactionAnalytics() {
     setDateRange(undefined)
     setGroupBy("month")
     setViewMode("chart")
+    setSelectedAcademicYear("ALL")
   }
 
   const exportToCSV = async () => {
@@ -230,7 +261,7 @@ export default function TransactionAnalytics() {
         <div className="px-6 py-4 bg-white border-b border-gray-100">
           <div className="space-y-4">
             {/* Filter Controls */}
-            <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr_1fr] gap-3 items-end">
+            <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr_1fr_1fr] gap-3 items-end">
               {/* Date Range */}
               <div>
                 <Label className="text-sm font-medium text-gray-700">Date Range</Label>
@@ -241,6 +272,30 @@ export default function TransactionAnalytics() {
                     placeholder="Select date range"
                     className="h-9 border-gray-200 focus:border-blue-500 focus:ring-blue-500/20 text-sm bg-gray-50/50 focus:bg-white transition-colors"
                   />
+                </div>
+              </div>
+
+              {/* Academic Year */}
+              <div>
+                <Label className="text-sm font-medium text-gray-700">Academic Year</Label>
+                <div className="mt-1">
+                  <Select
+                    value={selectedAcademicYear}
+                    onValueChange={setSelectedAcademicYear}
+                    disabled={loadingAcademicYears}
+                  >
+                    <SelectTrigger className="h-9 border-gray-200 focus:border-blue-500 focus:ring-blue-500/20">
+                      <SelectValue placeholder={loadingAcademicYears ? "Loading..." : "All Academic Years"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ALL">All Academic Years</SelectItem>
+                      {academicYears.map((year) => (
+                        <SelectItem key={year.id} value={year.id}>
+                          {year.year}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 

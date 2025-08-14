@@ -13,11 +13,12 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url)
     const page = parseInt(searchParams.get("page") || "1")
-    const limit = parseInt(searchParams.get("limit") || "10")
+    const limitParam = searchParams.get("limit")
+    const limit = limitParam === "all" ? null : parseInt(limitParam || "10")
     const search = searchParams.get("search") || ""
     const status = searchParams.get("status") || "all"
 
-    const skip = (page - 1) * limit
+    const skip = limit ? (page - 1) * limit : 0
 
     // Build where clause with search and status filtering
     const where: {
@@ -50,7 +51,7 @@ export async function GET(request: NextRequest) {
       prisma.student.findMany({
         where,
         skip,
-        take: limit,
+        ...(limit ? { take: limit } : {}),
         orderBy: { createdAt: "desc" },
       }),
       prisma.student.count({ where }),
@@ -62,7 +63,7 @@ export async function GET(request: NextRequest) {
         page,
         limit,
         total,
-        pages: Math.ceil(total / limit),
+        pages: limit ? Math.ceil(total / limit) : 1,
       },
     })
   } catch (error) {
