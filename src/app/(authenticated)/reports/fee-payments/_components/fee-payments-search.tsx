@@ -42,6 +42,7 @@ interface FeePaymentsSearchProps {
     studentId: string
     receiptNo: string
     paymentMethod: string
+    academicYearId: string
   }
   onFilterChange: (key: string, value: string) => void
   reportData: ReportData | null
@@ -54,6 +55,8 @@ interface FeePaymentsSearchProps {
   onSortChange?: (sortBy: string, sortOrder: string) => void
   recordsPerPage?: number
   onRecordsPerPageChange?: (limit: number) => void
+  academicYears: Array<{id: string, year: string}>
+  loadingAcademicYears: boolean
 }
 
 export default function FeePaymentsSearch({
@@ -72,7 +75,9 @@ export default function FeePaymentsSearch({
   sortOrder = "desc",
   onSortChange,
   recordsPerPage = 20,
-  onRecordsPerPageChange
+  onRecordsPerPageChange,
+  academicYears,
+  loadingAcademicYears
 }: FeePaymentsSearchProps) {
   return (
     <>
@@ -107,18 +112,29 @@ export default function FeePaymentsSearch({
       {/* Search and Filters Section */}
       <div className="px-6 py-4 bg-white border-b border-gray-100">
         <div className="space-y-4">
-          {/* Single Line Layout for MD/LG */}
-          <div className="grid grid-cols-1 lg:grid-cols-[2fr_1.5fr_1fr_1fr] gap-3 items-end">
-            {/* Date Range */}
+          {/* Single Row - All Filters */}
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-2 items-end">
+            {/* Academic Year */}
             <div>
-              <Label className="text-sm font-medium text-gray-700">Date Range</Label>
+              <Label className="text-sm font-medium text-gray-700">Academic Year</Label>
               <div className="mt-1">
-                <DateRangePicker
-                  date={dateRange}
-                  onDateChange={onDateChange}
-                  placeholder="Select date range"
-                  className="h-9 border-gray-200 focus:border-blue-500 focus:ring-blue-500/20 text-sm bg-gray-50/50 focus:bg-white transition-colors"
-                />
+                <Select
+                  value={filters.academicYearId}
+                  onValueChange={(value) => onFilterChange("academicYearId", value)}
+                  disabled={loadingAcademicYears}
+                >
+                  <SelectTrigger className="h-9 border-gray-200 focus:border-blue-500 focus:ring-blue-500/20">
+                    <SelectValue placeholder={loadingAcademicYears ? "Loading..." : "All Academic Years"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ALL">All Academic Years</SelectItem>
+                    {academicYears.map((year) => (
+                      <SelectItem key={year.id} value={year.id}>
+                        {year.year}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
@@ -147,7 +163,7 @@ export default function FeePaymentsSearch({
               />
             </div>
 
-            {/* Payment Method */}
+            {/* Payment Method with Reset Button */}
             <div>
               <Label className="text-sm font-medium text-gray-700">Payment Method</Label>
               <div className="flex items-center space-x-2 mt-1">
@@ -177,9 +193,9 @@ export default function FeePaymentsSearch({
             </div>
           </div>
 
-          {/* Sorting Controls Row */}
+          {/* Sorting Controls and Date Filter Row */}
           <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-            {/* Sort Controls */}
+            {/* Sort Controls - Left */}
             <div className="flex items-center space-x-4">
               <Label className="text-sm font-medium text-gray-700">Sort by:</Label>
               <Select
@@ -208,6 +224,17 @@ export default function FeePaymentsSearch({
                   <SelectItem value="desc">Z-A</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+            
+            {/* Date Range - Right */}
+            <div className="flex items-center space-x-2">
+              <Label className="text-sm font-medium text-gray-700">Date Range:</Label>
+              <DateRangePicker
+                date={dateRange}
+                onDateChange={onDateChange}
+                placeholder="Select date range"
+                className="h-8 border-gray-200 focus:border-blue-500 focus:ring-blue-500/20 text-sm bg-gray-50/50 focus:bg-white transition-colors"
+              />
             </div>
           </div>
 

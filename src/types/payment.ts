@@ -1,6 +1,7 @@
 import { 
   StudentInfo, 
   AcademicYearInfo, 
+  ClassInfo,
   PaymentMethod 
 } from './enrollment'
 
@@ -26,6 +27,7 @@ export interface Payment {
   id: string
   receiptNo: string
   studentEnrollmentId: string
+  academicYearId: string
   totalAmount: number
   paymentDate: Date
   paymentMethod: PaymentMethod
@@ -35,7 +37,9 @@ export interface Payment {
   
   // Embedded student info for receipts
   student: StudentInfo
+  class: ClassInfo
   academicYear: AcademicYearInfo
+  section: string
   
   // Payment breakdown
   paymentItems: PaymentItem[]

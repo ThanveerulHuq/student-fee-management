@@ -56,7 +56,6 @@ export async function GET(request: NextRequest) {
       class: {
         id: enrollment.classId,
         className: enrollment.class.className,
-        order: enrollment.class.order,
         isActive: enrollment.class.isActive
       },
       

@@ -52,19 +52,20 @@ export async function GET(
       // Student information (embedded in payment)
       student: {
         id: enrollment.studentId,
-        admissionNo: enrollment.student.admissionNumber,
-        name: `${enrollment.student.name}`,
-        fatherName: enrollment.student.fatherName,
-        mobileNo: enrollment.student.mobileNo,
-        status: enrollment.student.status
+        admissionNo: payment.student.admissionNumber,
+        name: `${payment.student.name}`,
+        fatherName: payment.student.fatherName,
+        mobileNo: payment.student.mobileNo,
+        status: payment.student.status,
+        class: `${payment.class.className} - ${payment.section}`
       },
       
       // Academic year info (embedded in payment)
       academicYear: {
-        year: enrollment.academicYear.year,
-        startDate: enrollment.academicYear.startDate,
-        endDate: enrollment.academicYear.endDate,
-        isActive: enrollment.academicYear.isActive
+        year: payment.academicYear.year,
+        startDate: payment.academicYear.startDate,
+        endDate: payment.academicYear.endDate,
+        isActive: payment.academicYear.isActive
       },
       
       // Payment breakdown from embedded paymentItems

@@ -123,12 +123,15 @@ export async function POST(request: NextRequest) {
       data: {
         receiptNo,
         studentEnrollmentId: validatedData.studentEnrollmentId,
+        academicYearId: enrollment.academicYearId,
         totalAmount: validatedData.totalAmount,
         paymentMethod: validatedData.paymentMethod,
         remarks: validatedData.remarks,
         createdBy: session.user?.name || 'Unknown',
         student: enrollment.student,
+        class: enrollment.class,
         academicYear: enrollment.academicYear,
+        section: enrollment.section,
         paymentItems: validatedData.paymentItems.map(item => {
           const fee = validFees.find(f => f.id === item.feeId)!
           return {
@@ -154,17 +157,7 @@ export async function POST(request: NextRequest) {
       return {
         ...fee,
         amountPaid: newAmountPaid,
-        amountDue: Math.max(0, newAmountDue),
-        recentPayments: [
-          {
-            paymentId: payment.id,
-            amount: paymentItem.amount,
-            paymentDate: new Date(),
-            receiptNo: payment.receiptNo,
-            paymentMethod: validatedData.paymentMethod
-          },
-          ...fee.recentPayments.slice(0, 4) // Keep last 5 payments
-        ]
+        amountDue: Math.max(0, newAmountDue)
       }
     })
 

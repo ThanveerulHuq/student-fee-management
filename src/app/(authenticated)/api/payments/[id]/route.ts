@@ -89,8 +89,7 @@ export async function DELETE(
       return {
         ...fee,
         amountPaid: newAmountPaid,
-        amountDue: newAmountDue,
-        recentPayments: fee.recentPayments.filter(rp => rp.paymentId !== payment.id)
+        amountDue: newAmountDue
       }
     })
 

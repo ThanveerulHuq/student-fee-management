@@ -17,6 +17,7 @@ export async function GET(request: NextRequest) {
     const studentId = searchParams.get("studentId")
     const receiptNo = searchParams.get("receiptNo")
     const paymentMethod = searchParams.get("paymentMethod")
+    const academicYearId = searchParams.get("academicYearId")
     
     // Pagination parameters
     const page = parseInt(searchParams.get("page") || "1")
@@ -25,18 +26,7 @@ export async function GET(request: NextRequest) {
     const sortOrder = searchParams.get("sortOrder") || "desc"
 
     // Build where conditions for payments
-    const paymentWhere: {
-      paymentDate?: {
-        gte?: Date
-        lte?: Date
-      }
-      studentEnrollmentId?: string
-      receiptNo?: {
-        contains?: string
-        mode?: "insensitive"
-      }
-      status?: string
-    } = {
+    const paymentWhere: any = {
       status: "COMPLETED" // Only completed payments
     }
 
@@ -54,9 +44,21 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Student filter (by enrollment ID)
-    if (studentId) {
-      paymentWhere.studentEnrollmentId = studentId
+    // Academic year filter
+    if (academicYearId && academicYearId !== "ALL") {
+      paymentWhere.academicYearId = academicYearId
+    }
+
+    // Student filter (search in embedded student data)
+    if (studentId && studentId.trim()) {
+      if (!paymentWhere.OR) {
+        paymentWhere.OR = []
+      }
+      paymentWhere.OR.push(
+        { "student":  { is: { name: { contains: studentId.trim(), mode: "insensitive" } } } },
+        { "student":  { is: { admissionNumber: { contains: studentId.trim(), mode: "insensitive" } } } },
+        { "student":  { is: { fatherName: { contains: studentId.trim(), mode: "insensitive" } } } }
+      )
     }
 
     // Receipt number filter (partial match)
@@ -65,6 +67,11 @@ export async function GET(request: NextRequest) {
         contains: receiptNo,
         mode: "insensitive"
       }
+    }
+
+    // Payment method filter
+    if (paymentMethod && paymentMethod !== "ALL") {
+      paymentWhere.paymentMethod = paymentMethod as "CASH" | "ONLINE" | "CHEQUE"
     }
 
     // Build orderBy object
@@ -77,7 +84,7 @@ export async function GET(request: NextRequest) {
         case "receiptNo":
           return { receiptNo: sortOrder as "asc" | "desc" }
         case "studentName":
-          return { studentEnrollment: { student: { name: sortOrder as "asc" | "desc" } } }
+          return { "student.name": sortOrder as "asc" | "desc" }
         default:
           return { paymentDate: "desc" as "desc" }
       }
@@ -91,47 +98,30 @@ export async function GET(request: NextRequest) {
       where: paymentWhere,
     })
 
-    // Get ALL payments matching filters for summary calculations
+    // Get all payments for summary calculations
     const allPayments = await prisma.payment.findMany({
       where: paymentWhere,
-      include: {
-        studentEnrollment: {
-          include: {
-            student: true,
-            class: true,
-            academicYear: true
-          }
-        }
-      }
     })
 
-    // Get paginated payments with the filters applied
+    // Get paginated payments (no need to include enrollment - data is embedded)
     const payments = await prisma.payment.findMany({
       where: paymentWhere,
-      include: {
-        studentEnrollment: {
-          include: {
-            student: true,
-            class: true,
-            academicYear: true
-          }
-        }
-      },
       orderBy: getOrderBy(sortBy, sortOrder),
       skip,
       take: limit
     })
 
-    // Process paginated payments for the report
+    // Process paginated payments using embedded data
     const processedPayments = payments.map(payment => ({
       id: payment.id,
       receiptNo: payment.receiptNo,
-      studentName: `${payment.studentEnrollment.student.name}`,
-      studentFatherName: payment.studentEnrollment.student.fatherName,
-      studentPhone: payment.studentEnrollment.student.mobileNo,
-      studentClass: payment.studentEnrollment.class.className,
-      studentSection: payment.studentEnrollment.section,
-      academicYear: payment.studentEnrollment.academicYear.year,
+      studentName: payment.student.name,
+      studentAdmissionNo: payment.student.admissionNumber,
+      studentFatherName: payment.student.fatherName,
+      studentPhone: payment.student.mobileNo,
+      studentClass: payment.class.className,
+      studentSection: payment.section,
+      academicYear: payment.academicYear.year,
       totalAmount: payment.totalAmount,
       paymentDate: payment.paymentDate.toISOString(),
       paymentMethod: payment.paymentMethod,
@@ -224,7 +214,8 @@ export async function GET(request: NextRequest) {
         endDate,
         studentId,
         receiptNo,
-        paymentMethod
+        paymentMethod,
+        academicYearId
       },
       generatedAt: new Date(),
       generatedBy: session.user.username

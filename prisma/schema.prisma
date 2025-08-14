@@ -298,7 +298,7 @@ model StudentEnrollment {
 model Payment {
   id                   String   @id @default(auto()) @map("_id") @db.ObjectId
   receiptNo            String   @unique
-  studentEnrollmentId  String   @db.ObjectId
+  paymentItems         PaymentItem[]
   totalAmount          Float
   paymentDate          DateTime @default(now())
   paymentMethod        PaymentMethod @default(CASH)
@@ -306,13 +306,16 @@ model Payment {
   createdBy            String
   status               String   @default("COMPLETED") // COMPLETED, PENDING, CANCELLED
   
+  studentEnrollmentId  String   @db.ObjectId
+  academicYearId       String   @db.ObjectId
   // Embedded student info for receipts
   student      StudentInfo
+  class        ClassInfo
   academicYear AcademicYearInfo
-  studentEnrollment StudentEnrollment @relation(fields: [studentEnrollmentId], references: [id])    
+  section      String
   
   // Payment breakdown
-  paymentItems PaymentItem[]
+  studentEnrollment StudentEnrollment @relation(fields: [studentEnrollmentId], references: [id])    
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

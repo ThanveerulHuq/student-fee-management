@@ -696,13 +696,16 @@ async function migratePayments(csvData: CSVData) {
         data: {
           receiptNo: row.id.toString(),
           studentEnrollmentId: enrollment.id,
+          academicYearId: enrollment.academicYearId,
           totalAmount: parseFloat(row.amount_paid),
           paymentDate: new Date(row.payment_date),
           paymentMethod: 'CASH',
           createdBy: 'system',
           status: 'COMPLETED',
           student: enrollment.student,
+          class: enrollment.class,
           academicYear: enrollment.academicYear,
+          section: enrollment.section,
           paymentItems,
           migrationData: createMigrationData('fee_txn', row.id, {
             originalStudentYearId: row.student_id,

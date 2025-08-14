@@ -89,7 +89,6 @@ export async function POST(
         // Updated class data
         class: {
           className: classInfo.className,
-          order: classInfo.order,
           isActive: classInfo.isActive
         },
         

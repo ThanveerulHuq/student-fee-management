@@ -98,13 +98,16 @@ export async function POST(request: NextRequest) {
         data: {
           receiptNo,
           studentEnrollmentId: validatedData.studentEnrollmentId,
+          academicYearId: enrollment.academicYearId,
           totalAmount: validatedData.totalAmount,
           paymentDate: validatedData.paymentDate,
           paymentMethod: validatedData.paymentMethod,
           remarks: validatedData.remarks,
           createdBy: validatedData.createdBy,
           student: enrollment.student,
+          class: enrollment.class,
           academicYear: enrollment.academicYear,
+          section: enrollment.section,
           paymentItems
         }
       })

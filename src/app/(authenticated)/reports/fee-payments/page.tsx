@@ -102,13 +102,39 @@ export default function FeePaymentsReportPage({}: FeePaymentsPageProps) {
     studentId: searchParams.get("studentId") || "",
     receiptNo: searchParams.get("receiptNo") || "",
     paymentMethod: searchParams.get("paymentMethod") || "ALL",
+    academicYearId: searchParams.get("academicYearId") || "ALL",
   })
+  
+  // Academic years state
+  const [academicYears, setAcademicYears] = useState<Array<{id: string, year: string}>>([])
+  const [loadingAcademicYears, setLoadingAcademicYears] = useState(true)
 
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/auth/login")
     }
   }, [status, router])
+
+  // Load academic years
+  useEffect(() => {
+    const loadAcademicYears = async () => {
+      try {
+        const response = await fetch('/api/academic-years')
+        if (response.ok) {
+          const data = await response.json()
+          setAcademicYears(data || [])
+        }
+      } catch (error) {
+        console.error('Error loading academic years:', error)
+      } finally {
+        setLoadingAcademicYears(false)
+      }
+    }
+
+    if (session) {
+      loadAcademicYears()
+    }
+  }, [session])
 
   // Initialize date range from URL params
   useEffect(() => {
@@ -151,6 +177,9 @@ export default function FeePaymentsReportPage({}: FeePaymentsPageProps) {
       }
       if (filters.paymentMethod && filters.paymentMethod !== "ALL") {
         queryParams.append("paymentMethod", filters.paymentMethod)
+      }
+      if (filters.academicYearId && filters.academicYearId !== "ALL") {
+        queryParams.append("academicYearId", filters.academicYearId)
       }
 
       const response = await fetch(`/api/reports/fee-payments?${queryParams}`)
@@ -252,6 +281,7 @@ export default function FeePaymentsReportPage({}: FeePaymentsPageProps) {
       studentId: "",
       receiptNo: "",
       paymentMethod: "ALL",
+      academicYearId: "ALL",
     })
     setDateRange(undefined)
     setSortBy("paymentDate")
@@ -272,14 +302,6 @@ export default function FeePaymentsReportPage({}: FeePaymentsPageProps) {
     setPagination(prev => ({ ...prev, limit: newLimit }))
   }
 
-  const getPaymentMethodColor = (method: string) => {
-    switch (method) {
-      case "CASH": return "bg-green-100 text-green-800"
-      case "ONLINE": return "bg-blue-100 text-blue-800"
-      case "CHEQUE": return "bg-purple-100 text-purple-800"
-      default: return "bg-gray-100 text-gray-800"
-    }
-  }
 
   if (loading && !reportData) {
     return <StudentsListSkeleton />
@@ -309,6 +331,8 @@ export default function FeePaymentsReportPage({}: FeePaymentsPageProps) {
           onSortChange={handleSortChange}
           recordsPerPage={recordsPerPage}
           onRecordsPerPageChange={handleRecordsPerPageChange}
+          academicYears={academicYears}
+          loadingAcademicYears={loadingAcademicYears}
         />
 
         {/* Error */}

@@ -210,9 +210,9 @@ export default function FormalTemplate({ receipt, schoolConfig }: ReceiptProps) 
                   : 'bg-white'
               }>
                 <td className="border border-black py-0.5 px-1 font-bold">{feeItem.templateName.toUpperCase()} FEE</td>
-                <td className="border border-black py-0.5 px-1 text-center font-bold">₹{feeItem.total}</td>
-                <td className="border border-black py-0.5 px-1 text-center font-extrabold">₹{paidAmount}</td>
-                <td className="border border-black py-0.5 px-1 text-center font-bold">₹{feeItem.outstanding}</td>
+                <td className="border border-black py-0.5 px-1 text-center font-bold" style={{ fontSize: schoolConfig.branding.fonts.size?.medium || '10px' }}>{formatCurrency(feeItem.total)}</td>
+                <td className="border border-black py-0.5 px-1 text-center font-extrabold" style={{ fontSize: schoolConfig.branding.fonts.size?.large || '12px' }}>{formatCurrency(paidAmount)}</td>
+                <td className="border border-black py-0.5 px-1 text-center font-bold" style={{ fontSize: schoolConfig.branding.fonts.size?.large || '12px' }}>{formatCurrency(feeItem.outstanding)}</td>
               </tr>
             );
           })}
@@ -220,7 +220,7 @@ export default function FormalTemplate({ receipt, schoolConfig }: ReceiptProps) 
             receipt.currentFeeStatus.scholarships.map((scholarship: any, index: number) => (
               <tr key={`scholarship-${index}`} className="bg-gray-200">
                 <td className="border border-black py-0.5 px-1 font-bold">{scholarship.templateName.toUpperCase()} (-)</td>
-                <td className="border border-black py-0.5 px-1 text-center font-bold">₹{scholarship.amount}</td>
+                <td className="border border-black py-0.5 px-1 text-center font-bold">{formatCurrency(scholarship.amount)}</td>
                 <td className="border border-black py-0.5 px-1 text-center">-</td>
                 <td className="border border-black py-0.5 px-1 text-center">-</td>
               </tr>
