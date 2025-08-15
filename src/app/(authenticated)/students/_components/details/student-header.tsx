@@ -5,7 +5,8 @@ import {
   Edit, 
   UserPlus, 
   UserMinus,
-  ArrowLeft
+  ArrowLeft,
+  Printer
 } from "lucide-react"
 
 interface Student {
@@ -22,6 +23,7 @@ interface StudentHeaderProps {
   onDeactivate: () => void
   onReactivate: () => void
   onBack: () => void
+  onPrint: () => void
 }
 
 export default function StudentHeader({
@@ -30,7 +32,8 @@ export default function StudentHeader({
   onEnroll,
   onDeactivate,
   onReactivate,
-  onBack
+  onBack,
+  onPrint
 }: StudentHeaderProps) {
   return (
     <div className="bg-white border-b border-gray-200">
@@ -53,6 +56,14 @@ export default function StudentHeader({
             </div>
           </div>
           <div className="flex items-center space-x-3">
+            <Button
+              variant="outline"
+              onClick={onPrint}
+              className="border-gray-300"
+            >
+              <Printer className="h-4 w-4 mr-2" />
+              Print
+            </Button>
             <Button
               variant="outline"
               onClick={onEnroll}

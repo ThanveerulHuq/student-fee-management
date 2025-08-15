@@ -62,7 +62,7 @@ export async function GET(request: NextRequest) {
         academicYear: true
       },
       orderBy: {
-        paymentDate: 'asc'
+        paymentDate: 'desc'
       }
     })
 
@@ -122,9 +122,9 @@ export async function GET(request: NextRequest) {
       })
     })
 
-    // Convert to array and sort
+    // Convert to array and sort by date descending
     const result = Array.from(groupedData.values()).sort((a, b) => 
-      a.period.localeCompare(b.period)
+      b.period.localeCompare(a.period)
     )
 
     // Format period labels for better display

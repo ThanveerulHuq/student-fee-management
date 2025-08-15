@@ -48,7 +48,7 @@ export default function EnhancedPageHeader({
               </Button>
             )}
             <div 
-              className="flex items-center space-x-3 cursor-pointer hover:opacity-80 transition-opacity"
+              className="flex items-center space-x-2 sm:space-x-3 cursor-pointer hover:opacity-80 transition-opacity min-w-0 flex-1"
               onClick={() => navigateTo("/dashboard")}
             >
               <Image
@@ -56,28 +56,26 @@ export default function EnhancedPageHeader({
                 alt="School Logo"
                 width={40}
                 height={40}
-                className="w-10 h-10"
+                className="w-8 h-8 sm:w-10 sm:h-10 flex-shrink-0"
               />
-              <div className="flex flex-col">
-                <h1 className="text-lg font-bold text-gray-900 leading-tight">
+              <div className="flex flex-col min-w-0">
+                <h1 className="text-sm sm:text-lg font-bold text-gray-900 leading-tight truncate">
                   {title}
                 </h1>
-
-                  <span className="text-xs text-gray-500 font-medium">
-                    Student Management System
-                  </span>
-                
+                <span className="text-xs text-gray-500 font-medium hidden sm:block">
+                  Student Management System
+                </span>
               </div>
             </div>
           </div>
           
-          <div className="flex items-center space-x-4">
-            {/* Academic Year Selector */}
+          <div className="flex items-center space-x-2 sm:space-x-4">
+            {/* Academic Year Selector - Hidden on mobile */}
             {academicYear && academicYears.length > 0 && (
-              <div className="flex items-center space-x-2">
+              <div className="hidden sm:flex items-center space-x-2">
                 <CalendarDays className="h-4 w-4 text-gray-500" />
                 <Select value={academicYear.id} onValueChange={handleAcademicYearChange}>
-                  <SelectTrigger className="w-[180px]">
+                  <SelectTrigger className="w-[140px] lg:w-[180px]">
                     <SelectValue>
                       <Badge variant="outline" className="text-sm">
                         {academicYear.year}
@@ -97,25 +95,33 @@ export default function EnhancedPageHeader({
             
             {children}
             
-            {/* User Info */}
+            {/* User Info - Simplified on mobile */}
             <div className="flex items-center space-x-2">
               <UserCircle className="h-5 w-5 text-gray-400" />
-              <span className="text-sm text-gray-700">
-                {session?.user?.username}
-              </span>
-              <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                {session?.user?.role}
-              </span>
+              <div className="hidden sm:flex items-center space-x-2">
+                <span className="text-sm text-gray-700">
+                  {session?.user?.username}
+                </span>
+                <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                  {session?.user?.role}
+                </span>
+              </div>
+              <div className="sm:hidden">
+                <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                  {session?.user?.role}
+                </span>
+              </div>
             </div>
             
-            {/* Logout */}
+            {/* Logout - Icon only on mobile */}
             <Button
               variant="outline"
               size="sm"
               onClick={() => signOut({ callbackUrl: "/auth/login" })}
+              className="px-2 sm:px-3"
             >
-              <LogOut className="h-4 w-4 mr-2" />
-              Logout
+              <LogOut className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Logout</span>
             </Button>
           </div>
         </div>

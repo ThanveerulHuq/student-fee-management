@@ -397,7 +397,7 @@ export default function TransactionAnalytics() {
               {viewMode === "chart" ? (
                 <div className="h-96">
                   <ResponsiveContainer width="100%" height="100%">
-                    <RechartsBarChart data={data.data} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                    <RechartsBarChart data={[...data.data].reverse()} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis 
                         dataKey="formattedPeriod"

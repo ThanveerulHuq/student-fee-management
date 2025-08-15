@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { signIn } from "next-auth/react"
 import { useRouter } from "next/navigation"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -50,6 +51,18 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
+          {schoolConfig.header.showLogo && (
+            <div className="flex justify-center mb-4">
+              <Image
+                src={schoolConfig.header.logoPath}
+                alt={`${schoolConfig.shortName} Logo`}
+                width={parseInt(schoolConfig.header.logoSize?.width || '60px')}
+                height={schoolConfig.header.logoSize?.height === 'auto' ? 60 : parseInt(schoolConfig.header.logoSize?.height || '60px')}
+                className="object-contain"
+                priority
+              />
+            </div>
+          )}
           <CardTitle className="text-2xl font-bold">{schoolConfig.shortName}</CardTitle>
           <CardDescription>
             School Data Management System

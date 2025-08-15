@@ -179,6 +179,10 @@ export default function StudentDetailPage({ params }: StudentDetailPageProps) {
     setShowReactivateDialog(false)
   }
 
+  const handlePrint = () => {
+    navigateTo(`/students/${studentId}/print`)
+  }
+
   if (status === "loading" || loading) {
     return <LoaderWrapper fullScreen label="Loading student details..." />
   }
@@ -202,6 +206,7 @@ export default function StudentDetailPage({ params }: StudentDetailPageProps) {
         onDeactivate={handleDeactivateStudent}
         onReactivate={handleReactivateStudent}
         onBack={() => router.back()}
+        onPrint={handlePrint}
       />
 
       <main className="w-full py-6 px-4 sm:px-6 lg:px-8 space-y-6">
