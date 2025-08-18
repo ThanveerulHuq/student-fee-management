@@ -206,7 +206,7 @@ export default function ReceiptPage({ params }: ReceiptPageProps) {
           @media print {
             @page {
               size: A4;
-              margin: 0.5in;
+              margin: 0.3in;
             }
             
             /* Hide everything except receipt content */
@@ -220,15 +220,60 @@ export default function ReceiptPage({ params }: ReceiptPageProps) {
               visibility: visible;
             }
             
-            /* Position receipt content at top of page */
+            /* Enhanced font scaling for server environments */
             .receipt-container {
               position: absolute;
               left: 0;
               top: 0;
               width: 100%;
               page-break-inside: avoid;
-              height: 48vh;
-              margin-bottom: 1vh;
+              height: 47vh;
+              margin-bottom: 0.5vh;
+              zoom: 1.15;
+              transform-origin: top left;
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
+            }
+            
+            /* Force larger minimum font sizes for print */
+            .receipt-container * {
+              font-size: max(10px, 1em) !important;
+              line-height: 1.1 !important;
+            }
+            
+            /* Scale up specific text elements */
+            .receipt-container .text-xs {
+              font-size: 10px !important;
+            }
+            
+            .receipt-container .text-sm {
+              font-size: 12px !important;
+            }
+            
+            .receipt-container .text-lg {
+              font-size: 14px !important;
+            }
+            
+            /* Table content scaling */
+            .receipt-container table {
+              font-size: 10px !important;
+            }
+            
+            .receipt-container table td,
+            .receipt-container table th {
+              padding: 2px 4px !important;
+              font-size: 10px !important;
+            }
+            
+            /* Header and important text scaling */
+            .receipt-container .font-black {
+              font-size: 11px !important;
+              font-weight: 900 !important;
+            }
+            
+            .receipt-container .font-extrabold {
+              font-size: 11px !important;
+              font-weight: 800 !important;
             }
             
             .receipt-separator {
@@ -243,12 +288,27 @@ export default function ReceiptPage({ params }: ReceiptPageProps) {
             }
             
             .receipt-container:last-of-type {
-              top: 50vh;
+              top: 47.5vh;
+              margin-top: 0;
             }
             
             /* Ensure print only shows receipt content */
             header, nav, .print\\:hidden {
               display: none !important;
+            }
+            
+            /* Improve border visibility */
+            .receipt-container .border-black {
+              border-color: #000000 !important;
+              border-width: 1px !important;
+            }
+            
+            .receipt-container .border-2 {
+              border-width: 2px !important;
+            }
+            
+            .receipt-container .border-4 {
+              border-width: 3px !important;
             }
           }
         `}</style>
